@@ -377,9 +377,7 @@ class File extends \IVT\System\File
 	{
 		if ( $result === false )
 		{
-			$last = error_get_last();
-
-			throw new \ErrorException( $last[ 'message' ], 0, $last[ 'type' ], $last[ 'file' ], $last[ 'line' ] );
+			throw new Exception( "Something went wrong with $this (see the stack trace)" );
 		}
 	}
 
