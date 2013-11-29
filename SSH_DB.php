@@ -2,9 +2,7 @@
 
 namespace IVT\System\SSH\DB;
 
-use CommandResult;
-use IVT\System\SSH\Credentials;
-use IVT\System\SSH\System;
+use IVT\System;
 use Symfony\Component\Process\Process;
 
 class Connection extends \Dbase_SQL_Driver
@@ -18,12 +16,12 @@ class Connection extends \Dbase_SQL_Driver
 	private $forwardedPort;
 
 	/**
-	 * @param Credentials             $ssh
+	 * @param System\SSH\Credentials  $ssh
 	 * @param \DatabaseConnectionInfo $dsn
 	 *
 	 * @throws \DbaseConnectionFailed
 	 */
-	function __construct( Credentials $ssh, \DatabaseConnectionInfo $dsn )
+	function __construct( System\SSH\Credentials $ssh, \DatabaseConnectionInfo $dsn )
 	{
 		$this->forwardedPort = new ForwardedPort( $ssh, $dsn->host(), $dsn->port() ? : '3306' );
 
@@ -37,7 +35,7 @@ class Connection extends \Dbase_SQL_Driver
 		}
 		catch ( \DbaseConnectionFailed $e )
 		{
-			$e2 = new \CommandFailedException( $this->forwardedPort->commandResult() );
+			$e2 = new System\CommandFailedException( $this->forwardedPort->commandResult() );
 
 			throw new \DbaseConnectionFailed( $e->getMessage(), $e->getCode(), $e2 );
 		}
@@ -60,7 +58,7 @@ class ForwardedPort
 	private $remoteHost;
 	private $ssh;
 
-	function __construct( Credentials $ssh, $remoteHost, $remotePort )
+	function __construct( System\SSH\Credentials $ssh, $remoteHost, $remotePort )
 	{
 		// PHP only collects cycles when the number of "roots" hits 1000 and
 		// by that time there may be many instances of this object in memory,
@@ -93,7 +91,7 @@ class ForwardedPort
 			{
 				$lastException = $e;
 			}
-			catch ( \CommandFailedException $e )
+			catch ( System\CommandFailedException $e )
 			{
 				$lastException = $e;
 			}
@@ -113,11 +111,11 @@ class ForwardedPort
 	{
 		$this->process->stop();
 
-		return CommandResult::fromSymfonyProcess( $this->process );
+		return System\CommandResult::fromSymfonyProcess( $this->process );
 	}
 
 	/**
-	 * @throws \CommandFailedException
+	 * @throws System\CommandFailedException
 	 * @throws PortAlreadyOpen
 	 * @return Process
 	 */
@@ -143,7 +141,7 @@ class ForwardedPort
 
 			if ( !$process->isRunning() )
 			{
-				throw new \CommandFailedException( CommandResult::fromSymfonyProcess( $process ) );
+				throw new System\CommandFailedException( System\CommandResult::fromSymfonyProcess( $process ) );
 			}
 		}
 
@@ -153,7 +151,7 @@ class ForwardedPort
 	private function isPortOpen()
 	{
 		$connection = @fsockopen( $this->localHost, $this->localPort, ref_new(), ref_new(), 1 );
-		
+
 		if ( $connection === false )
 			return false;
 
@@ -164,13 +162,13 @@ class ForwardedPort
 
 	private function sshCommand()
 	{
-		$localHost  = System::escapeCmd( $this->localHost );
-		$localPort  = System::escapeCmd( $this->localPort );
-		$remoteHost = System::escapeCmd( $this->remoteHost );
-		$remotePort = System::escapeCmd( $this->remotePort );
-		$key        = System::escapeCmd( $this->ssh->keyFile() );
-		$host       = System::escapeCmd( $this->ssh->host() );
-		$user       = System::escapeCmd( $this->ssh->user() );
+		$localHost  = System\System::escapeCmd( $this->localHost );
+		$localPort  = System\System::escapeCmd( $this->localPort );
+		$remoteHost = System\System::escapeCmd( $this->remoteHost );
+		$remotePort = System\System::escapeCmd( $this->remotePort );
+		$key        = System\System::escapeCmd( $this->ssh->keyFile() );
+		$host       = System\System::escapeCmd( $this->ssh->host() );
+		$user       = System\System::escapeCmd( $this->ssh->user() );
 
 		return <<<s
 ssh -o ExitOnForwardFailure=yes -o BatchMode=yes \

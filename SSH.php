@@ -2,11 +2,11 @@
 
 namespace IVT\System\SSH;
 
-use IVT\HostData\Log;
 use IVT\str;
-use IVT\WriteStream;
 use IVT\System\Exception;
+use IVT\System\Log;
 use IVT\System\SSH\DB\Connection;
+use IVT\System\WriteStream;
 
 class Credentials
 {
@@ -79,9 +79,9 @@ class System extends \IVT\System\System
 	}
 
 	/**
-	 * @param string            $command
-	 * @param string            $stdIn
-	 * @param \IVT\HostData\Log $log
+	 * @param string $command
+	 * @param string $stdIn
+	 * @param Log    $log
 	 *
 	 * @return int
 	 */
@@ -105,8 +105,8 @@ class System extends \IVT\System\System
 	}
 
 	/**
-	 * @param string            $command
-	 * @param \IVT\HostData\Log $log
+	 * @param string $command
+	 * @param Log    $log
 	 */
 	private function sshRunCommand( $command, Log $log )
 	{

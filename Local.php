@@ -2,12 +2,24 @@
 
 namespace IVT\System\Local;
 
-use IVT\HostData\Log;
+use IVT\System\StreamStream;
 use IVT\System\Exception;
+use IVT\System\Log;
 use Symfony\Component\Process\Process;
 
 class System extends \IVT\System\System
 {
+	/**
+	 * @param \IVT\System\WriteStream[] $delegates
+	 *
+	 * @return System
+	 */
+	static function create( array $delegates = array() )
+	{
+		return new self( new Log( new StreamStream( STDOUT, $delegates ),
+		                          new StreamStream( STDERR, $delegates ) ) );
+	}
+
 	function file( $path )
 	{
 		return new File( $this, $path );
@@ -46,24 +58,14 @@ class System extends \IVT\System\System
 
 	function chdir( $dir )
 	{
-		$this->log( "chdir: $dir\n" );
+		$this->log()->out( "chdir: $dir\n" );
 
 		if ( !chdir( $dir ) )
 			throw new Exception( "chdir failed: $dir" );
 	}
 
-	/**
-	 * @return string
-	 */
-	function getcwd()
-	{
-		return getcwd();
-	}
-
-	function __construct( Log $log )
-	{
-		parent::__construct( $log );
-	}
+	/** @return string */
+	function getcwd() { return getcwd(); }
 }
 
 class File extends \IVT\System\File

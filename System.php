@@ -2,10 +2,6 @@
 
 namespace IVT\System;
 
-use IVT\AccumulateStream;
-use IVT\HostData\Log;
-use IVT\LinePrefixStream;
-use IVT\WriteStream;
 use Symfony\Component\Process\Process;
 
 abstract class System
@@ -19,12 +15,12 @@ abstract class System
 
 	static function escapeCmd( $arg )
 	{
-		return \ProcessBuilder::escape( $arg );
+		return Local\ProcessBuilder::escape( $arg );
 	}
 	
 	static function escapeCmdArgs( array $args )
 	{
-		return \ProcessBuilder::escapeArgs( $args );
+		return Local\ProcessBuilder::escapeArgs( $args );
 	}
 
 	final function shell_exec( $command, $stdIn = '' )
@@ -76,7 +72,7 @@ abstract class System
 	 * @param string $command
 	 * @param string $stdIn
 	 *
-	 * @return \CommandResult
+	 * @return CommandResult
 	 */
 	final function run( $command, $stdIn = '' )
 	{
@@ -104,7 +100,7 @@ abstract class System
 
 		$exit->write( "$exitStatus $exitMessage\n" )->flush();
 
-		return new \CommandResult( $command, $stdOut->data(), $stdErr->data(), $exitStatus );
+		return new CommandResult( $command, $stdOut->data(), $stdErr->data(), $exitStatus );
 	}
 
 	/**
@@ -119,7 +115,7 @@ abstract class System
 	{
 		return $this->connectDBImpl( new \DatabaseConnectionInfo( 'mysql', $host, $username, $password, $database ) );
 	}
-	
+
 	protected abstract function connectDBImpl( \DatabaseConnectionInfo $dsn );
 
 	/**
@@ -130,18 +126,15 @@ abstract class System
 	abstract function time();
 
 	/**
-	 * @param string            $command
-	 * @param string            $stdIn
-	 * @param \IVT\HostData\Log $log
+	 * @param string $command
+	 * @param string $stdIn
+	 * @param Log    $log
 	 *
 	 * @return int exit code
 	 */
 	abstract protected function runImpl( $command, $stdIn, Log $log );
 
-	protected function log( $string )
-	{
-		$this->log->out( $string );
-	}
+	function log() { return $this->log; }
 }
 
 abstract class File
