@@ -234,6 +234,6 @@ abstract class File
 	abstract function file_put_contents( $data, $append = false, $bailIfExists = false );
 }
 
-class Exception extends \ErrorHandler\Exception
+class Exception extends \IVT\Exception
 {
 }
