@@ -250,6 +250,9 @@ class File extends \IVT\System\File
 	{
 		clearstatcache( true );
 
+		if ( $maxLength === PHP_INT_MAX )
+			$maxLength = -1;
+
 		assertNotFalse( $result = file_get_contents( $this->sftpURL(), false, null, $offset, $maxLength ) );
 
 		return $result;
