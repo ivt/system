@@ -83,14 +83,14 @@ abstract class System
 		return Local\ProcessBuilder::escapeArgs( $args );
 	}
 
-	final function shell_exec( $command, $stdIn = '' )
+	final function shellExec( $command, $stdIn = '' )
 	{
-		return $this->run( $command, $stdIn )->assertSuccess()->stdout();
+		return $this->runCommand( $command, $stdIn )->assertSuccess()->stdout();
 	}
 
 	final function now()
 	{
-		return $this->dateTime( $this->time() );
+		return $this->dateTime( $this->currentTimestamp() );
 	}
 
 	/**
@@ -114,12 +114,12 @@ abstract class System
 	 *
 	 * @return void
 	 */
-	abstract function chdir( $dir );
+	abstract function setWorkingDirectory( $dir );
 
 	/**
 	 * @return string
 	 */
-	abstract function getcwd();
+	abstract function getWorkingDirectory();
 
 	/**
 	 * @param $path
@@ -134,7 +134,7 @@ abstract class System
 	 *
 	 * @return CommandResult
 	 */
-	final function run( $command, $stdIn = '' )
+	final function runCommand( $command, $stdIn = '' )
 	{
 		$output     = new CommandOutput( $command, $stdIn, $this->log->outStream() );
 		$exitStatus = $this->runImpl( $command, $stdIn, $output->log() );
@@ -164,7 +164,7 @@ abstract class System
 	 *
 	 * @return int
 	 */
-	abstract function time();
+	abstract function currentTimestamp();
 
 	/**
 	 * @param string $command
@@ -192,30 +192,29 @@ abstract class File
 
 	final function __toString() { return $this->path(); }
 
-	final function append( $append )
+	final function concat( $append )
 	{
 		return $this->system->file( $this->path . $append );
 	}
 
-	final function chdir()
-	{
-		$this->system->chdir( $this->path );
-	}
+	function create( $data ) { $this->write( $data, false, true ); }
+	
+	function append( $data ) { $this->write( $data, true ); }
 
 	/**
 	 * @return bool
 	 */
-	abstract function is_file();
+	abstract function isFile();
 
 	/**
 	 * @return string[]
 	 */
-	abstract function scandir();
+	abstract function scanDir();
 
 	/**
 	 * @return bool
 	 */
-	abstract function is_dir();
+	abstract function isDir();
 
 	/**
 	 * @param int  $mode
@@ -223,56 +222,57 @@ abstract class File
 	 *
 	 * @return void
 	 */
-	abstract function mkdir( $mode = 0777, $recursive = false );
+	abstract function createDir( $mode = 0777, $recursive = false );
 
 	/**
 	 * @return bool
 	 */
-	abstract function is_link();
+	abstract function isLink();
 
 	/**
 	 * @return string
 	 */
-	abstract function readlink();
+	abstract function readLink();
 
 	/**
 	 * @return bool
 	 */
-	abstract function file_exists();
+	abstract function exists();
 
 	/**
 	 * @return int
 	 */
-	abstract function filesize();
+	abstract function fileSize();
 
 	/**
 	 * @return void
 	 */
-	abstract function unlink();
+	abstract function removeFile();
 
 	/**
 	 * @return int
 	 */
-	abstract function filemtime();
+	abstract function lastModified();
 
 	/**
 	 * @return int
 	 */
-	abstract function filectime();
+	abstract function lastStatusCange();
 
 	/**
+	 * @param int $offset
+	 * @param int $maxLength
+	 *
 	 * @return string
 	 */
-	abstract function file_get_contents();
+	abstract function read( $offset = 0, $maxLength = PHP_INT_MAX );
 
 	/**
 	 * @param string $data
-	 * @param bool   $append
-	 * @param bool   $bailIfExists
 	 *
 	 * @return void
 	 */
-	abstract function file_put_contents( $data, $append = false, $bailIfExists = false );
+	abstract function write( $data );
 }
 
 class Exception extends \IVT\Exception

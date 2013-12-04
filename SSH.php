@@ -41,14 +41,6 @@ class System extends \IVT\System\System
 {
 	const EXIT_CODE_MARKER = "*EXIT CODE: ";
 
-	private function check( $result, $message = "Something went wrong (see the stack trace)" )
-	{
-		if ( $result === false )
-		{
-			throw new Exception( "$message\n\ncredentials: $this->credentials" );
-		}
-	}
-
 	private $ssh, $sftp, $credentials, $cwd;
 
 	function credentials() { return $this->credentials; }
@@ -59,16 +51,16 @@ class System extends \IVT\System\System
 
 		$this->credentials = $credentials;
 
-		$this->check( $this->ssh = ssh2_connect( $credentials->host(),
-		                                         $credentials->port() ), "Connection failed" );
+		assertNotFalse( $this->ssh = ssh2_connect( $credentials->host(),
+		                                           $credentials->port() ), "Connection failed" );
 
-		$this->check( ssh2_auth_pubkey_file( $this->ssh,
-		                                     $credentials->user(),
-		                                     $credentials->keyFilePublic(),
-		                                     $credentials->keyFile() ), "authentication failed" );
+		assertNotFalse( ssh2_auth_pubkey_file( $this->ssh,
+		                                       $credentials->user(),
+		                                       $credentials->keyFilePublic(),
+		                                       $credentials->keyFile() ), "authentication failed" );
 
-		$this->check( $this->sftp = ssh2_sftp( $this->ssh ), "Failed to get SFTP subsystem" );
-		$this->check( $this->cwd = substr( $this->shell_exec( 'pwd' ), 0, -1 ) );
+		assertNotFalse( $this->sftp = ssh2_sftp( $this->ssh ), "Failed to get SFTP subsystem" );
+		assertNotFalse( $this->cwd = substr( $this->shellExec( 'pwd' ), 0, -1 ) );
 	}
 
 	function pwd() { return $this->cwd; }
@@ -99,9 +91,9 @@ class System extends \IVT\System\System
 		return new Connection( $this->credentials, $dsn );
 	}
 
-	function time()
+	function currentTimestamp()
 	{
-		return (int) substr( $this->shell_exec( 'date +%s' ), 0, -1 );
+		return (int) substr( $this->shellExec( 'date +%s' ), 0, -1 );
 	}
 
 	/**
@@ -110,11 +102,11 @@ class System extends \IVT\System\System
 	 */
 	private function sshRunCommand( $command, Log $log )
 	{
-		$this->check( $stdOut = ssh2_exec( $this->ssh, $command ) );
-		$this->check( $stdErr = ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
+		assertNotFalse( $stdOut = ssh2_exec( $this->ssh, $command ) );
+		assertNotFalse( $stdErr = ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
 
-		$this->check( stream_set_blocking( $stdOut, false ) );
-		$this->check( stream_set_blocking( $stdErr, false ) );
+		assertNotFalse( stream_set_blocking( $stdOut, false ) );
+		assertNotFalse( stream_set_blocking( $stdErr, false ) );
 
 		$stdErrDone = false;
 		$stdOutDone = false;
@@ -145,17 +137,17 @@ s;
 
 	private function readStream( $resource, WriteStream $stream )
 	{
-		$this->check( $data = fread( $resource, 8192 ) );
+		assertNotFalse( $data = fread( $resource, 8192 ) );
 		$stream->write( $data );
 
 		if ( feof( $resource ) )
 		{
 			// For some reason, with SSH2, we have to set the stream to blocking mode and call
 			// fread() again, otherwise the next call to ssh2_exec() will fail.
-			$this->check( stream_set_blocking( $resource, true ) );
-			$this->check( $data = fread( $resource, 8192 ) );
+			assertNotFalse( stream_set_blocking( $resource, true ) );
+			assertNotFalse( $data = fread( $resource, 8192 ) );
 			assertEqual( $data, '' );
-			$this->check( fclose( $resource ) );
+			assertNotFalse( fclose( $resource ) );
 
 			return true;
 		}
@@ -163,15 +155,15 @@ s;
 		return false;
 	}
 
-	function chdir( $dir )
+	function setWorkingDirectory( $dir )
 	{
-		$this->cwd = substr( $this->shell_exec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
+		$this->cwd = substr( $this->shellExec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
 	}
 
 	/**
 	 * @return string
 	 */
-	function getcwd()
+	function getWorkingDirectory()
 	{
 		return $this->cwd;
 	}
@@ -252,102 +244,102 @@ class File extends \IVT\System\File
 		parent::__construct( $system, $path );
 	}
 
-	function file_get_contents()
+	function read( $offset = 0, $maxLength = PHP_INT_MAX )
 	{
 		clearstatcache( true );
 
-		$this->check( $result = file_get_contents( $this->sftpURL() ) );
+		assertNotFalse( $result = file_get_contents( $this->sftpURL(), false, null, $offset, $maxLength ) );
 
 		return $result;
 	}
 
-	function is_file()
+	function isFile()
 	{
 		clearstatcache( true );
 
 		return is_file( $this->sftpURL() );
 	}
 
-	function scandir()
+	function scanDir()
 	{
 		clearstatcache( true );
 
-		$this->check( $result = scandir( $this->sftpURL() ) );
+		assertNotFalse( $result = scandir( $this->sftpURL() ) );
 
 		return $result;
 	}
 
-	function is_dir()
+	function isDir()
 	{
 		clearstatcache( true );
 
 		return is_dir( $this->sftpURL() );
 	}
 
-	function mkdir( $mode = 0777, $recursive = false )
+	function createDir( $mode = 0777, $recursive = false )
 	{
-		$this->check( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ) );
+		assertNotFalse( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ) );
 	}
 
-	function is_link()
+	function isLink()
 	{
 		clearstatcache( true );
 
 		return is_link( $this->sftpURL() );
 	}
 
-	function readlink()
+	function readLink()
 	{
-		$this->check( $result = ssh2_sftp_readlink( $this->sftp, $this->absolutePath() ) );
+		assertNotFalse( $result = ssh2_sftp_readlink( $this->sftp, $this->absolutePath() ) );
 
 		return $result;
 	}
 
-	function file_exists()
+	function exists()
 	{
 		clearstatcache( true );
 
 		return file_exists( $this->sftpURL() );
 	}
 
-	function filesize()
+	function fileSize()
 	{
 		clearstatcache( true );
 
-		$this->check( $size = filesize( $this->sftpURL() ) );
+		assertNotFalse( $size = filesize( $this->sftpURL() ) );
 
 		return $size;
 	}
 
-	function unlink()
+	function removeFile()
 	{
-		$this->check( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ) );
+		assertNotFalse( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ) );
 	}
 
-	function filemtime()
+	function lastModified()
 	{
 		clearstatcache( true );
 
-		$this->check( $mtime = filemtime( $this->sftpURL() ) );
+		assertNotFalse( $mtime = filemtime( $this->sftpURL() ) );
 
 		return $mtime;
 	}
 
-	function filectime()
+	function lastStatusCange()
 	{
 		// ctime is not supported over SFTP2, so we run a command to get it instead.
-		$stdout = $this->system->shell_exec( "stat -c %Z " . System::escapeCmd( $this->path() ) );
+		$stdout = $this->system->shellExec( "stat -c %Z " . System::escapeCmd( $this->path() ) );
 
 		return (int) substr( $stdout, 0, -1 );
 	}
 
-	function file_put_contents( $data, $append = false, $bailIfExists = false )
+	function write( $data, $append = false, $bailIfExists = false )
 	{
 		// In the case of append, 'a' doesn't work, so we need to open the file and seek to the end instead.
 		// If the file exists, 'w' will truncate it, and 'x' will throw an error. 'c' is not supported by the library.
 		// That just leaves 'r+', which will throw an error if the file doesn't exist. So the best thing we can do is
 		// use 'r+' if the file exists and 'w' if it doesn't.
-		$append = $append && $this->file_exists();
+		$append = $append && $this->exists();
 
 		if ( $bailIfExists )
 			$mode = 'xb';
@@ -356,14 +348,14 @@ class File extends \IVT\System\File
 		else
 			$mode = 'wb';
 		
-		$this->check( $handle = fopen( $this->sftpURL(), $mode ) );
+		assertNotFalse( $handle = fopen( $this->sftpURL(), $mode ) );
 
 		if ( $append )
-			$this->check( fseek( $handle, 0, SEEK_END ) === 0 );
+			assertNotFalse( fseek( $handle, 0, SEEK_END ) === 0 );
 		
-		$this->check( $bytesWritten = fwrite( $handle, $data ) );
+		assertNotFalse( $bytesWritten = fwrite( $handle, $data ) );
 		assertEqual( $bytesWritten, strlen( $data ) );
-		$this->check( fclose( $handle ) );
+		assertNotFalse( fclose( $handle ) );
 	}
 
 	private function absolutePath()
@@ -371,14 +363,6 @@ class File extends \IVT\System\File
 		$path = $this->path();
 
 		return starts_with( $path, '/' ) ? $path : $this->system->pwd() . '/' . $path;
-	}
-
-	private function check( $result )
-	{
-		if ( $result === false )
-		{
-			throw new Exception( "Something went wrong with $this (see the stack trace)" );
-		}
 	}
 
 	private function sftpURL()

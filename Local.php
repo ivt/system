@@ -53,7 +53,7 @@ class System extends \IVT\System\System
 		} );
 	}
 
-	function time() { return time(); }
+	function currentTimestamp() { return time(); }
 
 	/**
 	 * @return int
@@ -68,7 +68,7 @@ class System extends \IVT\System\System
 		return new \Dbase_SQL_Driver( $dsn );
 	}
 
-	function chdir( $dir )
+	function setWorkingDirectory( $dir )
 	{
 		$this->log()->out( "chdir: $dir\n" );
 
@@ -77,12 +77,12 @@ class System extends \IVT\System\System
 	}
 
 	/** @return string */
-	function getcwd() { return getcwd(); }
+	function getWorkingDirectory() { return getcwd(); }
 }
 
 class File extends \IVT\System\File
 {
-	function is_file()
+	function isFile()
 	{
 		clearstatcache( true );
 
@@ -96,112 +96,103 @@ class File extends \IVT\System\File
 		return is_executable( $this->fsPath() );
 	}
 
-	function scandir()
+	function scanDir()
 	{
-		$this->check( $result = scandir( $this->fsPath() ) );
+		assertNotFalse( $result = scandir( $this->fsPath() ) );
 
 		return $result;
 	}
 
-	function is_dir()
+	function isDir()
 	{
 		clearstatcache( true );
 
 		return is_dir( $this->fsPath() );
 	}
 
-	function mkdir( $mode = 0777, $recursive = false )
+	function createDir( $mode = 0777, $recursive = false )
 	{
 		clearstatcache( true );
 
-		$this->check( mkdir( $this->fsPath(), $mode, $recursive ) );
+		assertNotFalse( mkdir( $this->fsPath(), $mode, $recursive ) );
 	}
 
-	function is_link()
+	function isLink()
 	{
 		clearstatcache( true );
 
 		return is_link( $this->fsPath() );
 	}
 
-	function readlink()
+	function readLink()
 	{
 		clearstatcache( true );
 
-		$this->check( $result = readlink( $this->fsPath() ) );
+		assertNotFalse( $result = readlink( $this->fsPath() ) );
 
 		return $result;
 	}
 
-	function file_exists()
+	function exists()
 	{
 		clearstatcache( true );
 
 		return file_exists( $this->fsPath() );
 	}
 
-	function filesize()
+	function fileSize()
 	{
 		clearstatcache( true );
 
-		$this->check( $size = filesize( $this->fsPath() ) );
+		assertNotFalse( $size = filesize( $this->fsPath() ) );
 
 		return $size;
 	}
 
-	function unlink()
+	function removeFile()
 	{
 		clearstatcache( true );
 
-		$this->check( unlink( $this->fsPath() ) );
+		assertNotFalse( unlink( $this->fsPath() ) );
 	}
 
-	function filemtime()
+	function lastModified()
 	{
 		clearstatcache( true );
 
-		$this->check( $result = filemtime( $this->fsPath() ) );
+		assertNotFalse( $result = filemtime( $this->fsPath() ) );
 
 		return $result;
 	}
 
-	function filectime()
+	function lastStatusCange()
 	{
 		clearstatcache( true );
 
-		$this->check( $result = filectime( $this->fsPath() ) );
+		assertNotFalse( $result = filectime( $this->fsPath() ) );
 
 		return $result;
 	}
 
-	function file_get_contents()
+	function read( $offset = 0, $maxLength = PHP_INT_MAX )
 	{
-		$this->check( $result = file_get_contents( $this->fsPath(), false ) );
+		assertNotFalse( $result = file_get_contents( $this->fsPath(), false, null, $offset, $maxLength ) );
 
 		return $result;
 	}
 
-	function file_put_contents( $data, $append = false, $bailIfExists = false )
-	{
-		if ( $bailIfExists )
-			$mode = 'xb';
-		else if ( $append )
-			$mode = 'ab';
-		else
-			$mode = 'wb';
+	function create( $data ) { $this->writeImpl( $data, 'xb' ); }
+	
+	function append( $data ) { $this->writeImpl( $data, 'ab' ); }
+	
+	function write( $data ) { $this->writeImpl( $data, 'wb' ); }
 
-		$this->check( $handle = fopen( $this->fsPath(), $mode ) );
-		$this->check( $written = fwrite( $handle, $data ) );
+	private function writeImpl( $data, $mode )
+	{
+		assertNotFalse( $handle = fopen( $this->fsPath(), $mode ) );
+		assertNotFalse( $written = fwrite( $handle, $data ) );
 		assertEqual( $written, strlen( $data ) );
-		$this->check( fclose( $handle ) );
-	}
-
-	private function check( $result )
-	{
-		if ( $result === false )
-		{
-			throw new Exception( "Failed to do something with $this ( see the stack trace)" );
-		}
+		assertNotFalse( fclose( $handle ) );
 	}
 
 	private function fsPath()
