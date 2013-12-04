@@ -158,6 +158,8 @@ s;
 	function setWorkingDirectory( $dir )
 	{
 		$this->cwd = substr( $this->shellExec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
+		
+		return $this;
 	}
 
 	/**
@@ -244,7 +246,7 @@ class File extends \IVT\System\File
 		parent::__construct( $system, $path );
 	}
 
-	function read( $offset = 0, $maxLength = PHP_INT_MAX )
+	function getContents( $offset = 0, $maxLength = PHP_INT_MAX )
 	{
 		clearstatcache( true );
 
@@ -279,6 +281,8 @@ class File extends \IVT\System\File
 	function createDir( $mode = 0777, $recursive = false )
 	{
 		assertNotFalse( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ) );
+		
+		return $this;
 	}
 
 	function isLink()
@@ -314,6 +318,8 @@ class File extends \IVT\System\File
 	function removeFile()
 	{
 		assertNotFalse( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ) );
+		
+		return $this;
 	}
 
 	function lastModified()
@@ -332,8 +338,14 @@ class File extends \IVT\System\File
 
 		return (int) substr( $stdout, 0, -1 );
 	}
+	
+	function appendContents( $contents ) { return $this->writeImpl( $contents, true, false ); }
+	
+	function createWithContents( $contents ) { return $this->writeImpl( $contents, false, true ); }
+	
+	function setContents( $contents ) { return $this->writeImpl( $contents, false, false ); }
 
-	function write( $data, $append = false, $bailIfExists = false )
+	function writeImpl( $data, $append, $bailIfExists )
 	{
 		// In the case of append, 'a' doesn't work, so we need to open the file and seek to the end instead.
 		// If the file exists, 'w' will truncate it, and 'x' will throw an error. 'c' is not supported by the library.
@@ -356,6 +368,8 @@ class File extends \IVT\System\File
 		assertNotFalse( $bytesWritten = fwrite( $handle, $data ) );
 		assertEqual( $bytesWritten, strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
+		
+		return $this;
 	}
 
 	private function absolutePath()

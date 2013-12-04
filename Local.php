@@ -74,6 +74,8 @@ class System extends \IVT\System\System
 
 		if ( !chdir( $dir ) )
 			throw new Exception( "chdir failed: $dir" );
+		
+		return $this;
 	}
 
 	/** @return string */
@@ -115,6 +117,8 @@ class File extends \IVT\System\File
 		clearstatcache( true );
 
 		assertNotFalse( mkdir( $this->fsPath(), $mode, $recursive ) );
+		
+		return $this;
 	}
 
 	function isLink()
@@ -154,6 +158,8 @@ class File extends \IVT\System\File
 		clearstatcache( true );
 
 		assertNotFalse( unlink( $this->fsPath() ) );
+		
+		return $this;
 	}
 
 	function lastModified()
@@ -174,18 +180,18 @@ class File extends \IVT\System\File
 		return $result;
 	}
 
-	function read( $offset = 0, $maxLength = PHP_INT_MAX )
+	function getContents( $offset = 0, $maxLength = PHP_INT_MAX )
 	{
 		assertNotFalse( $result = file_get_contents( $this->fsPath(), false, null, $offset, $maxLength ) );
 
 		return $result;
 	}
 
-	function create( $data ) { $this->writeImpl( $data, 'xb' ); }
+	function createWithContents( $contents ) { return $this->writeImpl( $contents, 'xb' ); }
 	
-	function append( $data ) { $this->writeImpl( $data, 'ab' ); }
+	function appendContents( $contents ) { return $this->writeImpl( $contents, 'ab' ); }
 	
-	function write( $data ) { $this->writeImpl( $data, 'wb' ); }
+	function setContents( $contents ) { return $this->writeImpl( $contents, 'wb' ); }
 
 	private function writeImpl( $data, $mode )
 	{
@@ -193,6 +199,8 @@ class File extends \IVT\System\File
 		assertNotFalse( $written = fwrite( $handle, $data ) );
 		assertEqual( $written, strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
+		
+		return $this;
 	}
 
 	private function fsPath()

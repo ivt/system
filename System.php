@@ -112,7 +112,7 @@ abstract class System
 	/**
 	 * @param string $dir
 	 *
-	 * @return void
+	 * @return self
 	 */
 	abstract function setWorkingDirectory( $dir );
 
@@ -192,14 +192,10 @@ abstract class File
 
 	final function __toString() { return $this->path(); }
 
-	final function concat( $append )
+	final function appendPath( $append )
 	{
 		return $this->system->file( $this->path . $append );
 	}
-
-	function create( $data ) { $this->write( $data, false, true ); }
-	
-	function append( $data ) { $this->write( $data, true ); }
 
 	/**
 	 * @return bool
@@ -220,7 +216,7 @@ abstract class File
 	 * @param int  $mode
 	 * @param bool $recursive
 	 *
-	 * @return void
+	 * @return self
 	 */
 	abstract function createDir( $mode = 0777, $recursive = false );
 
@@ -245,7 +241,7 @@ abstract class File
 	abstract function fileSize();
 
 	/**
-	 * @return void
+	 * @return self
 	 */
 	abstract function removeFile();
 
@@ -265,14 +261,28 @@ abstract class File
 	 *
 	 * @return string
 	 */
-	abstract function read( $offset = 0, $maxLength = PHP_INT_MAX );
+	abstract function getContents( $offset = 0, $maxLength = PHP_INT_MAX );
 
 	/**
-	 * @param string $data
+	 * @param string $contents
 	 *
-	 * @return void
+	 * @return self
 	 */
-	abstract function write( $data );
+	abstract function setContents( $contents );
+
+	/**
+	 * @param string $contents
+	 *
+	 * @return self
+	 */
+	abstract function createWithContents( $contents );
+
+	/**
+	 * @param string $contents
+	 *
+	 * @return self
+	 */
+	abstract function appendContents( $contents );
 }
 
 class Exception extends \IVT\Exception
