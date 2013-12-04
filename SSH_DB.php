@@ -35,7 +35,7 @@ class Connection extends \Dbase_SQL_Driver
 		}
 		catch ( \DbaseConnectionFailed $e )
 		{
-			$e2 = new System\CommandFailedException( $this->forwardedPort->commandResult() );
+			$e2 = $this->forwardedPort->commandResult()->commandFailedException();
 
 			throw new \DbaseConnectionFailed( $e->getMessage(), $e->getCode(), $e2 );
 		}
@@ -111,7 +111,7 @@ class ForwardedPort
 	{
 		$this->process->stop();
 
-		return System\CommandResult::fromSymfonyProcess( $this->process );
+		return System\CommandOutput::fromSymfonyProcess( $this->process );
 	}
 
 	/**
@@ -141,7 +141,7 @@ class ForwardedPort
 
 			if ( !$process->isRunning() )
 			{
-				throw new System\CommandFailedException( System\CommandResult::fromSymfonyProcess( $process ) );
+				throw System\CommandOutput::fromSymfonyProcess( $process )->commandFailedException();
 			}
 		}
 

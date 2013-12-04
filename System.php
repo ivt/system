@@ -6,18 +6,35 @@ use Symfony\Component\Process\Process;
 
 class CommandOutput
 {
-	private $command, $stdOut, $stdErr, $out, $err, $exit, $cmd, $in;
-
-	function __construct( $command, $stdIn, $log )
+	static function fromSymfonyProcess( Process $process )
 	{
-		$this->stdOut = new AccumulateStream;
-		$this->stdErr = new AccumulateStream;
+		if ( $process->isRunning() )
+			$process->wait();
 
-		$this->cmd  = new LinePrefixStream( '>>> ', array( $log ) );
-		$this->in   = new LinePrefixStream( ' IN ', array( $log ) );
-		$this->out  = new LinePrefixStream( 'OUT ', array( $log ) );
-		$this->err  = new LinePrefixStream( 'ERR ', array( $log ) );
-		$this->exit = new LinePrefixStream( '    ', array( $log ) );
+		$self = new self( $process->getCommandLine(), $process->getStdin(), new WriteStream );
+
+		$log = $self->log();
+		$log->out( $process->getOutput() );
+		$log->err( $process->getErrorOutput() );
+		
+		return $self->finish( $process->getExitCode() );
+	}
+
+	private $command, $stdOut, $stdErr, $stdBoth, $log;
+	private $cmd, $in, $out, $err, $exit;
+
+	function __construct( $command, $stdIn, WriteStream $log )
+	{
+		$this->log     = new AccumulateStream( array( $log ) );
+		$this->stdBoth = new AccumulateStream;
+		$this->stdOut  = new AccumulateStream( array( $this->stdBoth ) );
+		$this->stdErr  = new AccumulateStream( array( $this->stdBoth ) );
+
+		$this->cmd  = new LinePrefixStream( '>>> ', array( $this->log ) );
+		$this->in   = new LinePrefixStream( '>IN ', array( $this->log ) );
+		$this->out  = new LinePrefixStream( '<<< ', array( $this->log ) );
+		$this->err  = new LinePrefixStream( '!!! ', array( $this->log ) );
+		$this->exit = new LinePrefixStream( '=== ', array( $this->log ) );
 
 		$this->cmd->write( "$command\n" );
 		$this->cmd->flush();
@@ -42,7 +59,8 @@ class CommandOutput
 		$this->exit->write( "$exitStatus $exitMessage\n" );
 		$this->exit->flush();
 
-		return new CommandResult( $this->command, $this->stdOut->data(), $this->stdErr->data(), $exitStatus );
+		return new CommandResult( $this->stdOut->data(), $this->stdErr->data(),
+		                          $this->stdBoth->data(), $exitStatus, $this->log->data() );
 	}
 }
 
@@ -118,9 +136,12 @@ abstract class System
 	 */
 	final function run( $command, $stdIn = '' )
 	{
-		$output = new CommandOutput( $command, $stdIn, $this->log->outStream() );
+		$output     = new CommandOutput( $command, $stdIn, $this->log->outStream() );
+		$exitStatus = $this->runImpl( $command, $stdIn, $output->log() );
+		$result     = $output->finish( $exitStatus );
+		$this->log->outStream()->write( "\n" );
 
-		return $output->finish( $this->runImpl( $command, $stdIn, $output->log() ) );
+		return $result;
 	}
 
 	/**

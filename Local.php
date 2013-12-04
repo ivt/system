@@ -27,9 +27,21 @@ class System extends \IVT\System\System
 
 	function runImpl( $command, $stdIn, Log $log )
 	{
-		$process = new Process( $command );
-		$process->setTimeout( null );
-		$process->setStdin( $stdIn );
+		return self::runLocal( $command, $stdIn, $log, null, null );
+	}
+
+	/**
+	 * @param string        $command
+	 * @param string        $stdIn
+	 * @param Log           $log
+	 * @param string|null   $cwd
+	 * @param string[]|null $environment
+	 *
+	 * @return int
+	 */
+	static function runLocal( $command, $stdIn, Log $log, $cwd, $environment )
+	{
+		$process = new Process( $command, $cwd, $environment, $stdIn, null );
 
 		return $process->run( function ( $type, $data ) use ( $log )
 		{
