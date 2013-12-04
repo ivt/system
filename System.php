@@ -4,6 +4,48 @@ namespace IVT\System;
 
 use Symfony\Component\Process\Process;
 
+class CommandOutput
+{
+	private $command, $stdOut, $stdErr, $out, $err, $exit, $cmd, $in;
+
+	function __construct( $command, $stdIn, $log )
+	{
+		$this->stdOut = new AccumulateStream;
+		$this->stdErr = new AccumulateStream;
+
+		$this->cmd  = new LinePrefixStream( '>>> ', array( $log ) );
+		$this->in   = new LinePrefixStream( ' IN ', array( $log ) );
+		$this->out  = new LinePrefixStream( 'OUT ', array( $log ) );
+		$this->err  = new LinePrefixStream( 'ERR ', array( $log ) );
+		$this->exit = new LinePrefixStream( '    ', array( $log ) );
+
+		$this->cmd->write( "$command\n" );
+		$this->cmd->flush();
+		$this->in->write( $stdIn );
+		$this->in->flush();
+
+		$this->command = $command;
+	}
+
+	function log()
+	{
+		return new Log( new WriteStream( array( $this->stdOut, $this->out ) ),
+		                new WriteStream( array( $this->stdErr, $this->err ) ) );
+	}
+
+	function finish( $exitStatus )
+	{
+		$exitMessage = array_get( Process::$exitCodes, $exitStatus, "Unknown error" );
+
+		$this->out->flush();
+		$this->err->flush();
+		$this->exit->write( "$exitStatus $exitMessage\n" );
+		$this->exit->flush();
+
+		return new CommandResult( $this->command, $this->stdOut->data(), $this->stdErr->data(), $exitStatus );
+	}
+}
+
 abstract class System
 {
 	private $log;
@@ -76,31 +118,9 @@ abstract class System
 	 */
 	final function run( $command, $stdIn = '' )
 	{
-		$log    = $this->log->outStream();
-		$stdOut = new AccumulateStream;
-		$stdErr = new AccumulateStream;
+		$output = new CommandOutput( $command, $stdIn, $this->log->outStream() );
 
-		$cmd  = new LinePrefixStream( '>>> ', array( $log ) );
-		$in   = new LinePrefixStream( ' IN ', array( $log ) );
-		$out  = new LinePrefixStream( 'OUT ', array( $log ) );
-		$err  = new LinePrefixStream( 'ERR ', array( $log ) );
-		$exit = new LinePrefixStream( '    ', array( $log ) );
-
-		$cmd->write( "$command\n" )->flush();
-		$in->write( $stdIn )->flush();
-
-		$cmdLog = new Log( new WriteStream( array( $stdOut, $out ) ),
-		                   new WriteStream( array( $stdErr, $err ) ) );
-
-		$exitStatus  = $this->runImpl( $command, $stdIn, $cmdLog );
-		$exitMessage = array_get( Process::$exitCodes, $exitStatus, "Unknown error" );
-
-		$out->flush();
-		$err->flush();
-
-		$exit->write( "$exitStatus $exitMessage\n" )->flush();
-
-		return new CommandResult( $command, $stdOut->data(), $stdErr->data(), $exitStatus );
+		return $output->finish( $this->runImpl( $command, $stdIn, $output->log() ) );
 	}
 
 	/**
