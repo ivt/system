@@ -182,7 +182,14 @@ class File extends \IVT\System\File
 
 	function getContents( $offset = 0, $maxLength = PHP_INT_MAX )
 	{
-		assertNotFalse( $result = file_get_contents( $this->fsPath(), false, null, $offset, $maxLength ) );
+		if ( $maxLength == PHP_INT_MAX )
+		{
+			assertNotFalse( $result = file_get_contents( $this->fsPath(), false, null, $offset ) );
+		}
+		else
+		{
+			assertNotFalse( $result = file_get_contents( $this->fsPath(), false, null, $offset, $maxLength ) );
+		}
 
 		return $result;
 	}
