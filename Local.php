@@ -9,6 +9,18 @@ use Symfony\Component\Process\Process;
 
 class System extends \IVT\System\System
 {
+	static function isPortOpen( $host, $port, $timeout )
+	{
+		$connection = @fsockopen( $host, $port, ref_new(), ref_new(), $timeout );
+
+		if ( $connection === false )
+			return false;
+
+		fclose( $connection );
+
+		return true;
+	}
+
 	/**
 	 * @param \IVT\System\WriteStream[] $delegates
 	 *

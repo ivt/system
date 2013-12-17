@@ -150,14 +150,7 @@ class ForwardedPort
 
 	private function isPortOpen()
 	{
-		$connection = @fsockopen( $this->localHost, $this->localPort, ref_new(), ref_new(), 1 );
-
-		if ( $connection === false )
-			return false;
-
-		fclose( $connection );
-
-		return true;
+		return System\Local\System::isPortOpen( $this->localHost, $this->localPort, 1 );
 	}
 
 	private function sshCommand()
