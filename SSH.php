@@ -51,8 +51,15 @@ class System extends \IVT\System\System
 
 		$this->credentials = $credentials;
 
-		assertNotFalse( $this->ssh = ssh2_connect( $credentials->host(),
-		                                           $credentials->port() ), "Connection failed" );
+		$host = $credentials->host();
+		$port = $credentials->port();
+
+		if ( !\IVT\System\Local\System::isPortOpen( $host, $port, 5 ) )
+		{
+			throw new \ErrorHandler\Exception( "Port $port is not open on $host" );
+		}
+
+		assertNotFalse( $this->ssh = ssh2_connect( $host, $port ), "Connection failed" );
 
 		assertNotFalse( ssh2_auth_pubkey_file( $this->ssh,
 		                                       $credentials->user(),
