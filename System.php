@@ -218,8 +218,18 @@ abstract class File
 		$result = array();
 
 		foreach ( $this->scanDir() as $file )
+			$result[ ] = $this->appendPath( ends_with( $this->path, '/' ) ? $file : "/$file" );
+
+		return $result;
+	}
+
+	final function scanDirNoDots()
+	{
+		$result = array();
+
+		foreach ( $this->scanDir() as $file )
 			if ( $file !== '.' && $file !== '..' )
-				$result[ ] = $this->appendPath( ends_with( $this->path, '/' ) ? $file : "/$file" );
+				$result[ ] = $file;
 
 		return $result;
 	}
