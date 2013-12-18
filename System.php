@@ -16,11 +16,11 @@ class CommandOutput
 		$log = $self->log();
 		$log->out( $process->getOutput() );
 		$log->err( $process->getErrorOutput() );
-		
+
 		return $self->finish( $process->getExitCode() );
 	}
 
-	private $command, $stdOut, $stdErr, $stdBoth, $log;
+	private $stdOut, $stdErr, $stdBoth, $log;
 	private $cmd, $in, $out, $err, $exit;
 
 	function __construct( $command, $stdIn, WriteStream $log )
@@ -40,8 +40,6 @@ class CommandOutput
 		$this->cmd->flush();
 		$this->in->write( $stdIn );
 		$this->in->flush();
-
-		$this->command = $command;
 	}
 
 	function log()
@@ -77,7 +75,7 @@ abstract class System
 	{
 		return Local\ProcessBuilder::escape( $arg );
 	}
-	
+
 	static function escapeCmdArgs( array $args )
 	{
 		return Local\ProcessBuilder::escapeArgs( $args );
@@ -197,6 +195,35 @@ abstract class File
 		return $this->system->file( $this->path . $append );
 	}
 
+	final function removeRecursive()
+	{
+		if ( $this->isDir() && !$this->isLink() )
+		{
+			foreach ( $this->subFiles() as $file )
+				$file->removeRecursive();
+
+			$this->removeDir();
+		}
+		else
+		{
+			$this->removeFile();
+		}
+	}
+
+	/**
+	 * @return self[]
+	 */
+	final function subFiles()
+	{
+		$result = array();
+
+		foreach ( $this->scanDir() as $file )
+			if ( $file !== '.' && $file !== '..' )
+				$result[ ] = $this->appendPath( ends_with( $this->path, '/' ) ? $file : "/$file" );
+
+		return $result;
+	}
+
 	/**
 	 * @return bool
 	 */
@@ -283,6 +310,11 @@ abstract class File
 	 * @return self
 	 */
 	abstract function appendContents( $contents );
+
+	/**
+	 * @return self
+	 */
+	abstract function removeDir();
 }
 
 class Exception extends \IVT\Exception

@@ -122,7 +122,7 @@ class System extends \IVT\System\System
 		{
 			$stdOutDone = $stdOutDone || $this->readStream( $stdOut, $log->outStream() );
 			$stdErrDone = $stdErrDone || $this->readStream( $stdErr, $log->errStream() );
-			
+
 			usleep( 100000 );
 		}
 	}
@@ -165,7 +165,7 @@ s;
 	function setWorkingDirectory( $dir )
 	{
 		$this->cwd = substr( $this->shellExec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
-		
+
 		return $this;
 	}
 
@@ -295,7 +295,7 @@ class File extends \IVT\System\File
 	function createDir( $mode = 0777, $recursive = false )
 	{
 		assertNotFalse( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ) );
-		
+
 		return $this;
 	}
 
@@ -332,7 +332,7 @@ class File extends \IVT\System\File
 	function removeFile()
 	{
 		assertNotFalse( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ) );
-		
+
 		return $this;
 	}
 
@@ -352,11 +352,21 @@ class File extends \IVT\System\File
 
 		return (int) substr( $stdout, 0, -1 );
 	}
-	
+
+	/**
+	 * @return self
+	 */
+	function removeDir()
+	{
+		assertNotFalse( rmdir( $this->sftpURL() ) );
+
+		return $this;
+	}
+
 	function appendContents( $contents ) { return $this->writeImpl( $contents, true, false ); }
-	
+
 	function createWithContents( $contents ) { return $this->writeImpl( $contents, false, true ); }
-	
+
 	function setContents( $contents ) { return $this->writeImpl( $contents, false, false ); }
 
 	function writeImpl( $data, $append, $bailIfExists )
@@ -373,16 +383,16 @@ class File extends \IVT\System\File
 			$mode = 'r+b';
 		else
 			$mode = 'wb';
-		
+
 		assertNotFalse( $handle = fopen( $this->sftpURL(), $mode ) );
 
 		if ( $append )
 			assertNotFalse( fseek( $handle, 0, SEEK_END ) === 0 );
-		
+
 		assertNotFalse( $bytesWritten = fwrite( $handle, $data ) );
 		assertEqual( $bytesWritten, strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
-		
+
 		return $this;
 	}
 

@@ -2,9 +2,9 @@
 
 namespace IVT\System\Local;
 
-use IVT\System\StreamStream;
 use IVT\System\Exception;
 use IVT\System\Log;
+use IVT\System\StreamStream;
 use Symfony\Component\Process\Process;
 
 class System extends \IVT\System\System
@@ -84,9 +84,8 @@ class System extends \IVT\System\System
 	{
 		$this->log()->out( "chdir: $dir\n" );
 
-		if ( !chdir( $dir ) )
-			throw new Exception( "chdir failed: $dir" );
-		
+		assertNotFalse( chdir( $dir ) );
+
 		return $this;
 	}
 
@@ -129,7 +128,7 @@ class File extends \IVT\System\File
 		clearstatcache( true );
 
 		assertNotFalse( mkdir( $this->fsPath(), $mode, $recursive ) );
-		
+
 		return $this;
 	}
 
@@ -170,7 +169,7 @@ class File extends \IVT\System\File
 		clearstatcache( true );
 
 		assertNotFalse( unlink( $this->fsPath() ) );
-		
+
 		return $this;
 	}
 
@@ -206,10 +205,20 @@ class File extends \IVT\System\File
 		return $result;
 	}
 
+	/**
+	 * @return self
+	 */
+	function removeDir()
+	{
+		assertNotFalse( rmdir( $this->fsPath() ) );
+
+		return $this;
+	}
+
 	function createWithContents( $contents ) { return $this->writeImpl( $contents, 'xb' ); }
-	
+
 	function appendContents( $contents ) { return $this->writeImpl( $contents, 'ab' ); }
-	
+
 	function setContents( $contents ) { return $this->writeImpl( $contents, 'wb' ); }
 
 	private function writeImpl( $data, $mode )
@@ -218,7 +227,7 @@ class File extends \IVT\System\File
 		assertNotFalse( $written = fwrite( $handle, $data ) );
 		assertEqual( $written, strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
-		
+
 		return $this;
 	}
 
