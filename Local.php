@@ -2,7 +2,6 @@
 
 namespace IVT\System\Local;
 
-use IVT\System\Exception;
 use IVT\System\Log;
 use IVT\System\StreamStream;
 use Symfony\Component\Process\Process;
