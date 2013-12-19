@@ -31,7 +31,7 @@ class CommandOutput
 		$this->stdErr  = new AccumulateStream( array( $this->stdBoth ) );
 
 		$this->cmd  = new LinePrefixStream( '>>> ', array( $this->log ) );
-		$this->in   = new LinePrefixStream( '>IN ', array( $this->log ) );
+		$this->in   = new LinePrefixStream( ' IN ', array( $this->log ) );
 		$this->out  = new LinePrefixStream( '<<< ', array( $this->log ) );
 		$this->err  = new LinePrefixStream( '!!! ', array( $this->log ) );
 		$this->exit = new LinePrefixStream( '=== ', array( $this->log ) );
