@@ -223,8 +223,7 @@ class File extends \IVT\System\File
 	private function writeImpl( $data, $mode )
 	{
 		assertNotFalse( $handle = fopen( $this->fsPath(), $mode ) );
-		assertNotFalse( $written = fwrite( $handle, $data ) );
-		assertEqual( $written, strlen( $data ) );
+		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
 
 		return $this;

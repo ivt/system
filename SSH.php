@@ -387,10 +387,9 @@ class File extends \IVT\System\File
 		assertNotFalse( $handle = fopen( $this->sftpURL(), $mode ) );
 
 		if ( $append )
-			assertNotFalse( fseek( $handle, 0, SEEK_END ) === 0 );
+			assertEqual( fseek( $handle, 0, SEEK_END ), 0 );
 
-		assertNotFalse( $bytesWritten = fwrite( $handle, $data ) );
-		assertEqual( $bytesWritten, strlen( $data ) );
+		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
 
 		return $this;
