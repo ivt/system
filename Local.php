@@ -74,7 +74,7 @@ class System extends \IVT\System\System
 		return getmypid();
 	}
 
-	function connectDBImpl( \DatabaseConnectionInfo $dsn )
+	function connectDB( \DatabaseConnectionInfo $dsn )
 	{
 		return new \Dbase_SQL_Driver( $dsn );
 	}

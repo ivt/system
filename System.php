@@ -143,19 +143,11 @@ abstract class System
 	}
 
 	/**
-	 * @param string $host
-	 * @param string $username
-	 * @param string $password
-	 * @param string $database
+	 * @param \DatabaseConnectionInfo $dsn
 	 *
-	 * @return \Dbase_SQL_Driver
+	 * @return \Dbase_SQL_Driver_Abstract
 	 */
-	function connectDB( $host, $username, $password, $database )
-	{
-		return $this->connectDBImpl( new \DatabaseConnectionInfo( 'mysql', $host, $username, $password, $database ) );
-	}
-
-	protected abstract function connectDBImpl( \DatabaseConnectionInfo $dsn );
+	abstract function connectDB( \DatabaseConnectionInfo $dsn );
 
 	/**
 	 * Unix timestamp

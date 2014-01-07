@@ -93,7 +93,7 @@ class System extends \IVT\System\System
 		return (int) $exitCodePruner->exitCode();
 	}
 
-	function connectDBImpl( \DatabaseConnectionInfo $dsn )
+	function connectDB( \DatabaseConnectionInfo $dsn )
 	{
 		return new Connection( $this->credentials, $dsn );
 	}
