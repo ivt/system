@@ -3,7 +3,6 @@
 namespace IVT\System\SSH;
 
 use IVT\str;
-use IVT\System\Exception;
 use IVT\System\Log;
 use IVT\System\SSH\DB\Connection;
 use IVT\System\WriteStream;
@@ -216,7 +215,7 @@ class ExitCodeStream extends WriteStream
 			}
 		}
 
-		throw new Exception( "The code above should always return. Why are we here?" );
+		throw new \Exception( "The code above should always return. Why are we here?" );
 	}
 
 	/**

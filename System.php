@@ -319,6 +319,3 @@ abstract class File
 	abstract function removeDir();
 }
 
-class Exception extends \IVT\Exception
-{
-}
