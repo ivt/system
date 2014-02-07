@@ -73,12 +73,12 @@ abstract class System
 
 	static function escapeCmd( $arg )
 	{
-		return Local\ProcessBuilder::escape( $arg );
+		return ProcessBuilder::escape( $arg );
 	}
 
 	static function escapeCmdArgs( array $args )
 	{
-		return Local\ProcessBuilder::escapeArgs( $args );
+		return ProcessBuilder::escapeArgs( $args );
 	}
 
 	final function shellExec( $command, $stdIn = '' )

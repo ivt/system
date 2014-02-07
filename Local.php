@@ -1,12 +1,10 @@
 <?php
 
-namespace IVT\System\Local;
+namespace IVT\System;
 
-use IVT\System\Log;
-use IVT\System\StreamStream;
 use Symfony\Component\Process\Process;
 
-class System extends \IVT\System\System
+class LocalSystem extends System
 {
 	static function isPortOpen( $host, $port, $timeout )
 	{
@@ -21,9 +19,9 @@ class System extends \IVT\System\System
 	}
 
 	/**
-	 * @param \IVT\System\WriteStream[] $delegates
+	 * @param WriteStream[] $delegates
 	 *
-	 * @return System
+	 * @return self
 	 */
 	static function create( array $delegates = array() )
 	{
@@ -33,7 +31,7 @@ class System extends \IVT\System\System
 
 	function file( $path )
 	{
-		return new File( $this, $path );
+		return new LocalFile( $this, $path );
 	}
 
 	function runImpl( $command, $stdIn, Log $log )
@@ -92,7 +90,7 @@ class System extends \IVT\System\System
 	function getWorkingDirectory() { return getcwd(); }
 }
 
-class File extends \IVT\System\File
+class LocalFile extends File
 {
 	function isFile()
 	{

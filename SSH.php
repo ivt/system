@@ -1,13 +1,11 @@
 <?php
 
-namespace IVT\System\SSH;
+namespace IVT\System;
 
+use IVT\Exception;
 use IVT\str;
-use IVT\System\Log;
-use IVT\System\SSH\DB\Connection;
-use IVT\System\WriteStream;
 
-class Credentials
+class SSHCredentials
 {
 	private $user, $host, $port, $privateKeyFile, $publicKeyFile;
 
@@ -36,7 +34,7 @@ class Credentials
 	}
 }
 
-class System extends \IVT\System\System
+class SSHSystem extends System
 {
 	const EXIT_CODE_MARKER = "*EXIT CODE: ";
 
@@ -44,7 +42,7 @@ class System extends \IVT\System\System
 
 	function credentials() { return $this->credentials; }
 
-	function __construct( Credentials $credentials, Log $log )
+	function __construct( SSHCredentials $credentials, Log $log )
 	{
 		parent::__construct( $log );
 
@@ -53,9 +51,9 @@ class System extends \IVT\System\System
 		$host = $credentials->host();
 		$port = $credentials->port();
 
-		if ( !\IVT\System\Local\System::isPortOpen( $host, $port, 5 ) )
+		if ( !LocalSystem::isPortOpen( $host, $port, 5 ) )
 		{
-			throw new \ErrorHandler\Exception( "Port $port is not open on $host" );
+			throw new Exception( "Port $port is not open on $host" );
 		}
 
 		assertNotFalse( $this->ssh = ssh2_connect( $host, $port ), "Connection failed" );
@@ -73,7 +71,7 @@ class System extends \IVT\System\System
 
 	function file( $path )
 	{
-		return new File( $this, $this->sftp, $path );
+		return new SSHFile( $this, $this->sftp, $path );
 	}
 
 	/**
@@ -94,7 +92,7 @@ class System extends \IVT\System\System
 
 	function connectDB( \DatabaseConnectionInfo $dsn )
 	{
-		return new Connection( $this->credentials, $dsn );
+		return new SSHDBConnection( $this->credentials, $dsn );
 	}
 
 	function currentTimestamp()
@@ -179,7 +177,7 @@ s;
 
 class ExitCodeStream extends WriteStream
 {
-	private $buffer = '', $marker = System::EXIT_CODE_MARKER;
+	private $buffer = '', $marker = SSHSystem::EXIT_CODE_MARKER;
 
 	function exitCode()
 	{
@@ -235,16 +233,16 @@ class ExitCodeStream extends WriteStream
 	}
 }
 
-class File extends \IVT\System\File
+class SSHFile extends File
 {
 	private $sftp, $system;
 
 	/**
-	 * @param System   $system
-	 * @param resource $sftp
-	 * @param string   $path
+	 * @param SSHSystem $system
+	 * @param resource  $sftp
+	 * @param string    $path
 	 */
-	function __construct( System $system, $sftp, $path )
+	function __construct( SSHSystem $system, $sftp, $path )
 	{
 		$this->sftp   = $sftp;
 		$this->system = $system;
@@ -347,7 +345,7 @@ class File extends \IVT\System\File
 	function lastStatusCange()
 	{
 		// ctime is not supported over SFTP2, so we run a command to get it instead.
-		$stdout = $this->system->shellExec( "stat -c %Z " . System::escapeCmd( $this->path() ) );
+		$stdout = $this->system->shellExec( "stat -c %Z " . SSHSystem::escapeCmd( $this->path() ) );
 
 		return (int) substr( $stdout, 0, -1 );
 	}
