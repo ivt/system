@@ -213,7 +213,7 @@ class ExitCodeStream extends WriteStream
 			}
 		}
 
-		throw new \Exception( "The code above should always return. Why are we here?" );
+		throw new Exception( "The code above should always return. Why are we here?" );
 	}
 
 	/**
