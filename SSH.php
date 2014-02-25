@@ -3,7 +3,7 @@
 namespace IVT\System;
 
 use IVT\Exception;
-use IVT\str;
+use IVT\StringBuffer;
 
 class SSHCredentials
 {
@@ -177,37 +177,48 @@ s;
 
 class ExitCodeStream extends WriteStream
 {
-	private $buffer = '', $marker = SSHSystem::EXIT_CODE_MARKER;
+	/** @var StringBuffer */
+	private $buffer;
+	/** @var StringBuffer */
+	private $marker;
+
+	function __construct( array $delegates = array() )
+	{
+		$this->buffer = new StringBuffer;
+		$this->marker = new StringBuffer( SSHSystem::EXIT_CODE_MARKER );
+
+		parent::__construct( $delegates );
+	}
 
 	function exitCode()
 	{
-		$buffer = str::mk( $this->buffer );
-		$marker = str::mk( $this->marker );
+		$marker = $this->marker;
+		$buffer = $this->buffer;
 
-		assertEqual( $this->marker, $buffer->take( $marker->len() ) );
+		assertEqual( "$marker", $buffer->remove( $marker->len() ) );
 
-		return $buffer->skip( $marker->len() );
+		return "$buffer";
 	}
 
 	function write( $data )
 	{
-		$buffer = str::mk( $this->buffer .= $data );
-		$marker = str::mk( $this->marker );
+		$buffer = $this->buffer;
+		$marker = $this->marker;
 
-		if ( $buffer->contains( $marker, true ) )
+		$buffer->append( $data );
+
+		$markerPos = $buffer->find( $marker );
+
+		if ( $markerPos !== false )
 		{
-			// Send data up to the last marker we found.
-			return $this->send( $buffer->lastPos( $marker ) );
+			return $this->send( $markerPos );
 		}
 
-		// Loop from $buffer->len() - $marker->len() to $buffer->len(), each time checking
-		// if this part of the buffer is the start of a marker.
-		//
-		// Once we reach $buffer->len(), the whole buffer is sent.
+		$pos = max( 0, $buffer->len() - $marker->len() );
 
-		for ( $pos = max( 0, $buffer->len() - $marker->len() ); $pos <= $buffer->len(); $pos++ )
+		while ( true )
 		{
-			if ( $marker->startsWith( $buffer->skip( $pos ) ) )
+			if ( $marker->startsWith( $buffer->after( $pos ) ) )
 			{
 				return $this->send( $pos );
 			}
@@ -216,20 +227,9 @@ class ExitCodeStream extends WriteStream
 		throw new Exception( "The code above should always return. Why are we here?" );
 	}
 
-	/**
-	 * Send data from the buffer up to $pos.
-	 *
-	 * @param int $pos
-	 *
-	 * @return $this
-	 */
-	private function send( $pos )
+	private function send( $length )
 	{
-		$buffer       = str::mk( $this->buffer );
-		$result       = parent::write( $buffer->take( $pos ) );
-		$this->buffer = $buffer->skip( $pos );
-
-		return $result;
+		return parent::write( $this->buffer->remove( $length ) );
 	}
 }
 
