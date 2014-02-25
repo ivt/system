@@ -197,7 +197,7 @@ class ExitCodeStream extends WriteStream
 
 		assertEqual( "$marker", $buffer->remove( $marker->len() ) );
 
-		return "$buffer";
+		return $buffer->removeAll();
 	}
 
 	function write( $data )
@@ -207,7 +207,7 @@ class ExitCodeStream extends WriteStream
 
 		$buffer->append( $data );
 
-		$markerPos = $buffer->find( $marker );
+		$markerPos = $buffer->findLast( $marker );
 
 		if ( $markerPos !== false )
 		{
@@ -216,7 +216,7 @@ class ExitCodeStream extends WriteStream
 
 		$pos = max( 0, $buffer->len() - $marker->len() );
 
-		while ( true )
+		for ( ; ; $pos++ )
 		{
 			if ( $marker->startsWith( $buffer->after( $pos ) ) )
 			{
@@ -250,11 +250,11 @@ class SSHFile extends File
 		parent::__construct( $system, $path );
 	}
 
-	function getContents( $offset = 0, $maxLength = PHP_INT_MAX )
+	function getContents( $offset = 0, $maxLength = null )
 	{
 		clearstatcache( true );
 
-		if ( $maxLength == PHP_INT_MAX )
+		if ( $maxLength === null )
 		{
 			assertNotFalse( $result = file_get_contents( $this->sftpURL(), false, null, $offset ) );
 		}

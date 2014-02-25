@@ -285,12 +285,12 @@ abstract class File
 	abstract function lastStatusCange();
 
 	/**
-	 * @param int $offset
-	 * @param int $maxLength
+	 * @param int      $offset
+	 * @param int|null $maxLength
 	 *
 	 * @return string
 	 */
-	abstract function getContents( $offset = 0, $maxLength = PHP_INT_MAX );
+	abstract function getContents( $offset = 0, $maxLength = null );
 
 	/**
 	 * @param string $contents
