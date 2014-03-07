@@ -190,7 +190,7 @@ class LocalFile extends File
 
 	function getContents( $offset = 0, $maxLength = null )
 	{
-		if ( $maxLength == null )
+		if ( $maxLength === null )
 		{
 			assertNotFalse( $result = file_get_contents( $this->fsPath(), false, null, $offset ) );
 		}
