@@ -81,8 +81,6 @@ class LocalSystem extends System
 		$this->writeLog( "chdir: $dir\n" );
 
 		assertNotFalse( chdir( $dir ) );
-
-		return $this;
 	}
 
 	/** @return string */
@@ -134,8 +132,6 @@ class LocalFile extends File
 		clearstatcache( true );
 
 		assertNotFalse( mkdir( $this->fsPath(), $mode, $recursive ) );
-
-		return $this;
 	}
 
 	function isLink()
@@ -175,8 +171,6 @@ class LocalFile extends File
 		clearstatcache( true );
 
 		assertNotFalse( unlink( $this->fsPath() ) );
-
-		return $this;
 	}
 
 	function lastModified()
@@ -211,29 +205,22 @@ class LocalFile extends File
 		return $result;
 	}
 
-	/**
-	 * @return self
-	 */
 	function removeDir()
 	{
 		assertNotFalse( rmdir( $this->fsPath() ) );
-
-		return $this;
 	}
 
-	function createWithContents( $contents ) { return $this->writeImpl( $contents, 'xb' ); }
+	function createWithContents( $contents ) { $this->writeImpl( $contents, 'xb' ); }
 
-	function appendContents( $contents ) { return $this->writeImpl( $contents, 'ab' ); }
+	function appendContents( $contents ) { $this->writeImpl( $contents, 'ab' ); }
 
-	function setContents( $contents ) { return $this->writeImpl( $contents, 'wb' ); }
+	function setContents( $contents ) { $this->writeImpl( $contents, 'wb' ); }
 
 	private function writeImpl( $data, $mode )
 	{
 		assertNotFalse( $handle = fopen( $this->fsPath(), $mode ) );
 		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
-
-		return $this;
 	}
 
 	private function fsPath()

@@ -164,8 +164,6 @@ s;
 	function setWorkingDirectory( $dir )
 	{
 		$this->cwd = substr( $this->shellExec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
-
-		return $this;
 	}
 
 	/**
@@ -304,8 +302,6 @@ class SSHFile extends File
 	function createDir( $mode = 0777, $recursive = false )
 	{
 		assertNotFalse( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ) );
-
-		return $this;
 	}
 
 	function isLink()
@@ -341,8 +337,6 @@ class SSHFile extends File
 	function removeFile()
 	{
 		assertNotFalse( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ) );
-
-		return $this;
 	}
 
 	function lastModified()
@@ -362,23 +356,18 @@ class SSHFile extends File
 		return (int) substr( $stdout, 0, -1 );
 	}
 
-	/**
-	 * @return self
-	 */
 	function removeDir()
 	{
 		assertNotFalse( rmdir( $this->sftpURL() ) );
-
-		return $this;
 	}
 
-	function appendContents( $contents ) { return $this->writeImpl( $contents, true, false ); }
+	function appendContents( $contents ) { $this->writeImpl( $contents, true, false ); }
 
-	function createWithContents( $contents ) { return $this->writeImpl( $contents, false, true ); }
+	function createWithContents( $contents ) { $this->writeImpl( $contents, false, true ); }
 
-	function setContents( $contents ) { return $this->writeImpl( $contents, false, false ); }
+	function setContents( $contents ) { $this->writeImpl( $contents, false, false ); }
 
-	function writeImpl( $data, $append, $bailIfExists )
+	private function writeImpl( $data, $append, $bailIfExists )
 	{
 		// In the case of append, 'a' doesn't work, so we need to open the file and seek to the end instead.
 		// If the file exists, 'w' will truncate it, and 'x' will throw an error. 'c' is not supported by the library.
@@ -400,8 +389,6 @@ class SSHFile extends File
 
 		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
-
-		return $this;
 	}
 
 	private function absolutePath()

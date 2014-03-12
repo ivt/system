@@ -109,8 +109,6 @@ abstract class System
 
 	/**
 	 * @param string $dir
-	 *
-	 * @return self
 	 */
 	abstract function setWorkingDirectory( $dir );
 
@@ -253,8 +251,6 @@ abstract class File
 	/**
 	 * @param int  $mode
 	 * @param bool $recursive
-	 *
-	 * @return self
 	 */
 	abstract function createDir( $mode = 0777, $recursive = false );
 
@@ -278,9 +274,6 @@ abstract class File
 	 */
 	abstract function fileSize();
 
-	/**
-	 * @return self
-	 */
 	abstract function removeFile();
 
 	/**
@@ -303,28 +296,19 @@ abstract class File
 
 	/**
 	 * @param string $contents
-	 *
-	 * @return self
 	 */
 	abstract function setContents( $contents );
 
 	/**
 	 * @param string $contents
-	 *
-	 * @return self
 	 */
 	abstract function createWithContents( $contents );
 
 	/**
 	 * @param string $contents
-	 *
-	 * @return self
 	 */
 	abstract function appendContents( $contents );
 
-	/**
-	 * @return self
-	 */
 	abstract function removeDir();
 }
 
