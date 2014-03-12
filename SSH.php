@@ -197,7 +197,9 @@ class ExitCodeStream extends WriteStream
 		if ( $buffer->contains( $marker, true ) )
 		{
 			// Send data up to the last marker we found.
-			return $this->send( $buffer->lastPos( $marker ) );
+			$this->send( $buffer->lastPos( $marker ) );
+
+			return;
 		}
 
 		// Loop from $buffer->len() - $marker->len() to $buffer->len(), each time checking
@@ -209,7 +211,9 @@ class ExitCodeStream extends WriteStream
 		{
 			if ( $marker->startsWith( $buffer->skip( $pos ) ) )
 			{
-				return $this->send( $pos );
+				$this->send( $pos );
+
+				return;
 			}
 		}
 
@@ -220,16 +224,12 @@ class ExitCodeStream extends WriteStream
 	 * Send data from the buffer up to $pos.
 	 *
 	 * @param int $pos
-	 *
-	 * @return $this
 	 */
 	private function send( $pos )
 	{
-		$buffer       = str::mk( $this->buffer );
-		$result       = parent::write( $buffer->take( $pos ) );
+		$buffer = str::mk( $this->buffer );
+		parent::write( $buffer->take( $pos ) );
 		$this->buffer = $buffer->skip( $pos );
-
-		return $result;
 	}
 }
 

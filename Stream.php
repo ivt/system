@@ -16,15 +16,43 @@ class WriteStream
 
 	/**
 	 * @param string $data
-	 *
-	 * @return $this
 	 */
 	function write( $data )
 	{
 		foreach ( $this->delegates as $stream )
 			$stream->write( $data );
+	}
 
-		return $this;
+	function closure()
+	{
+		$self = $this;
+
+		return function ( $data ) use ( $self ) { $self->write( $data ); };
+	}
+}
+
+class ClosureStream extends WriteStream
+{
+	private $closure;
+
+	function __construct( \Closure $closure, array $delegates = array() )
+	{
+		parent::__construct( $delegates );
+
+		$this->closure = $closure;
+	}
+
+	function write( $data )
+	{
+		$closure = $this->closure;
+		$closure( $data );
+
+		parent::write( $data );
+	}
+
+	function closure()
+	{
+		return $this->closure;
 	}
 }
 
@@ -47,7 +75,7 @@ class StreamStream extends WriteStream
 	{
 		assertEqual( fwrite( $this->resource, $data ), strlen( $data ) );
 
-		return parent::write( $data );
+		parent::write( $data );
 	}
 }
 
@@ -63,7 +91,7 @@ class AccumulateStream extends WriteStream
 	{
 		$this->data .= $data;
 
-		return parent::write( $data );
+		parent::write( $data );
 	}
 }
 
