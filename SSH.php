@@ -77,17 +77,16 @@ class SSHSystem extends System
 	}
 
 	/**
-	 * @param string $command
-	 * @param string $stdIn
-	 * @param Log    $log
+	 * @param string               $command
+	 * @param string               $input
+	 * @param CommandOutputHandler $output
 	 *
 	 * @return int
 	 */
-	function runImpl( $command, $stdIn, Log $log )
+	function runImpl( $command, $input, CommandOutputHandler $output )
 	{
-		$this->sshRunCommand( $this->wrapCommand( $command, $stdIn ),
-		                      new Log( $exitCodePruner = new ExitCodeStream( array( $log->outStream() ) ),
-		                               $log->errStream() ) );
+		$this->sshRunCommand( $this->wrapCommand( $command, $input ),
+		                      $exitCodePruner = new ExitCodeStream( $output ) );
 
 		return (int) $exitCodePruner->exitCode();
 	}
@@ -103,10 +102,10 @@ class SSHSystem extends System
 	}
 
 	/**
-	 * @param string $command
-	 * @param Log    $log
+	 * @param string               $command
+	 * @param CommandOutputHandler $output
 	 */
-	private function sshRunCommand( $command, Log $log )
+	private function sshRunCommand( $command, CommandOutputHandler $output )
 	{
 		assertNotFalse( $stdOut = ssh2_exec( $this->ssh, $command ) );
 		assertNotFalse( $stdErr = ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
@@ -119,8 +118,8 @@ class SSHSystem extends System
 
 		while ( !$stdErrDone || !$stdOutDone )
 		{
-			$stdOutDone = $stdOutDone || $this->readStream( $stdOut, $log->outStream() );
-			$stdErrDone = $stdErrDone || $this->readStream( $stdErr, $log->errStream() );
+			$stdOutDone = $stdOutDone || $this->readStream( $stdOut, $output, false );
+			$stdErrDone = $stdErrDone || $this->readStream( $stdErr, $output, true );
 
 			usleep( 100000 );
 		}
@@ -141,10 +140,14 @@ echo -nE $exitCodeMarkerSh\$?
 s;
 	}
 
-	private function readStream( $resource, WriteStream $stream )
+	private function readStream( $resource, CommandOutputHandler $output, $isError )
 	{
 		assertNotFalse( $data = fread( $resource, 8192 ) );
-		$stream->write( $data );
+
+		if ( !$isError )
+			$output->writeOutput( $data );
+		else
+			$output->writeError( $data );
 
 		if ( feof( $resource ) )
 		{
@@ -174,20 +177,27 @@ s;
 		return $this->cwd;
 	}
 
-	function writeOut( $data )
+	function writeOutput( $data )
 	{
-		$this->delegate->writeOut( $data );
+		$this->delegate->writeOutput( $data );
 	}
 
-	function writeErr( $data )
+	function writeError( $data )
 	{
-		$this->delegate->writeErr( $data );
+		$this->delegate->writeError( $data );
 	}
 }
 
-class ExitCodeStream extends WriteStream
+class ExitCodeStream implements CommandOutputHandler
 {
 	private $buffer = '', $marker = SSHSystem::EXIT_CODE_MARKER;
+	/** @var CommandOutputHandler */
+	private $delegate;
+
+	function __construct( CommandOutputHandler $delegate )
+	{
+		$this->delegate = $delegate;
+	}
 
 	function exitCode()
 	{
@@ -199,7 +209,7 @@ class ExitCodeStream extends WriteStream
 		return $buffer->skip( $marker->len() );
 	}
 
-	function write( $data )
+	function writeOutput( $data )
 	{
 		$buffer = str::mk( $this->buffer .= $data );
 		$marker = str::mk( $this->marker );
@@ -238,8 +248,13 @@ class ExitCodeStream extends WriteStream
 	private function send( $pos )
 	{
 		$buffer = str::mk( $this->buffer );
-		parent::write( $buffer->take( $pos ) );
+		$this->delegate->writeOutput( $buffer->take( $pos ) );
 		$this->buffer = $buffer->skip( $pos );
+	}
+
+	function writeError( $data )
+	{
+		$this->delegate->writeError( $data );
 	}
 }
 

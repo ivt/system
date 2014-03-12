@@ -4,7 +4,7 @@ namespace IVT\System;
 
 use Symfony\Component\Process\Process;
 
-class CommandOutput
+class CommandOutput implements CommandOutputHandler
 {
 	static function fromSymfonyProcess( Process $process )
 	{
@@ -13,22 +13,20 @@ class CommandOutput
 
 		$self = new self( $process->getCommandLine(), $process->getStdin(), new WriteStream );
 
-		$log = $self->log();
-		$log->out( $process->getOutput() );
-		$log->err( $process->getErrorOutput() );
+		$self->writeOutput( $process->getOutput() );
+		$self->writeError( $process->getErrorOutput() );
 
 		return $self->finish( $process->getExitCode() );
 	}
 
-	private $stdOut, $stdErr, $stdBoth, $log;
+	private $stdOut, $stdErr, $log;
 	private $cmd, $in, $out, $err, $exit;
 
 	function __construct( $command, $stdIn, WriteStream $log )
 	{
 		$this->log     = new AccumulateStream( array( $log ) );
-		$this->stdBoth = new AccumulateStream;
-		$this->stdOut  = new AccumulateStream( array( $this->stdBoth ) );
-		$this->stdErr  = new AccumulateStream( array( $this->stdBoth ) );
+		$this->stdOut  = new AccumulateStream;
+		$this->stdErr  = new AccumulateStream;
 
 		$this->cmd  = new LinePrefixStream( '>>> ', array( $this->log ) );
 		$this->in   = new LinePrefixStream( ' IN ', array( $this->log ) );
@@ -42,12 +40,6 @@ class CommandOutput
 		$this->in->flush();
 	}
 
-	function log()
-	{
-		return new Log( new WriteStream( array( $this->stdOut, $this->out ) ),
-		                new WriteStream( array( $this->stdErr, $this->err ) ) );
-	}
-
 	function finish( $exitStatus )
 	{
 		$exitMessage = array_get( Process::$exitCodes, $exitStatus, "Unknown error" );
@@ -57,12 +49,23 @@ class CommandOutput
 		$this->exit->write( "$exitStatus $exitMessage\n" );
 		$this->exit->flush();
 
-		return new CommandResult( $this->stdOut->data(), $this->stdErr->data(),
-		                          $this->stdBoth->data(), $exitStatus, $this->log->data() );
+		return new CommandResult( $this->stdOut->data(), $this->stdErr->data(), $exitStatus, $this->log->data() );
+	}
+
+	function writeOutput( $data )
+	{
+		$this->stdOut->write( $data );
+		$this->out->write( $data );
+	}
+
+	function writeError( $data )
+	{
+		$this->stdErr->write( $data );
+		$this->err->write( $data );
 	}
 }
 
-abstract class System
+abstract class System implements CommandOutputHandler
 {
 	private $log;
 
@@ -133,7 +136,7 @@ abstract class System
 	final function runCommand( $command, $stdIn = '' )
 	{
 		$output     = new CommandOutput( $command, $stdIn, $this->log );
-		$exitStatus = $this->runImpl( $command, $stdIn, $output->log() );
+		$exitStatus = $this->runImpl( $command, $stdIn, $output );
 		$result     = $output->finish( $exitStatus );
 		$this->log->write( "\n" );
 
@@ -155,20 +158,16 @@ abstract class System
 	abstract function currentTimestamp();
 
 	/**
-	 * @param string $command
-	 * @param string $stdIn
-	 * @param Log    $log
+	 * @param string               $command
+	 * @param                      $input
+	 * @param CommandOutputHandler $output
 	 *
 	 * @return int exit code
 	 */
-	abstract protected function runImpl( $command, $stdIn, Log $log );
+	abstract protected function runImpl( $command, $input, CommandOutputHandler $output );
 
 	protected function log() { return $this->log; }
 
-	abstract function writeOut( $data );
-
-	abstract function writeErr( $data );
-	
 	protected function writeLog( $data )
 	{
 		$this->log->write( $data );

@@ -33,31 +33,31 @@ class LocalSystem extends System
 		return new LocalFile( $this, $path );
 	}
 
-	function runImpl( $command, $stdIn, Log $log )
+	function runImpl( $command, $input, CommandOutputHandler $output )
 	{
-		return self::runLocal( $command, $stdIn, $log, null, null );
+		return self::runLocal( $command, $input, $output, null, null );
 	}
 
 	/**
-	 * @param string        $command
-	 * @param string        $stdIn
-	 * @param Log           $log
-	 * @param string|null   $cwd
-	 * @param string[]|null $environment
+	 * @param string               $command
+	 * @param string               $input
+	 * @param CommandOutputHandler $output
+	 * @param string|null          $cwd
+	 * @param string[]|null        $environment
 	 *
 	 * @return int
 	 */
-	static function runLocal( $command, $stdIn, Log $log, $cwd, $environment )
+	static function runLocal( $command, $input, CommandOutputHandler $output, $cwd, $environment )
 	{
-		$process = new Process( $command, $cwd, $environment, $stdIn, null );
+		$process = new Process( $command, $cwd, $environment, $input, null );
 
-		return $process->run( function ( $type, $data ) use ( $log )
+		return $process->run( function ( $type, $data ) use ( $output )
 		{
 			if ( $type === Process::OUT )
-				$log->out( $data );
+				$output->writeOutput( $data );
 
 			if ( $type === Process::ERR )
-				$log->err( $data );
+				$output->writeError( $data );
 		} );
 	}
 
@@ -86,12 +86,12 @@ class LocalSystem extends System
 	/** @return string */
 	function getWorkingDirectory() { return getcwd(); }
 
-	function writeOut( $data )
+	function writeOutput( $data )
 	{
 		assertNotFalse( fwrite( STDOUT, $data ) );
 	}
 
-	function writeErr( $data )
+	function writeError( $data )
 	{
 		assertNotFalse( fwrite( STDERR, $data ) );
 	}
