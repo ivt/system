@@ -18,14 +18,17 @@ class LocalSystem extends System
 		return true;
 	}
 
-	/**
-	 * @param WriteStream[] $delegates
-	 *
-	 * @return self
-	 */
-	static function create( array $delegates = array() )
+	static function createLogging()
 	{
-		return new self( new WriteStream( $delegates ) );
+		$self = new self;
+
+		return new LoggingSystem(
+			$self,
+			function ( $data ) use ( $self )
+			{
+				$self->writeOutput( $data );
+			}
+		);
 	}
 
 	function file( $path )
@@ -78,8 +81,6 @@ class LocalSystem extends System
 
 	function setWorkingDirectory( $dir )
 	{
-		$this->writeLog( "chdir: $dir\n" );
-
 		assertNotFalse( chdir( $dir ) );
 	}
 

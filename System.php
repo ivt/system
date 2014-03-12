@@ -6,41 +6,32 @@ use Symfony\Component\Process\Process;
 
 class CommandOutput implements CommandOutputHandler
 {
-	static function fromSymfonyProcess( Process $process )
+	private $cmd, $in, $out, $err, $exit, $delegate;
+
+	function __construct( CommandOutputHandler $output, \Closure $log )
 	{
-		if ( $process->isRunning() )
-			$process->wait();
+		$this->delegate = $output;
 
-		$self = new self( $process->getCommandLine(), $process->getStdin(), new WriteStream );
-
-		$self->writeOutput( $process->getOutput() );
-		$self->writeError( $process->getErrorOutput() );
-
-		return $self->finish( $process->getExitCode() );
+		$this->cmd  = new LinePrefixStream( '>>> ', $log );
+		$this->in   = new LinePrefixStream( ' IN ', $log );
+		$this->out  = new LinePrefixStream( '<<< ', $log );
+		$this->err  = new LinePrefixStream( '!!! ', $log );
+		$this->exit = new LinePrefixStream( '=== ', $log );
 	}
 
-	private $stdOut, $stdErr, $log;
-	private $cmd, $in, $out, $err, $exit;
-
-	function __construct( $command, $stdIn, WriteStream $log )
+	function writeCommand( $command )
 	{
-		$this->log     = new AccumulateStream( array( $log ) );
-		$this->stdOut  = new AccumulateStream;
-		$this->stdErr  = new AccumulateStream;
-
-		$this->cmd  = new LinePrefixStream( '>>> ', array( $this->log ) );
-		$this->in   = new LinePrefixStream( ' IN ', array( $this->log ) );
-		$this->out  = new LinePrefixStream( '<<< ', array( $this->log ) );
-		$this->err  = new LinePrefixStream( '!!! ', array( $this->log ) );
-		$this->exit = new LinePrefixStream( '=== ', array( $this->log ) );
-
-		$this->cmd->write( "$command\n" );
+		$this->cmd->write( $command );
 		$this->cmd->flush();
+	}
+
+	function writeInput( $stdIn )
+	{
 		$this->in->write( $stdIn );
 		$this->in->flush();
 	}
 
-	function finish( $exitStatus )
+	function writeExitStatus( $exitStatus )
 	{
 		$exitMessage = array_get( Process::$exitCodes, $exitStatus, "Unknown error" );
 
@@ -48,32 +39,25 @@ class CommandOutput implements CommandOutputHandler
 		$this->err->flush();
 		$this->exit->write( "$exitStatus $exitMessage\n" );
 		$this->exit->flush();
-
-		return new CommandResult( $this->stdOut->data(), $this->stdErr->data(), $exitStatus, $this->log->data() );
 	}
 
 	function writeOutput( $data )
 	{
-		$this->stdOut->write( $data );
+		$this->delegate->writeOutput( $data );
+		$this->err->flush();
 		$this->out->write( $data );
 	}
 
 	function writeError( $data )
 	{
-		$this->stdErr->write( $data );
+		$this->delegate->writeError( $data );
+		$this->out->flush();
 		$this->err->write( $data );
 	}
 }
 
 abstract class System implements CommandOutputHandler
 {
-	private $log;
-
-	function __construct( WriteStream $log )
-	{
-		$this->log = $log;
-	}
-
 	static function escapeCmd( $arg )
 	{
 		return ProcessBuilder::escape( $arg );
@@ -135,12 +119,10 @@ abstract class System implements CommandOutputHandler
 	 */
 	final function runCommand( $command, $stdIn = '' )
 	{
-		$output     = new CommandOutput( $command, $stdIn, $this->log );
-		$exitStatus = $this->runImpl( $command, $stdIn, $output );
-		$result     = $output->finish( $exitStatus );
-		$this->log->write( "\n" );
+		$output   = new AccumulateOutputHandler;
+		$exitCode = $this->runImpl( $command, $stdIn, $output );
 
-		return $result;
+		return new CommandResult( $command, $stdIn, $output->stdOut(), $output->stdErr(), $exitCode );
 	}
 
 	/**
@@ -165,13 +147,6 @@ abstract class System implements CommandOutputHandler
 	 * @return int exit code
 	 */
 	abstract protected function runImpl( $command, $input, CommandOutputHandler $output );
-
-	protected function log() { return $this->log; }
-
-	protected function writeLog( $data )
-	{
-		$this->log->write( $data );
-	}
 }
 
 abstract class File

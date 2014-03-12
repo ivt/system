@@ -43,10 +43,8 @@ class SSHSystem extends System
 
 	function credentials() { return $this->credentials; }
 
-	function __construct( SSHCredentials $credentials, System $delegate )
+	function __construct( SSHCredentials $credentials, CommandOutputHandler $delegate )
 	{
-		parent::__construct( $delegate->log() );
-
 		$this->credentials = $credentials;
 		$this->delegate    = $delegate;
 
