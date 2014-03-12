@@ -66,7 +66,7 @@ abstract class System
 {
 	private $log;
 
-	function __construct( Log $log )
+	function __construct( WriteStream $log )
 	{
 		$this->log = $log;
 	}
@@ -134,10 +134,10 @@ abstract class System
 	 */
 	final function runCommand( $command, $stdIn = '' )
 	{
-		$output     = new CommandOutput( $command, $stdIn, $this->log->outStream() );
+		$output     = new CommandOutput( $command, $stdIn, $this->log );
 		$exitStatus = $this->runImpl( $command, $stdIn, $output->log() );
 		$result     = $output->finish( $exitStatus );
-		$this->log->outStream()->write( "\n" );
+		$this->log->write( "\n" );
 
 		return $result;
 	}
@@ -165,7 +165,16 @@ abstract class System
 	 */
 	abstract protected function runImpl( $command, $stdIn, Log $log );
 
-	function log() { return $this->log; }
+	protected function log() { return $this->log; }
+
+	abstract function writeOut( $data );
+
+	abstract function writeErr( $data );
+	
+	protected function writeLog( $data )
+	{
+		$this->log->write( $data );
+	}
 }
 
 abstract class File

@@ -25,8 +25,7 @@ class LocalSystem extends System
 	 */
 	static function create( array $delegates = array() )
 	{
-		return new self( new Log( new StreamStream( STDOUT, $delegates ),
-		                          new StreamStream( STDERR, $delegates ) ) );
+		return new self( new WriteStream( $delegates ) );
 	}
 
 	function file( $path )
@@ -79,7 +78,7 @@ class LocalSystem extends System
 
 	function setWorkingDirectory( $dir )
 	{
-		$this->log()->out( "chdir: $dir\n" );
+		$this->writeLog( "chdir: $dir\n" );
 
 		assertNotFalse( chdir( $dir ) );
 
@@ -88,6 +87,16 @@ class LocalSystem extends System
 
 	/** @return string */
 	function getWorkingDirectory() { return getcwd(); }
+
+	function writeOut( $data )
+	{
+		assertNotFalse( fwrite( STDOUT, $data ) );
+	}
+
+	function writeErr( $data )
+	{
+		assertNotFalse( fwrite( STDERR, $data ) );
+	}
 }
 
 class LocalFile extends File

@@ -39,14 +39,16 @@ class SSHSystem extends System
 	const EXIT_CODE_MARKER = "*EXIT CODE: ";
 
 	private $ssh, $sftp, $credentials, $cwd;
+	private $delegate;
 
 	function credentials() { return $this->credentials; }
 
-	function __construct( SSHCredentials $credentials, Log $log )
+	function __construct( SSHCredentials $credentials, System $delegate )
 	{
-		parent::__construct( $log );
+		parent::__construct( $delegate->log() );
 
 		$this->credentials = $credentials;
+		$this->delegate    = $delegate;
 
 		$host = $credentials->host();
 		$port = $credentials->port();
@@ -172,6 +174,16 @@ s;
 	function getWorkingDirectory()
 	{
 		return $this->cwd;
+	}
+
+	function writeOut( $data )
+	{
+		$this->delegate->writeOut( $data );
+	}
+
+	function writeErr( $data )
+	{
+		$this->delegate->writeErr( $data );
 	}
 }
 
