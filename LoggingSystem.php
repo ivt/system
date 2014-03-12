@@ -18,7 +18,8 @@ class LoggingSystem extends WrappedSystem
 		$logger = new CommandOutput( $output, $this->logHandler );
 		$logger->writeCommand( "$command\n" );
 		$logger->writeInput( $input );
-		$logger->writeExitStatus( $exitStatus = parent::runImpl( $command, $input, $logger ) );
+		$exitStatus = parent::runImpl( $command, $input, $logger );
+		$logger->writeExitStatus( $exitStatus );
 		$this->writeLog( "\n" );
 
 		return $exitStatus;

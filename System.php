@@ -56,7 +56,27 @@ class CommandOutput implements CommandOutputHandler
 	}
 }
 
-abstract class System implements CommandOutputHandler
+interface FileSystem
+{
+	/**
+	 * @return string
+	 */
+	function getWorkingDirectory();
+
+	/**
+	 * @param string $dir
+	 */
+	function setWorkingDirectory( $dir );
+
+	/**
+	 * @param string $path
+	 *
+	 * @return File
+	 */
+	function file( $path );
+}
+
+abstract class System implements CommandOutputHandler, FileSystem
 {
 	static function escapeCmd( $arg )
 	{
@@ -93,23 +113,6 @@ abstract class System implements CommandOutputHandler
 
 		return $dateTime;
 	}
-
-	/**
-	 * @param string $dir
-	 */
-	abstract function setWorkingDirectory( $dir );
-
-	/**
-	 * @return string
-	 */
-	abstract function getWorkingDirectory();
-
-	/**
-	 * @param $path
-	 *
-	 * @return File
-	 */
-	abstract function file( $path );
 
 	/**
 	 * @param string $command
@@ -153,7 +156,7 @@ abstract class File
 {
 	private $path, $system;
 
-	function __construct( System $system, $path )
+	function __construct( FileSystem $system, $path )
 	{
 		$this->path   = $path;
 		$this->system = $system;
