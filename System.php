@@ -4,13 +4,13 @@ namespace IVT\System;
 
 use Symfony\Component\Process\Process;
 
-class CommandOutput implements CommandOutputHandler
+class CommandOutput extends DelegateOutputHandler
 {
-	private $cmd, $in, $out, $err, $exit, $delegate;
+	private $cmd, $in, $out, $err, $exit;
 
 	function __construct( CommandOutputHandler $output, \Closure $log )
 	{
-		$this->delegate = $output;
+		parent::__construct( $output );
 
 		$this->cmd  = new LinePrefixStream( '>>> ', $log );
 		$this->in   = new LinePrefixStream( ' IN ', $log );
@@ -43,14 +43,14 @@ class CommandOutput implements CommandOutputHandler
 
 	function writeOutput( $data )
 	{
-		$this->delegate->writeOutput( $data );
+		parent::writeOutput( $data );
 		$this->err->flush();
 		$this->out->write( $data );
 	}
 
 	function writeError( $data )
 	{
-		$this->delegate->writeError( $data );
+		parent::writeError( $data );
 		$this->out->flush();
 		$this->err->write( $data );
 	}
@@ -144,12 +144,18 @@ abstract class System implements CommandOutputHandler, FileSystem
 
 	/**
 	 * @param string               $command
-	 * @param                      $input
+	 * @param string               $input
 	 * @param CommandOutputHandler $output
 	 *
 	 * @return int exit code
 	 */
 	abstract protected function runImpl( $command, $input, CommandOutputHandler $output );
+
+	/**
+	 * If this System happens to be a wrapper around another System, this 
+	 * applies the same wrapping to the given system.
+	 */
+	function wrap( System $sytem ) { return $sytem; }
 }
 
 abstract class File

@@ -36,7 +36,7 @@ class LocalSystem extends System
 		return new LocalFile( $this, $path );
 	}
 
-	function runImpl( $command, $input, CommandOutputHandler $output )
+	protected function runImpl( $command, $input, CommandOutputHandler $output )
 	{
 		return self::runLocal( $command, $input, $output, null, null );
 	}
@@ -84,8 +84,12 @@ class LocalSystem extends System
 		assertNotFalse( chdir( $dir ) );
 	}
 
-	/** @return string */
-	function getWorkingDirectory() { return getcwd(); }
+	function getWorkingDirectory()
+	{
+		assertNotFalse( $result = getcwd() );
+
+		return $result;
+	}
 
 	function writeOutput( $data )
 	{

@@ -81,7 +81,7 @@ class SSHSystem extends System
 	 *
 	 * @return int
 	 */
-	function runImpl( $command, $input, CommandOutputHandler $output )
+	protected function runImpl( $command, $input, CommandOutputHandler $output )
 	{
 		$this->sshRunCommand( $this->wrapCommand( $command, $input ),
 		                      $exitCodePruner = new ExitCodeStream( $output ) );
@@ -186,16 +186,9 @@ s;
 	}
 }
 
-class ExitCodeStream implements CommandOutputHandler
+class ExitCodeStream extends DelegateOutputHandler
 {
 	private $buffer = '', $marker = SSHSystem::EXIT_CODE_MARKER;
-	/** @var CommandOutputHandler */
-	private $delegate;
-
-	function __construct( CommandOutputHandler $delegate )
-	{
-		$this->delegate = $delegate;
-	}
 
 	function exitCode()
 	{
@@ -246,13 +239,8 @@ class ExitCodeStream implements CommandOutputHandler
 	private function send( $pos )
 	{
 		$buffer = str::mk( $this->buffer );
-		$this->delegate->writeOutput( $buffer->take( $pos ) );
+		parent::writeOutput( $buffer->take( $pos ) );
 		$this->buffer = $buffer->skip( $pos );
-	}
-
-	function writeError( $data )
-	{
-		$this->delegate->writeError( $data );
 	}
 }
 

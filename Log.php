@@ -34,3 +34,17 @@ class AccumulateOutputHandler implements CommandOutputHandler
 
 	function stdOut() { return $this->out; }
 }
+
+class DelegateOutputHandler implements CommandOutputHandler
+{
+	private $output;
+
+	function __construct( CommandOutputHandler $output )
+	{
+		$this->output = $output;
+	}
+
+	function writeOutput( $data ) { $this->output->writeOutput( $data ); }
+
+	function writeError( $data ) { $this->output->writeError( $data ); }
+}
