@@ -27,11 +27,6 @@ class SSHCredentials
 	function keyFile() { return $this->privateKeyFile; }
 
 	function keyFilePublic() { return $this->publicKeyFile; }
-
-	function __toString()
-	{
-		return "$this->user@$this->host:$this->port (pubkey: $this->publicKeyFile, privkey: $this->privateKeyFile)";
-	}
 }
 
 class SSHSystem extends System
