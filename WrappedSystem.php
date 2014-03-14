@@ -50,6 +50,16 @@ class WrappedSystem extends System
 	{
 		$this->system->writeError( $data );
 	}
+
+	function wrap( System $sytem )
+	{
+		return $this->system->wrap( parent::wrap( $sytem ) );
+	}
+
+	function directorySeperator()
+	{
+		return $this->system->directorySeperator();
+	}
 }
 
 class WrappedFile extends File

@@ -74,6 +74,11 @@ interface FileSystem
 	 * @return File
 	 */
 	function file( $path );
+
+	/**
+	 * @return string
+	 */
+	function directorySeperator();
 }
 
 abstract class System implements CommandOutputHandler, FileSystem
@@ -200,7 +205,7 @@ abstract class File
 		$result = array();
 
 		foreach ( $this->scanDirNoDots() as $file )
-			$result[ ] = $this->appendPath( ends_with( $this->path, '/' ) ? $file : "/$file" );
+			$result[ ] = $this->subFile( $file );
 
 		return $result;
 	}
@@ -214,6 +219,13 @@ abstract class File
 				$result[ ] = $file;
 
 		return $result;
+	}
+
+	final function subFile( $file )
+	{
+		$sep = $this->system->directorySeperator();
+
+		return $this->appendPath( ends_with( $this->path, $sep ) ? $file : $sep . $file );
 	}
 
 	/**

@@ -100,6 +100,11 @@ class LocalSystem extends System
 	{
 		assertNotFalse( fwrite( STDERR, $data ) );
 	}
+
+	function directorySeperator()
+	{
+		return DIRECTORY_SEPARATOR;
+	}
 }
 
 class LocalFile extends File

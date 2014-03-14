@@ -184,6 +184,8 @@ s;
 	{
 		$this->delegate->writeError( $data );
 	}
+
+	function directorySeperator() { return '/'; }
 }
 
 class ExitCodeStream extends DelegateOutputHandler
