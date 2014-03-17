@@ -22,23 +22,18 @@ class CommandOutput extends DelegateOutputHandler
 	function writeCommand( $command )
 	{
 		$this->cmd->write( $command );
-		$this->cmd->flush();
 	}
 
 	function writeInput( $stdIn )
 	{
 		$this->in->write( $stdIn );
-		$this->in->flush();
 	}
 
 	function writeExitStatus( $exitStatus )
 	{
 		$exitMessage = array_get( Process::$exitCodes, $exitStatus, "Unknown error" );
 
-		$this->out->flush();
-		$this->err->flush();
 		$this->exit->write( "$exitStatus $exitMessage\n" );
-		$this->exit->flush();
 	}
 
 	function writeOutput( $data )
@@ -53,6 +48,15 @@ class CommandOutput extends DelegateOutputHandler
 		parent::writeError( $data );
 		$this->out->flush();
 		$this->err->write( $data );
+	}
+
+	function flush()
+	{
+		$this->cmd->flush();
+		$this->in->flush();
+		$this->out->flush();
+		$this->err->flush();
+		$this->exit->flush();
 	}
 }
 
