@@ -46,7 +46,9 @@ class SSHSystem extends System
 		$host = $credentials->host();
 		$port = $credentials->port();
 
-		if ( !LocalSystem::isPortOpen( $host, $port, 5 ) )
+		$local = new LocalSystem;
+
+		if ( !$local->isPortOpen( $host, $port, 5 ) )
 		{
 			throw new Exception( "Port $port is not open on $host" );
 		}

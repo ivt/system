@@ -6,18 +6,6 @@ use Symfony\Component\Process\Process;
 
 class LocalSystem extends System
 {
-	static function isPortOpen( $host, $port, $timeout )
-	{
-		$connection = @fsockopen( $host, $port, ref_new(), ref_new(), $timeout );
-
-		if ( $connection === false )
-			return false;
-
-		fclose( $connection );
-
-		return true;
-	}
-
 	static function createLogging()
 	{
 		$self = new self;

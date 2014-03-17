@@ -93,9 +93,14 @@ abstract class System implements CommandOutputHandler, FileSystem
 		return ProcessBuilder::escapeArgs( $args );
 	}
 
+	final function shellExecArgs( array $command, $stdIn = '' )
+	{
+		return $this->runCommandArgs( $command, $stdIn )->assertSuccess()->stdOut();
+	}
+
 	final function shellExec( $command, $stdIn = '' )
 	{
-		return $this->runCommand( $command, $stdIn )->assertSuccess()->stdout();
+		return $this->runCommand( $command, $stdIn )->assertSuccess()->stdOut();
 	}
 
 	final function now()
@@ -133,9 +138,27 @@ abstract class System implements CommandOutputHandler, FileSystem
 		return new CommandResult( $command, $stdIn, $output->stdOut(), $output->stdErr(), $exitCode );
 	}
 
+	/**
+	 * @param string[] $command
+	 * @param string   $stdIn
+	 *
+	 * @return CommandResult
+	 */
+	final function runCommandArgs( array $command, $stdIn = '' )
+	{
+		return $this->runCommand( self::escapeCmdArgs( $command ), $stdIn );
+	}
+
 	final function printLineError( $string = '' ) { $this->writeError( "$string\n" ); }
 
 	final function printLine( $string = '' ) { $this->writeOutput( "$string\n" ); }
+
+	final function isPortOpen( $host, $port, $timeout )
+	{
+		$cmd = array( 'nc', '-z', '-w', $timeout, '--', $host, $port );
+
+		return $this->runCommandArgs( $cmd )->succeeded();
+	}
 
 	/**
 	 * @param \DatabaseConnectionInfo $dsn

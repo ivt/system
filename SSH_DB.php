@@ -152,7 +152,9 @@ class SSHForwardedPort
 
 	private function isPortOpen()
 	{
-		return LocalSystem::isPortOpen( $this->localHost, $this->localPort, 1 );
+		$local = new LocalSystem;
+
+		return $local->isPortOpen( $this->localHost, $this->localPort, 1 );
 	}
 
 	private function sshCommand()
