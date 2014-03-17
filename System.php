@@ -133,6 +133,10 @@ abstract class System implements CommandOutputHandler, FileSystem
 		return new CommandResult( $command, $stdIn, $output->stdOut(), $output->stdErr(), $exitCode );
 	}
 
+	final function printLineError( $string = '' ) { $this->writeError( "$string\n" ); }
+
+	final function printLine( $string = '' ) { $this->writeOutput( "$string\n" ); }
+
 	/**
 	 * @param \DatabaseConnectionInfo $dsn
 	 *
@@ -157,7 +161,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 	abstract protected function runImpl( $command, $input, CommandOutputHandler $output );
 
 	/**
-	 * If this System happens to be a wrapper around another System, this 
+	 * If this System happens to be a wrapper around another System, this
 	 * applies the same wrapping to the given system.
 	 */
 	function wrap( System $sytem ) { return $sytem; }

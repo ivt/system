@@ -34,14 +34,14 @@ class SSHSystem extends System
 	const EXIT_CODE_MARKER = "*EXIT CODE: ";
 
 	private $ssh, $sftp, $credentials, $cwd;
-	private $delegate;
+	private $outputHandler;
 
 	function credentials() { return $this->credentials; }
 
-	function __construct( SSHCredentials $credentials, CommandOutputHandler $delegate )
+	function __construct( SSHCredentials $credentials, CommandOutputHandler $outputHandler )
 	{
-		$this->credentials = $credentials;
-		$this->delegate    = $delegate;
+		$this->credentials   = $credentials;
+		$this->outputHandler = $outputHandler;
 
 		$host = $credentials->host();
 		$port = $credentials->port();
@@ -172,12 +172,12 @@ s;
 
 	function writeOutput( $data )
 	{
-		$this->delegate->writeOutput( $data );
+		$this->outputHandler->writeOutput( $data );
 	}
 
 	function writeError( $data )
 	{
-		$this->delegate->writeError( $data );
+		$this->outputHandler->writeError( $data );
 	}
 
 	function directorySeperator() { return '/'; }
