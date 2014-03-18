@@ -20,6 +20,7 @@ class LoggingSystem extends WrappedSystem
 		$logger->writeInput( $input );
 		$logger->flush();
 		$exitStatus = parent::runImpl( $command, $input, $logger );
+		$logger->flush();
 		if ( $exitStatus !== 0 )
 			$logger->writeExitStatus( $exitStatus );
 		$logger->flush();

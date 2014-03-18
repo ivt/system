@@ -39,14 +39,12 @@ class CommandOutput extends DelegateOutputHandler
 	function writeOutput( $data )
 	{
 		parent::writeOutput( $data );
-		$this->err->flush();
 		$this->out->write( $data );
 	}
 
 	function writeError( $data )
 	{
 		parent::writeError( $data );
-		$this->out->flush();
 		$this->err->write( $data );
 	}
 
