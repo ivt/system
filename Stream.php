@@ -23,11 +23,22 @@ class LinePrefixStream
 
 	function write( $data )
 	{
-		$lines        = explode( "\n", $this->buffer . $data );
-		$this->buffer = array_pop( $lines );
+		$this->buffer .= $data;
+		$length = strlen( $this->buffer );
 
-		foreach ( $lines as $line )
-			$this->send( "$this->prefix$line\n" );
+		if ( $length > 5000 || !mb_check_encoding( $this->buffer, 'UTF-8' ) )
+		{
+			$this->send( "$length bytes\n" );
+			$this->buffer = '';
+		}
+		else
+		{
+			$lines        = explode( "\n", $this->buffer );
+			$this->buffer = array_pop( $lines );
+
+			foreach ( $lines as $line )
+				$this->send( "$this->prefix$line\n" );
+		}
 	}
 
 	function flush()
