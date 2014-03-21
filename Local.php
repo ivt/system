@@ -6,6 +6,16 @@ use Symfony\Component\Process\Process;
 
 class LocalSystem extends System
 {
+	function isPortOpen( $host, $port, $timeout )
+	{
+		$fp = @fsockopen( $host, $port, $errno, $errstr, $timeout );
+		if ( $fp === false )
+			return false;
+		fclose( $fp );
+
+		return true;
+	}
+
 	static function createLogging()
 	{
 		$self = new self;
@@ -92,16 +102,6 @@ class LocalSystem extends System
 	function directorySeperator()
 	{
 		return DIRECTORY_SEPARATOR;
-	}
-
-	function isPortOpen( $host, $port, $timeout )
-	{
-		$fp = @fsockopen( $host, $port, $errno, $errstr, $timeout );
-		if ( $fp === false )
-			return false;
-		fclose( $fp );
-
-		return true;
 	}
 }
 
