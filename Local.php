@@ -96,7 +96,7 @@ class LocalSystem extends System
 
 	function isPortOpen( $host, $port, $timeout )
 	{
-		$fp = fsockopen( $host, $port, $errno, $errstr, $timeout );
+		$fp = @fsockopen( $host, $port, $errno, $errstr, $timeout );
 		if ( $fp === false )
 			return false;
 		fclose( $fp );
