@@ -93,6 +93,16 @@ class LocalSystem extends System
 	{
 		return DIRECTORY_SEPARATOR;
 	}
+
+	function isPortOpen( $host, $port, $timeout )
+	{
+		$fp = fsockopen( $host, $port, $errno, $errstr, $timeout );
+		if ( $fp === false )
+			return false;
+		fclose( $fp );
+
+		return true;
+	}
 }
 
 class LocalFile extends File

@@ -60,6 +60,11 @@ class WrappedSystem extends System
 	{
 		return $this->system->directorySeperator();
 	}
+
+	function isPortOpen( $host, $port, $timeout )
+	{
+		return $this->system->isPortOpen( $host, $port, $timeout );
+	}
 }
 
 class WrappedFile extends File

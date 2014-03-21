@@ -155,7 +155,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 
 	final function printLine( $string = '' ) { $this->writeOutput( "$string\n" ); }
 
-	final function isPortOpen( $host, $port, $timeout )
+	function isPortOpen( $host, $port, $timeout )
 	{
 		$cmd = array( 'nc', '-z', '-w', $timeout, '--', $host, $port );
 

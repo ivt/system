@@ -36,6 +36,15 @@ class LoggingSystem extends WrappedSystem
 		parent::setWorkingDirectory( $dir );
 	}
 
+	function isPortOpen( $host, $port, $timeout )
+	{
+		$this->writeLog( "checking port $port on host $host is open (timeout $timeout secs)...\n" );
+		$result = parent::isPortOpen( $host, $port, $timeout );
+		$this->writeLog( $result ? "...yep!\n" : "...nope.\n" );
+
+		return $result;
+	}
+
 	function writeLog( $data )
 	{
 		$log = $this->logHandler;
