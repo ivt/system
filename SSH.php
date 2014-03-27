@@ -192,12 +192,12 @@ class ExitCodeStream extends DelegateOutputHandler
 	/** @var StringBuffer */
 	private $marker;
 
-	function __construct( array $delegates = array() )
+	function __construct( CommandOutputHandler $output )
 	{
 		$this->buffer = new StringBuffer;
 		$this->marker = new StringBuffer( SSHSystem::EXIT_CODE_MARKER );
 
-		parent::__construct( $delegates );
+		parent::__construct( $output );
 	}
 
 	function exitCode()
