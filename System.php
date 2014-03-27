@@ -4,73 +4,87 @@ namespace IVT\System;
 
 use Symfony\Component\Process\Process;
 
-class CommandOutput
+class CommandOutput extends DelegateOutputHandler
 {
-	static function fromSymfonyProcess( Process $process )
-	{
-		if ( $process->isRunning() )
-			$process->wait();
-
-		$self = new self( $process->getCommandLine(), $process->getStdin(), new WriteStream );
-
-		$log = $self->log();
-		$log->out( $process->getOutput() );
-		$log->err( $process->getErrorOutput() );
-
-		return $self->finish( $process->getExitCode() );
-	}
-
-	private $stdOut, $stdErr, $stdBoth, $log;
 	private $cmd, $in, $out, $err, $exit;
 
-	function __construct( $command, $stdIn, WriteStream $log )
+	function __construct( CommandOutputHandler $output, \Closure $log )
 	{
-		$this->log     = new AccumulateStream( array( $log ) );
-		$this->stdBoth = new AccumulateStream;
-		$this->stdOut  = new AccumulateStream( array( $this->stdBoth ) );
-		$this->stdErr  = new AccumulateStream( array( $this->stdBoth ) );
+		parent::__construct( $output );
 
-		$this->cmd  = new LinePrefixStream( '>>> ', array( $this->log ) );
-		$this->in   = new LinePrefixStream( ' IN ', array( $this->log ) );
-		$this->out  = new LinePrefixStream( '<<< ', array( $this->log ) );
-		$this->err  = new LinePrefixStream( '!!! ', array( $this->log ) );
-		$this->exit = new LinePrefixStream( '=== ', array( $this->log ) );
+		$this->cmd  = new LinePrefixStream( '>>> ', $log );
+		$this->in   = new LinePrefixStream( ' IN ', $log );
+		$this->out  = new LinePrefixStream( '<<< ', $log );
+		$this->err  = new LinePrefixStream( '!!! ', $log );
+		$this->exit = new LinePrefixStream( '=== ', $log );
+	}
 
-		$this->cmd->write( "$command\n" );
-		$this->cmd->flush();
+	function writeCommand( $command )
+	{
+		$this->cmd->write( $command );
+	}
+
+	function writeInput( $stdIn )
+	{
 		$this->in->write( $stdIn );
-		$this->in->flush();
 	}
 
-	function log()
-	{
-		return new Log( new WriteStream( array( $this->stdOut, $this->out ) ),
-		                new WriteStream( array( $this->stdErr, $this->err ) ) );
-	}
-
-	function finish( $exitStatus )
+	function writeExitStatus( $exitStatus )
 	{
 		$exitMessage = array_get( Process::$exitCodes, $exitStatus, "Unknown error" );
 
+		$this->exit->write( "$exitStatus $exitMessage\n" );
+	}
+
+	function writeOutput( $data )
+	{
+		parent::writeOutput( $data );
+		$this->out->write( $data );
+	}
+
+	function writeError( $data )
+	{
+		parent::writeError( $data );
+		$this->err->write( $data );
+	}
+
+	function flush()
+	{
+		$this->cmd->flush();
+		$this->in->flush();
 		$this->out->flush();
 		$this->err->flush();
-		$this->exit->write( "$exitStatus $exitMessage\n" );
 		$this->exit->flush();
-
-		return new CommandResult( $this->stdOut->data(), $this->stdErr->data(),
-		                          $this->stdBoth->data(), $exitStatus, $this->log->data() );
 	}
 }
 
-abstract class System
+interface FileSystem
 {
-	private $log;
+	/**
+	 * @return string
+	 */
+	function getWorkingDirectory();
 
-	function __construct( Log $log )
-	{
-		$this->log = $log;
-	}
+	/**
+	 * @param string $dir
+	 */
+	function setWorkingDirectory( $dir );
 
+	/**
+	 * @param string $path
+	 *
+	 * @return File
+	 */
+	function file( $path );
+
+	/**
+	 * @return string
+	 */
+	function directorySeperator();
+}
+
+abstract class System implements CommandOutputHandler, FileSystem
+{
 	static function escapeCmd( $arg )
 	{
 		return ProcessBuilder::escape( $arg );
@@ -81,9 +95,14 @@ abstract class System
 		return ProcessBuilder::escapeArgs( $args );
 	}
 
+	final function shellExecArgs( array $command, $stdIn = '' )
+	{
+		return $this->runCommandArgs( $command, $stdIn )->assertSuccess()->stdOut();
+	}
+
 	final function shellExec( $command, $stdIn = '' )
 	{
-		return $this->runCommand( $command, $stdIn )->assertSuccess()->stdout();
+		return $this->runCommand( $command, $stdIn )->assertSuccess()->stdOut();
 	}
 
 	final function now()
@@ -108,25 +127,6 @@ abstract class System
 	}
 
 	/**
-	 * @param string $dir
-	 *
-	 * @return self
-	 */
-	abstract function setWorkingDirectory( $dir );
-
-	/**
-	 * @return string
-	 */
-	abstract function getWorkingDirectory();
-
-	/**
-	 * @param $path
-	 *
-	 * @return File
-	 */
-	abstract function file( $path );
-
-	/**
 	 * @param string $command
 	 * @param string $stdIn
 	 *
@@ -134,12 +134,32 @@ abstract class System
 	 */
 	final function runCommand( $command, $stdIn = '' )
 	{
-		$output     = new CommandOutput( $command, $stdIn, $this->log->outStream() );
-		$exitStatus = $this->runImpl( $command, $stdIn, $output->log() );
-		$result     = $output->finish( $exitStatus );
-		$this->log->outStream()->write( "\n" );
+		$output   = new AccumulateOutputHandler;
+		$exitCode = $this->runImpl( $command, $stdIn, $output );
 
-		return $result;
+		return new CommandResult( $command, $stdIn, $output->stdOut(), $output->stdErr(), $exitCode );
+	}
+
+	/**
+	 * @param string[] $command
+	 * @param string   $stdIn
+	 *
+	 * @return CommandResult
+	 */
+	final function runCommandArgs( array $command, $stdIn = '' )
+	{
+		return $this->runCommand( self::escapeCmdArgs( $command ), $stdIn );
+	}
+
+	final function printLineError( $string = '' ) { $this->writeError( "$string\n" ); }
+
+	final function printLine( $string = '' ) { $this->writeOutput( "$string\n" ); }
+
+	function isPortOpen( $host, $port, $timeout )
+	{
+		$cmd = array( 'nc', '-z', '-w', $timeout, '--', $host, $port );
+
+		return $this->runCommandArgs( $cmd )->succeeded();
 	}
 
 	/**
@@ -157,22 +177,26 @@ abstract class System
 	abstract function currentTimestamp();
 
 	/**
-	 * @param string $command
-	 * @param string $stdIn
-	 * @param Log    $log
+	 * @param string               $command
+	 * @param string               $input
+	 * @param CommandOutputHandler $output
 	 *
 	 * @return int exit code
 	 */
-	abstract protected function runImpl( $command, $stdIn, Log $log );
+	abstract protected function runImpl( $command, $input, CommandOutputHandler $output );
 
-	function log() { return $this->log; }
+	/**
+	 * If this System happens to be a wrapper around another System, this
+	 * applies the same wrapping to the given system.
+	 */
+	function wrap( System $sytem ) { return $sytem; }
 }
 
 abstract class File
 {
 	private $path, $system;
 
-	function __construct( System $system, $path )
+	function __construct( FileSystem $system, $path )
 	{
 		$this->path   = $path;
 		$this->system = $system;
@@ -210,7 +234,7 @@ abstract class File
 		$result = array();
 
 		foreach ( $this->scanDirNoDots() as $file )
-			$result[ ] = $this->appendPath( ends_with( $this->path, '/' ) ? $file : "/$file" );
+			$result[ ] = $this->subFile( $file );
 
 		return $result;
 	}
@@ -224,6 +248,13 @@ abstract class File
 				$result[ ] = $file;
 
 		return $result;
+	}
+
+	final function subFile( $file )
+	{
+		$sep = $this->system->directorySeperator();
+
+		return $this->appendPath( ends_with( $this->path, $sep ) ? $file : $sep . $file );
 	}
 
 	/**
@@ -244,8 +275,6 @@ abstract class File
 	/**
 	 * @param int  $mode
 	 * @param bool $recursive
-	 *
-	 * @return self
 	 */
 	abstract function createDir( $mode = 0777, $recursive = false );
 
@@ -269,9 +298,6 @@ abstract class File
 	 */
 	abstract function fileSize();
 
-	/**
-	 * @return self
-	 */
 	abstract function removeFile();
 
 	/**
@@ -294,28 +320,19 @@ abstract class File
 
 	/**
 	 * @param string $contents
-	 *
-	 * @return self
 	 */
 	abstract function setContents( $contents );
 
 	/**
 	 * @param string $contents
-	 *
-	 * @return self
 	 */
 	abstract function createWithContents( $contents );
 
 	/**
 	 * @param string $contents
-	 *
-	 * @return self
 	 */
 	abstract function appendContents( $contents );
 
-	/**
-	 * @return self
-	 */
 	abstract function removeDir();
 }
 

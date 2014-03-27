@@ -113,7 +113,7 @@ class SSHForwardedPort
 	{
 		$this->process->stop();
 
-		return CommandOutput::fromSymfonyProcess( $this->process );
+		return CommandResult::fromSymfonyProcess( $this->process );
 	}
 
 	/**
@@ -143,7 +143,7 @@ class SSHForwardedPort
 
 			if ( !$process->isRunning() )
 			{
-				throw new CommandFailedException( CommandOutput::fromSymfonyProcess( $process ) );
+				throw new CommandFailedException( CommandResult::fromSymfonyProcess( $process ) );
 			}
 		}
 
@@ -152,7 +152,9 @@ class SSHForwardedPort
 
 	private function isPortOpen()
 	{
-		return LocalSystem::isPortOpen( $this->localHost, $this->localPort, 1 );
+		$local = new LocalSystem;
+
+		return $local->isPortOpen( $this->localHost, $this->localPort, 1 );
 	}
 
 	private function sshCommand()

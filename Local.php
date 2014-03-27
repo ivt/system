@@ -6,27 +6,27 @@ use Symfony\Component\Process\Process;
 
 class LocalSystem extends System
 {
-	static function isPortOpen( $host, $port, $timeout )
+	function isPortOpen( $host, $port, $timeout )
 	{
-		$connection = @fsockopen( $host, $port, ref_new(), ref_new(), $timeout );
-
-		if ( $connection === false )
+		$fp = @fsockopen( $host, $port, $errno, $errstr, $timeout );
+		if ( $fp === false )
 			return false;
-
-		fclose( $connection );
+		fclose( $fp );
 
 		return true;
 	}
 
-	/**
-	 * @param WriteStream[] $delegates
-	 *
-	 * @return self
-	 */
-	static function create( array $delegates = array() )
+	static function createLogging()
 	{
-		return new self( new Log( new StreamStream( STDOUT, $delegates ),
-		                          new StreamStream( STDERR, $delegates ) ) );
+		$self = new self;
+
+		return new LoggingSystem(
+			$self,
+			function ( $data ) use ( $self )
+			{
+				$self->writeOutput( $data );
+			}
+		);
 	}
 
 	function file( $path )
@@ -34,31 +34,31 @@ class LocalSystem extends System
 		return new LocalFile( $this, $path );
 	}
 
-	function runImpl( $command, $stdIn, Log $log )
+	protected function runImpl( $command, $input, CommandOutputHandler $output )
 	{
-		return self::runLocal( $command, $stdIn, $log, null, null );
+		return self::runLocal( $command, $input, $output, null, null );
 	}
 
 	/**
-	 * @param string        $command
-	 * @param string        $stdIn
-	 * @param Log           $log
-	 * @param string|null   $cwd
-	 * @param string[]|null $environment
+	 * @param string               $command
+	 * @param string               $input
+	 * @param CommandOutputHandler $output
+	 * @param string|null          $cwd
+	 * @param string[]|null        $environment
 	 *
 	 * @return int
 	 */
-	static function runLocal( $command, $stdIn, Log $log, $cwd, $environment )
+	static function runLocal( $command, $input, CommandOutputHandler $output, $cwd, $environment )
 	{
-		$process = new Process( $command, $cwd, $environment, $stdIn, null );
+		$process = new Process( $command, $cwd, $environment, $input, null );
 
-		return $process->run( function ( $type, $data ) use ( $log )
+		return $process->run( function ( $type, $data ) use ( $output )
 		{
 			if ( $type === Process::OUT )
-				$log->out( $data );
+				$output->writeOutput( $data );
 
 			if ( $type === Process::ERR )
-				$log->err( $data );
+				$output->writeError( $data );
 		} );
 	}
 
@@ -79,15 +79,30 @@ class LocalSystem extends System
 
 	function setWorkingDirectory( $dir )
 	{
-		$this->log()->out( "chdir: $dir\n" );
-
 		assertNotFalse( chdir( $dir ) );
-
-		return $this;
 	}
 
-	/** @return string */
-	function getWorkingDirectory() { return getcwd(); }
+	function getWorkingDirectory()
+	{
+		assertNotFalse( $result = getcwd() );
+
+		return $result;
+	}
+
+	function writeOutput( $data )
+	{
+		assertNotFalse( fwrite( STDOUT, $data ) );
+	}
+
+	function writeError( $data )
+	{
+		assertNotFalse( fwrite( STDERR, $data ) );
+	}
+
+	function directorySeperator()
+	{
+		return DIRECTORY_SEPARATOR;
+	}
 }
 
 class LocalFile extends File
@@ -125,8 +140,6 @@ class LocalFile extends File
 		clearstatcache( true );
 
 		assertNotFalse( mkdir( $this->fsPath(), $mode, $recursive ) );
-
-		return $this;
 	}
 
 	function isLink()
@@ -166,8 +179,6 @@ class LocalFile extends File
 		clearstatcache( true );
 
 		assertNotFalse( unlink( $this->fsPath() ) );
-
-		return $this;
 	}
 
 	function lastModified()
@@ -202,29 +213,22 @@ class LocalFile extends File
 		return $result;
 	}
 
-	/**
-	 * @return self
-	 */
 	function removeDir()
 	{
 		assertNotFalse( rmdir( $this->fsPath() ) );
-
-		return $this;
 	}
 
-	function createWithContents( $contents ) { return $this->writeImpl( $contents, 'xb' ); }
+	function createWithContents( $contents ) { $this->writeImpl( $contents, 'xb' ); }
 
-	function appendContents( $contents ) { return $this->writeImpl( $contents, 'ab' ); }
+	function appendContents( $contents ) { $this->writeImpl( $contents, 'ab' ); }
 
-	function setContents( $contents ) { return $this->writeImpl( $contents, 'wb' ); }
+	function setContents( $contents ) { $this->writeImpl( $contents, 'wb' ); }
 
 	private function writeImpl( $data, $mode )
 	{
 		assertNotFalse( $handle = fopen( $this->fsPath(), $mode ) );
 		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
-
-		return $this;
 	}
 
 	private function fsPath()

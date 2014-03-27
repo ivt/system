@@ -2,22 +2,49 @@
 
 namespace IVT\System;
 
-class Log
+interface CommandOutputHandler
 {
-	private $out, $err;
+	/**
+	 * @param string $data
+	 */
+	function writeOutput( $data );
 
-	function __construct( WriteStream $out, WriteStream $err )
-	{
-		$this->out = $out;
-		$this->err = $err;
-	}
-
-	final function err( $str ) { $this->err->write( $str ); }
-
-	final function out( $str ) { $this->out->write( $str ); }
-
-	final function outStream() { return $this->out; }
-
-	final function errStream() { return $this->err; }
+	/**
+	 * @param string $data
+	 */
+	function writeError( $data );
 }
 
+class NullCommandOutputHandler implements CommandOutputHandler
+{
+	function writeOutput( $data ) { }
+
+	function writeError( $data ) { }
+}
+
+class AccumulateOutputHandler implements CommandOutputHandler
+{
+	private $out = '', $err = '';
+
+	function writeOutput( $data ) { $this->out .= $data; }
+
+	function writeError( $data ) { $this->err .= $data; }
+
+	function stdErr() { return $this->err; }
+
+	function stdOut() { return $this->out; }
+}
+
+class DelegateOutputHandler implements CommandOutputHandler
+{
+	private $output;
+
+	function __construct( CommandOutputHandler $output )
+	{
+		$this->output = $output;
+	}
+
+	function writeOutput( $data ) { $this->output->writeOutput( $data ); }
+
+	function writeError( $data ) { $this->output->writeError( $data ); }
+}

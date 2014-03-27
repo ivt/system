@@ -27,11 +27,6 @@ class SSHCredentials
 	function keyFile() { return $this->privateKeyFile; }
 
 	function keyFilePublic() { return $this->publicKeyFile; }
-
-	function __toString()
-	{
-		return "$this->user@$this->host:$this->port (pubkey: $this->publicKeyFile, privkey: $this->privateKeyFile)";
-	}
 }
 
 class SSHSystem extends System
@@ -39,19 +34,21 @@ class SSHSystem extends System
 	const EXIT_CODE_MARKER = "*EXIT CODE: ";
 
 	private $ssh, $sftp, $credentials, $cwd;
+	private $outputHandler;
 
 	function credentials() { return $this->credentials; }
 
-	function __construct( SSHCredentials $credentials, Log $log )
+	function __construct( SSHCredentials $credentials, CommandOutputHandler $outputHandler )
 	{
-		parent::__construct( $log );
-
-		$this->credentials = $credentials;
+		$this->credentials   = $credentials;
+		$this->outputHandler = $outputHandler;
 
 		$host = $credentials->host();
 		$port = $credentials->port();
 
-		if ( !LocalSystem::isPortOpen( $host, $port, 5 ) )
+		$local = new LocalSystem;
+
+		if ( !$local->isPortOpen( $host, $port, 5 ) )
 		{
 			throw new Exception( "Port $port is not open on $host" );
 		}
@@ -75,17 +72,16 @@ class SSHSystem extends System
 	}
 
 	/**
-	 * @param string $command
-	 * @param string $stdIn
-	 * @param Log    $log
+	 * @param string               $command
+	 * @param string               $input
+	 * @param CommandOutputHandler $output
 	 *
 	 * @return int
 	 */
-	function runImpl( $command, $stdIn, Log $log )
+	protected function runImpl( $command, $input, CommandOutputHandler $output )
 	{
-		$this->sshRunCommand( $this->wrapCommand( $command, $stdIn ),
-		                      new Log( $exitCodePruner = new ExitCodeStream( array( $log->outStream() ) ),
-		                               $log->errStream() ) );
+		$this->sshRunCommand( $this->wrapCommand( $command, $input ),
+		                      $exitCodePruner = new ExitCodeStream( $output ) );
 
 		return (int) $exitCodePruner->exitCode();
 	}
@@ -101,10 +97,10 @@ class SSHSystem extends System
 	}
 
 	/**
-	 * @param string $command
-	 * @param Log    $log
+	 * @param string               $command
+	 * @param CommandOutputHandler $output
 	 */
-	private function sshRunCommand( $command, Log $log )
+	private function sshRunCommand( $command, CommandOutputHandler $output )
 	{
 		assertNotFalse( $stdOut = ssh2_exec( $this->ssh, $command ) );
 		assertNotFalse( $stdErr = ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
@@ -117,8 +113,8 @@ class SSHSystem extends System
 
 		while ( !$stdErrDone || !$stdOutDone )
 		{
-			$stdOutDone = $stdOutDone || $this->readStream( $stdOut, $log->outStream() );
-			$stdErrDone = $stdErrDone || $this->readStream( $stdErr, $log->errStream() );
+			$stdOutDone = $stdOutDone || $this->readStream( $stdOut, $output, false );
+			$stdErrDone = $stdErrDone || $this->readStream( $stdErr, $output, true );
 
 			usleep( 100000 );
 		}
@@ -139,10 +135,14 @@ echo -nE $exitCodeMarkerSh\$?
 s;
 	}
 
-	private function readStream( $resource, WriteStream $stream )
+	private function readStream( $resource, CommandOutputHandler $output, $isError )
 	{
 		assertNotFalse( $data = fread( $resource, 8192 ) );
-		$stream->write( $data );
+
+		if ( !$isError )
+			$output->writeOutput( $data );
+		else
+			$output->writeError( $data );
 
 		if ( feof( $resource ) )
 		{
@@ -162,8 +162,6 @@ s;
 	function setWorkingDirectory( $dir )
 	{
 		$this->cwd = substr( $this->shellExec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
-
-		return $this;
 	}
 
 	/**
@@ -173,9 +171,21 @@ s;
 	{
 		return $this->cwd;
 	}
+
+	function writeOutput( $data )
+	{
+		$this->outputHandler->writeOutput( $data );
+	}
+
+	function writeError( $data )
+	{
+		$this->outputHandler->writeError( $data );
+	}
+
+	function directorySeperator() { return '/'; }
 }
 
-class ExitCodeStream extends WriteStream
+class ExitCodeStream extends DelegateOutputHandler
 {
 	/** @var StringBuffer */
 	private $buffer;
@@ -200,7 +210,7 @@ class ExitCodeStream extends WriteStream
 		return $buffer->removeAll();
 	}
 
-	function write( $data )
+	function writeOutput( $data )
 	{
 		$buffer = $this->buffer;
 		$marker = $this->marker;
@@ -211,7 +221,9 @@ class ExitCodeStream extends WriteStream
 
 		if ( $markerPos !== false )
 		{
-			return $this->send( $markerPos );
+			parent::writeOutput( $buffer->remove( $markerPos ) );
+			
+			return;
 		}
 
 		$pos = max( 0, $buffer->len() - $marker->len() );
@@ -220,16 +232,13 @@ class ExitCodeStream extends WriteStream
 		{
 			if ( $marker->startsWith( $buffer->after( $pos ) ) )
 			{
-				return $this->send( $pos );
+				parent::writeOutput( $buffer->remove( $pos ) );
+
+				return;
 			}
 		}
 
 		throw new Exception( "The code above should always return. Why are we here?" );
-	}
-
-	private function send( $length )
-	{
-		return parent::write( $this->buffer->remove( $length ) );
 	}
 }
 
@@ -292,8 +301,6 @@ class SSHFile extends File
 	function createDir( $mode = 0777, $recursive = false )
 	{
 		assertNotFalse( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ) );
-
-		return $this;
 	}
 
 	function isLink()
@@ -329,8 +336,6 @@ class SSHFile extends File
 	function removeFile()
 	{
 		assertNotFalse( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ) );
-
-		return $this;
 	}
 
 	function lastModified()
@@ -350,23 +355,18 @@ class SSHFile extends File
 		return (int) substr( $stdout, 0, -1 );
 	}
 
-	/**
-	 * @return self
-	 */
 	function removeDir()
 	{
 		assertNotFalse( rmdir( $this->sftpURL() ) );
-
-		return $this;
 	}
 
-	function appendContents( $contents ) { return $this->writeImpl( $contents, true, false ); }
+	function appendContents( $contents ) { $this->writeImpl( $contents, true, false ); }
 
-	function createWithContents( $contents ) { return $this->writeImpl( $contents, false, true ); }
+	function createWithContents( $contents ) { $this->writeImpl( $contents, false, true ); }
 
-	function setContents( $contents ) { return $this->writeImpl( $contents, false, false ); }
+	function setContents( $contents ) { $this->writeImpl( $contents, false, false ); }
 
-	function writeImpl( $data, $append, $bailIfExists )
+	private function writeImpl( $data, $append, $bailIfExists )
 	{
 		// In the case of append, 'a' doesn't work, so we need to open the file and seek to the end instead.
 		// If the file exists, 'w' will truncate it, and 'x' will throw an error. 'c' is not supported by the library.
@@ -388,8 +388,6 @@ class SSHFile extends File
 
 		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
 		assertNotFalse( fclose( $handle ) );
-
-		return $this;
 	}
 
 	private function absolutePath()
