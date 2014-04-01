@@ -113,5 +113,6 @@ class WrappedFile extends File
 
 	function appendContents( $contents ) { $this->file->appendContents( $contents ); }
 
+	function chmod( $mode ) { $this->file->chmod( $mode ); }
 	function removeDir() { $this->file->removeDir(); }
 }

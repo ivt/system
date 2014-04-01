@@ -270,4 +270,10 @@ class LoggingFile extends WrappedFile
 	{
 		$this->system->log( $input, $output, $this->path() );
 	}
+
+	function chmod( $mode )
+	{
+		$this->log( array( 'chmod', decoct( $mode ) ) );
+		parent::chmod( $mode );
+	}
 }

@@ -406,4 +406,10 @@ class SSHFile extends File
 
 		return $result;
 	}
+
+	function chmod( $mode )
+	{
+		/** @noinspection PhpUndefinedFunctionInspection */
+		assertNotFalse( ssh2_sftp_chmod( $this->sftp, $this->absolutePath(), $mode ) );
+	}
 }

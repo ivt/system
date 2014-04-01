@@ -242,4 +242,9 @@ class LocalFile extends File
 	{
 		return \PCRE::create( '^(/|\w:|' . \PCRE::quote( '\\' ) . ')' )->wholeString()->matches( $this->path() );
 	}
+
+	function chmod( $mode )
+	{
+		assertNotFalse( chmod( $this->fsPath(), $mode ) );
+	}
 }

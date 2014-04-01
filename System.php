@@ -333,6 +333,10 @@ abstract class File
 	 */
 	abstract function appendContents( $contents );
 
+	/**
+	 * @param int $mode
+	 */
+	abstract function chmod( $mode );
 	abstract function removeDir();
 }
 
