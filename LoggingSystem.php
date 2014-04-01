@@ -68,48 +68,75 @@ class LoggingSystem extends WrappedSystem
 		return new LoggingFile( $this, $path, parent::file( $path ) );
 	}
 
-	function log( $input, $output = null )
+	function log( $input, $output = null, $context = null )
 	{
-		$this->writeLog( self::dump( $input ) . ' => ' . self::dump( $output ) . "\n\n" );
+		$result = self::dump( $input );
+
+		if ( $output !== null )
+			$result = "$result => " . self::dump( $output );
+
+		if ( $context !== null )
+			$result = self::dump( $context ) . ": $result";
+
+		$this->writeLog( "$result\n" );
 	}
 
-	private static function dump( $value )
+	static function dump( $value )
 	{
-		if ( is_object( $value ) )
-			$value = "$value";
-
 		if ( is_array( $value ) )
 		{
-			$count = count( $value );
-			if ( $count > 5 )
-				return "$count items";
-
-			$result = array();
-			foreach ( $value as $k => $v )
+			$delimit = function ( $value )
 			{
-				$vd = self::dump( $v );
-				$kd = self::dump( $k );
+				$result = array();
+				foreach ( $value as $k => $v )
+				{
+					if ( is_int( $k ) )
+						$result[ ] = LoggingSystem::dump( $v );
+					else
+						$result[ ] = LoggingSystem::dump( $k ) . ': ' . LoggingSystem::dump( $v );
+				}
 
-				$result[ ] = is_int( $k ) ? $vd : "$kd: $vd";
+				return join( ', ', $result );
+			};
+
+			if ( count( $value ) > 6 )
+			{
+				$start = $delimit( array_slice( $value, 0, 3 ) );
+				$end   = $delimit( array_slice( $value, -3 ) );
+
+				return "[$start ... $end]";
 			}
-
-			return join( ', ', $result );
+			else
+			{
+				return "[{$delimit( $value )}]";
+			}
 		}
-
-		if ( is_bool( $value ) )
-			return $value ? 'yes' : 'no';
-
-		if ( is_null( $value ) )
-			return 'null';
-
-		if ( is_string( $value ) )
+		else if ( is_bool( $value ) )
 		{
-			$len = strlen( $value );
-
-			return $len < 100 && ctype_print( $value ) ? $value : "$len bytes";
+			return $value ? 'yes' : 'no';
 		}
+		else if ( is_null( $value ) )
+		{
+			return 'null';
+		}
+		else if ( is_string( $value ) )
+		{
+			$value = \PCRE::create( '([^[:print:]]|\s)+' )->replace( $value, ' ' )->result();
+			$value = trim( $value );
 
-		return "$value";
+			if ( strlen( $value ) > 60 )
+				return substr( $value, 0, 30 ) . "..." . substr( $value, -30 );
+			else
+				return $value;
+		}
+		else if ( is_int( $value ) || is_float( $value ) )
+		{
+			return "$value";
+		}
+		else
+		{
+			throw new \Exception( "Invalid type: " . gettype( $value ) );
+		}
 	}
 }
 
@@ -180,7 +207,7 @@ class LoggingFile extends WrappedFile
 	function fileSize()
 	{
 		$size = parent::fileSize();
-		$this->log( "last modified", "$size bytes" );
+		$this->log( "file size", "$size bytes" );
 
 		return $size;
 	}
@@ -241,6 +268,6 @@ class LoggingFile extends WrappedFile
 
 	private function log( $input, $output = null )
 	{
-		$this->system->log( array( "$this", $input ), $output );
+		$this->system->log( $input, $output, $this->path() );
 	}
 }
