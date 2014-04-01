@@ -62,7 +62,7 @@ class LocalSystem extends System
 		} );
 	}
 
-	function currentTimestamp() { return time(); }
+	function time() { return time(); }
 
 	/**
 	 * @return int
@@ -77,12 +77,12 @@ class LocalSystem extends System
 		return new \Dbase_SQL_Driver( $dsn );
 	}
 
-	function setWorkingDirectory( $dir )
+	function chdir( $dir )
 	{
 		assertNotFalse( chdir( $dir ) );
 	}
 
-	function getWorkingDirectory()
+	function getcwd()
 	{
 		assertNotFalse( $result = getcwd() );
 
@@ -97,11 +97,6 @@ class LocalSystem extends System
 	function writeError( $data )
 	{
 		assertNotFalse( fwrite( STDERR, $data ) );
-	}
-
-	function directorySeperator()
-	{
-		return DIRECTORY_SEPARATOR;
 	}
 }
 
@@ -121,7 +116,7 @@ class LocalFile extends File
 		return is_executable( $this->fsPath() );
 	}
 
-	function scanDir()
+	function scandir()
 	{
 		assertNotFalse( $result = scandir( $this->fsPath() ) );
 
@@ -135,7 +130,7 @@ class LocalFile extends File
 		return is_dir( $this->fsPath() );
 	}
 
-	function createDir( $mode = 0777, $recursive = false )
+	function mkdir( $mode = 0777, $recursive = false )
 	{
 		clearstatcache( true );
 
@@ -149,7 +144,7 @@ class LocalFile extends File
 		return is_link( $this->fsPath() );
 	}
 
-	function readLink()
+	function readlink()
 	{
 		clearstatcache( true );
 
@@ -165,7 +160,7 @@ class LocalFile extends File
 		return file_exists( $this->fsPath() );
 	}
 
-	function fileSize()
+	function size()
 	{
 		clearstatcache( true );
 
@@ -174,14 +169,14 @@ class LocalFile extends File
 		return $size;
 	}
 
-	function removeFile()
+	function unlink()
 	{
 		clearstatcache( true );
 
 		assertNotFalse( unlink( $this->fsPath() ) );
 	}
 
-	function lastModified()
+	function mtime()
 	{
 		clearstatcache( true );
 
@@ -190,7 +185,7 @@ class LocalFile extends File
 		return $result;
 	}
 
-	function lastStatusCange()
+	function ctime()
 	{
 		clearstatcache( true );
 
@@ -199,7 +194,7 @@ class LocalFile extends File
 		return $result;
 	}
 
-	function getContents( $offset = 0, $maxLength = PHP_INT_MAX )
+	function read( $offset = 0, $maxLength = PHP_INT_MAX )
 	{
 		if ( $maxLength == PHP_INT_MAX )
 		{
@@ -213,16 +208,16 @@ class LocalFile extends File
 		return $result;
 	}
 
-	function removeDir()
+	function rmdir()
 	{
 		assertNotFalse( rmdir( $this->fsPath() ) );
 	}
 
-	function createWithContents( $contents ) { $this->writeImpl( $contents, 'xb' ); }
+	function create( $contents ) { $this->writeImpl( $contents, 'xb' ); }
 
-	function appendContents( $contents ) { $this->writeImpl( $contents, 'ab' ); }
+	function append( $contents ) { $this->writeImpl( $contents, 'ab' ); }
 
-	function setContents( $contents ) { $this->writeImpl( $contents, 'wb' ); }
+	function write( $contents ) { $this->writeImpl( $contents, 'wb' ); }
 
 	private function writeImpl( $data, $mode )
 	{

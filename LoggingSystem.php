@@ -29,16 +29,16 @@ class LoggingSystem extends WrappedSystem
 		return $exitStatus;
 	}
 
-	function setWorkingDirectory( $dir )
+	function chdir( $dir )
 	{
 		$this->log( array( 'set cwd', $dir ) );
 
-		parent::setWorkingDirectory( $dir );
+		parent::chdir( $dir );
 	}
 
-	function getWorkingDirectory()
+	function getcwd()
 	{
-		$result = parent::getWorkingDirectory();
+		$result = parent::getcwd();
 		$this->log( 'get cwd', $result );
 
 		return $result;
@@ -158,10 +158,10 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
-	function scanDir()
+	function scandir()
 	{
-		$result = parent::scanDir();
-		$this->log( "scan dir", $result );
+		$result = parent::scandir();
+		$this->log( "scandir", $result );
 
 		return $result;
 	}
@@ -174,10 +174,10 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
-	function createDir( $mode = 0777, $recursive = false )
+	function mkdir( $mode = 0777, $recursive = false )
 	{
-		$this->log( array( "create dir", 'mode' => decoct( $mode ), 'recursive' => $recursive ) );
-		parent::createDir( $mode, $recursive );
+		$this->log( array( "mkdir", 'mode' => decoct( $mode ), 'recursive' => $recursive ) );
+		parent::mkdir( $mode, $recursive );
 	}
 
 	function isLink()
@@ -188,9 +188,9 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
-	function readLink()
+	function readlink()
 	{
-		$result = parent::readLink();
+		$result = parent::readlink();
 		$this->log( "read link", $result );
 
 		return $result;
@@ -204,66 +204,66 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
-	function fileSize()
+	function size()
 	{
-		$size = parent::fileSize();
-		$this->log( "file size", "$size bytes" );
+		$size = parent::size();
+		$this->log( "size", "$size bytes" );
 
 		return $size;
 	}
 
-	function removeFile()
+	function unlink()
 	{
-		$this->log( "remove" );
-		parent::removeFile();
+		$this->log( "unlink" );
+		parent::unlink();
 	}
 
-	function lastModified()
+	function mtime()
 	{
-		$result = parent::lastModified();
-		$this->log( "last modified", $result );
+		$result = parent::mtime();
+		$this->log( "mtime", $result );
 
 		return $result;
 	}
 
-	function lastStatusCange()
+	function ctime()
 	{
-		$result = parent::lastStatusCange();
-		$this->log( "last status change", $result );
+		$result = parent::ctime();
+		$this->log( "ctime", $result );
 
 		return $result;
 	}
 
-	function getContents( $offset = 0, $maxLength = PHP_INT_MAX )
+	function read( $offset = 0, $maxLength = PHP_INT_MAX )
 	{
-		$result = parent::getContents( $offset, $maxLength );
-		$this->log( array( "get contents", 'offset' => $offset, 'length' => $maxLength ), $result );
+		$result = parent::read( $offset, $maxLength );
+		$this->log( array( "read", 'offset' => $offset, 'length' => $maxLength ), $result );
 
 		return $result;
 	}
 
-	function setContents( $contents )
+	function write( $contents )
 	{
-		$this->log( array( "set contents", $contents ) );
-		parent::setContents( $contents );
+		$this->log( array( "write", $contents ) );
+		parent::write( $contents );
 	}
 
-	function createWithContents( $contents )
+	function create( $contents )
 	{
-		$this->log( array( "create contents", $contents ) );
-		parent::createWithContents( $contents );
+		$this->log( array( "create", $contents ) );
+		parent::create( $contents );
 	}
 
-	function appendContents( $contents )
+	function append( $contents )
 	{
-		$this->log( array( "append contents", $contents ) );
-		parent::appendContents( $contents );
+		$this->log( array( "append", $contents ) );
+		parent::append( $contents );
 	}
 
-	function removeDir()
+	function rmdir()
 	{
-		$this->log( "remove dir" );
-		parent::removeDir();
+		$this->log( "rmdir" );
+		parent::rmdir();
 	}
 
 	private function log( $input, $output = null )

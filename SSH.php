@@ -61,7 +61,7 @@ class SSHSystem extends System
 		                                       $credentials->keyFile() ), "authentication failed" );
 
 		assertNotFalse( $this->sftp = ssh2_sftp( $this->ssh ), "Failed to get SFTP subsystem" );
-		assertNotFalse( $this->cwd = substr( $this->shellExec( 'pwd' ), 0, -1 ) );
+		assertNotFalse( $this->cwd = substr( $this->exec( 'pwd' ), 0, -1 ) );
 	}
 
 	function pwd() { return $this->cwd; }
@@ -91,9 +91,9 @@ class SSHSystem extends System
 		return new SSHDBConnection( $this->credentials, $dsn );
 	}
 
-	function currentTimestamp()
+	function time()
 	{
-		return (int) substr( $this->shellExec( 'date +%s' ), 0, -1 );
+		return (int) substr( $this->exec( 'date +%s' ), 0, -1 );
 	}
 
 	/**
@@ -159,15 +159,15 @@ s;
 		return false;
 	}
 
-	function setWorkingDirectory( $dir )
+	function chdir( $dir )
 	{
-		$this->cwd = substr( $this->shellExec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
+		$this->cwd = substr( $this->exec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
 	}
 
 	/**
 	 * @return string
 	 */
-	function getWorkingDirectory()
+	function getcwd()
 	{
 		return $this->cwd;
 	}
@@ -181,8 +181,6 @@ s;
 	{
 		$this->outputHandler->writeError( $data );
 	}
-
-	function directorySeperator() { return '/'; }
 }
 
 class ExitCodeStream extends DelegateOutputHandler
@@ -260,7 +258,7 @@ class SSHFile extends File
 		parent::__construct( $system, $path );
 	}
 
-	function getContents( $offset = 0, $maxLength = PHP_INT_MAX )
+	function read( $offset = 0, $maxLength = PHP_INT_MAX )
 	{
 		clearstatcache( true );
 
@@ -283,7 +281,7 @@ class SSHFile extends File
 		return is_file( $this->sftpURL() );
 	}
 
-	function scanDir()
+	function scandir()
 	{
 		clearstatcache( true );
 
@@ -299,7 +297,7 @@ class SSHFile extends File
 		return is_dir( $this->sftpURL() );
 	}
 
-	function createDir( $mode = 0777, $recursive = false )
+	function mkdir( $mode = 0777, $recursive = false )
 	{
 		assertNotFalse( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ) );
 	}
@@ -311,7 +309,7 @@ class SSHFile extends File
 		return is_link( $this->sftpURL() );
 	}
 
-	function readLink()
+	function readlink()
 	{
 		assertNotFalse( $result = ssh2_sftp_readlink( $this->sftp, $this->absolutePath() ) );
 
@@ -325,7 +323,7 @@ class SSHFile extends File
 		return file_exists( $this->sftpURL() );
 	}
 
-	function fileSize()
+	function size()
 	{
 		clearstatcache( true );
 
@@ -334,12 +332,12 @@ class SSHFile extends File
 		return $size;
 	}
 
-	function removeFile()
+	function unlink()
 	{
 		assertNotFalse( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ) );
 	}
 
-	function lastModified()
+	function mtime()
 	{
 		clearstatcache( true );
 
@@ -348,24 +346,24 @@ class SSHFile extends File
 		return $mtime;
 	}
 
-	function lastStatusCange()
+	function ctime()
 	{
 		// ctime is not supported over SFTP2, so we run a command to get it instead.
-		$stdout = $this->system->shellExec( "stat -c %Z " . SSHSystem::escapeCmd( $this->path() ) );
+		$stdout = $this->system->exec( "stat -c %Z " . SSHSystem::escapeCmd( $this->path() ) );
 
 		return (int) substr( $stdout, 0, -1 );
 	}
 
-	function removeDir()
+	function rmdir()
 	{
 		assertNotFalse( rmdir( $this->sftpURL() ) );
 	}
 
-	function appendContents( $contents ) { $this->writeImpl( $contents, true, false ); }
+	function append( $contents ) { $this->writeImpl( $contents, true, false ); }
 
-	function createWithContents( $contents ) { $this->writeImpl( $contents, false, true ); }
+	function create( $contents ) { $this->writeImpl( $contents, false, true ); }
 
-	function setContents( $contents ) { $this->writeImpl( $contents, false, false ); }
+	function write( $contents ) { $this->writeImpl( $contents, false, false ); }
 
 	private function writeImpl( $data, $append, $bailIfExists )
 	{

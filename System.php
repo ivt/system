@@ -63,12 +63,12 @@ interface FileSystem
 	/**
 	 * @return string
 	 */
-	function getWorkingDirectory();
+	function getcwd();
 
 	/**
 	 * @param string $dir
 	 */
-	function setWorkingDirectory( $dir );
+	function chdir( $dir );
 
 	/**
 	 * @param string $path
@@ -76,11 +76,6 @@ interface FileSystem
 	 * @return File
 	 */
 	function file( $path );
-
-	/**
-	 * @return string
-	 */
-	function directorySeperator();
 }
 
 abstract class System implements CommandOutputHandler, FileSystem
@@ -95,32 +90,22 @@ abstract class System implements CommandOutputHandler, FileSystem
 		return ProcessBuilder::escapeArgs( $args );
 	}
 
-	final function shellExecArgs( array $command, $stdIn = '' )
+	final function execArgs( array $command, $stdIn = '' )
 	{
 		return $this->runCommandArgs( $command, $stdIn )->assertSuccess()->stdOut();
 	}
 
-	final function shellExec( $command, $stdIn = '' )
+	final function exec( $command, $stdIn = '' )
 	{
 		return $this->runCommand( $command, $stdIn )->assertSuccess()->stdOut();
 	}
 
 	final function now()
 	{
-		return $this->dateTime( $this->currentTimestamp() );
-	}
-
-	/**
-	 * @param int $timestamp Unix timestamp (UTC)
-	 *
-	 * @return \DateTime
-	 */
-	final function dateTime( $timestamp )
-	{
 		// The timezone passed in the constructor of \DateTime is ignored in the case of a timestamp, because a
 		// unix timestamp is considered to have a built-in timezone of UTC.
 		$timezone = new \DateTimeZone( date_default_timezone_get() );
-		$dateTime = new \DateTime( "@$timestamp", $timezone );
+		$dateTime = new \DateTime( "@{$this->time()}", $timezone );
 		$dateTime->setTimezone( $timezone );
 
 		return $dateTime;
@@ -174,7 +159,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 *
 	 * @return int
 	 */
-	abstract function currentTimestamp();
+	abstract function time();
 
 	/**
 	 * @param string               $command
@@ -206,55 +191,9 @@ abstract class File
 
 	final function __toString() { return $this->path(); }
 
-	final function appendPath( $append )
+	final function concat( $append )
 	{
 		return $this->system->file( $this->path . $append );
-	}
-
-	final function removeRecursive()
-	{
-		if ( $this->isDir() && !$this->isLink() )
-		{
-			foreach ( $this->subFiles() as $file )
-				$file->removeRecursive();
-
-			$this->removeDir();
-		}
-		else
-		{
-			$this->removeFile();
-		}
-	}
-
-	/**
-	 * @return self[]
-	 */
-	final function subFiles()
-	{
-		$result = array();
-
-		foreach ( $this->scanDirNoDots() as $file )
-			$result[ ] = $this->subFile( $file );
-
-		return $result;
-	}
-
-	final function scanDirNoDots()
-	{
-		$result = array();
-
-		foreach ( $this->scanDir() as $file )
-			if ( $file !== '.' && $file !== '..' )
-				$result[ ] = $file;
-
-		return $result;
-	}
-
-	final function subFile( $file )
-	{
-		$sep = $this->system->directorySeperator();
-
-		return $this->appendPath( ends_with( $this->path, $sep ) ? $file : $sep . $file );
 	}
 
 	/**
@@ -265,7 +204,7 @@ abstract class File
 	/**
 	 * @return string[]
 	 */
-	abstract function scanDir();
+	abstract function scandir();
 
 	/**
 	 * @return bool
@@ -276,7 +215,7 @@ abstract class File
 	 * @param int  $mode
 	 * @param bool $recursive
 	 */
-	abstract function createDir( $mode = 0777, $recursive = false );
+	abstract function mkdir( $mode = 0777, $recursive = false );
 
 	/**
 	 * @return bool
@@ -286,7 +225,7 @@ abstract class File
 	/**
 	 * @return string
 	 */
-	abstract function readLink();
+	abstract function readlink();
 
 	/**
 	 * @return bool
@@ -296,19 +235,19 @@ abstract class File
 	/**
 	 * @return int
 	 */
-	abstract function fileSize();
+	abstract function size();
 
-	abstract function removeFile();
-
-	/**
-	 * @return int
-	 */
-	abstract function lastModified();
+	abstract function unlink();
 
 	/**
 	 * @return int
 	 */
-	abstract function lastStatusCange();
+	abstract function mtime();
+
+	/**
+	 * @return int
+	 */
+	abstract function ctime();
 
 	/**
 	 * @param int $offset
@@ -316,27 +255,28 @@ abstract class File
 	 *
 	 * @return string
 	 */
-	abstract function getContents( $offset = 0, $maxLength = PHP_INT_MAX );
+	abstract function read( $offset = 0, $maxLength = PHP_INT_MAX );
 
 	/**
 	 * @param string $contents
 	 */
-	abstract function setContents( $contents );
+	abstract function write( $contents );
 
 	/**
 	 * @param string $contents
 	 */
-	abstract function createWithContents( $contents );
+	abstract function create( $contents );
 
 	/**
 	 * @param string $contents
 	 */
-	abstract function appendContents( $contents );
+	abstract function append( $contents );
+
+	abstract function rmdir();
 
 	/**
 	 * @param int $mode
 	 */
 	abstract function chmod( $mode );
-	abstract function removeDir();
 }
 
