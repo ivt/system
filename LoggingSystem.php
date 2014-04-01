@@ -29,17 +29,17 @@ class LoggingSystem extends WrappedSystem
 		return $exitStatus;
 	}
 
-	function chdir( $dir )
+	function cd( $dir )
 	{
-		$this->log( array( 'set cwd', $dir ) );
+		$this->log( array( 'cd', $dir ) );
 
-		parent::chdir( $dir );
+		parent::cd( $dir );
 	}
 
-	function getcwd()
+	function pwd()
 	{
-		$result = parent::getcwd();
-		$this->log( 'get cwd', $result );
+		$result = parent::pwd();
+		$this->log( 'pwd', $result );
 
 		return $result;
 	}

@@ -77,12 +77,12 @@ class LocalSystem extends System
 		return new \Dbase_SQL_Driver( $dsn );
 	}
 
-	function chdir( $dir )
+	function cd( $dir )
 	{
 		assertNotFalse( chdir( $dir ) );
 	}
 
-	function getcwd()
+	function pwd()
 	{
 		assertNotFalse( $result = getcwd() );
 

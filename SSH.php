@@ -64,8 +64,6 @@ class SSHSystem extends System
 		assertNotFalse( $this->cwd = substr( $this->exec( 'pwd' ), 0, -1 ) );
 	}
 
-	function pwd() { return $this->cwd; }
-
 	function file( $path )
 	{
 		return new SSHFile( $this, $this->sftp, $path );
@@ -159,15 +157,12 @@ s;
 		return false;
 	}
 
-	function chdir( $dir )
+	function cd( $dir )
 	{
 		$this->cwd = substr( $this->exec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
 	}
 
-	/**
-	 * @return string
-	 */
-	function getcwd()
+	function pwd()
 	{
 		return $this->cwd;
 	}

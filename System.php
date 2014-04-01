@@ -63,12 +63,12 @@ interface FileSystem
 	/**
 	 * @return string
 	 */
-	function getcwd();
+	function pwd();
 
 	/**
 	 * @param string $dir
 	 */
-	function chdir( $dir );
+	function cd( $dir );
 
 	/**
 	 * @param string $path

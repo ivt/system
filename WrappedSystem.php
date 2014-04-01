@@ -11,14 +11,14 @@ class WrappedSystem extends System
 		$this->system = $system;
 	}
 
-	function chdir( $dir )
+	function cd( $dir )
 	{
-		$this->system->chdir( $dir );
+		$this->system->cd( $dir );
 	}
 
-	function getcwd()
+	function pwd()
 	{
-		return $this->system->getcwd();
+		return $this->system->pwd();
 	}
 
 	function file( $path )
