@@ -11,14 +11,14 @@ class WrappedSystem extends System
 		$this->system = $system;
 	}
 
-	function setWorkingDirectory( $dir )
+	function cd( $dir )
 	{
-		$this->system->setWorkingDirectory( $dir );
+		$this->system->cd( $dir );
 	}
 
-	function getWorkingDirectory()
+	function pwd()
 	{
-		return $this->system->getWorkingDirectory();
+		return $this->system->pwd();
 	}
 
 	function file( $path )
@@ -31,9 +31,9 @@ class WrappedSystem extends System
 		return $this->system->connectDB( $dsn );
 	}
 
-	function currentTimestamp()
+	function time()
 	{
-		return $this->system->currentTimestamp();
+		return $this->system->time();
 	}
 
 	protected function runImpl( $command, $input, CommandOutputHandler $output )
@@ -51,14 +51,9 @@ class WrappedSystem extends System
 		$this->system->writeError( $data );
 	}
 
-	function wrap( System $sytem )
+	function wrap( System $system )
 	{
-		return $this->system->wrap( parent::wrap( $sytem ) );
-	}
-
-	function directorySeperator()
-	{
-		return $this->system->directorySeperator();
+		return $this->system->wrap( parent::wrap( $system ) );
 	}
 
 	function isPortOpen( $host, $port, $timeout )
@@ -79,39 +74,41 @@ class WrappedFile extends File
 
 	function isFile() { return $this->file->isFile(); }
 
-	function scanDir() { return $this->file->scanDir(); }
+	function scandir() { return $this->file->scandir(); }
 
 	function isDir() { return $this->file->isDir(); }
 
-	function createDir( $mode = 0777, $recursive = false )
+	function mkdir( $mode = 0777, $recursive = false )
 	{
-		$this->file->createDir( $mode, $recursive );
+		$this->file->mkdir( $mode, $recursive );
 	}
 
 	function isLink() { return $this->file->isLink(); }
 
-	function readLink() { return $this->file->readLink(); }
+	function readlink() { return $this->file->readlink(); }
 
 	function exists() { return $this->file->exists(); }
 
-	function fileSize() { return $this->file->fileSize(); }
+	function size() { return $this->file->size(); }
 
-	function removeFile() { $this->file->removeFile(); }
+	function unlink() { $this->file->unlink(); }
 
-	function lastModified() { return $this->file->lastModified(); }
+	function mtime() { return $this->file->mtime(); }
 
-	function lastStatusCange() { return $this->file->lastStatusCange(); }
+	function ctime() { return $this->file->ctime(); }
 
-	function getContents( $offset = 0, $maxLength = PHP_INT_MAX )
+	function read( $offset = 0, $maxLength = null )
 	{
-		return $this->file->getContents( $offset, $maxLength );
+		return $this->file->read( $offset, $maxLength );
 	}
 
-	function setContents( $contents ) { $this->file->setContents( $contents ); }
+	function write( $contents ) { $this->file->write( $contents ); }
 
-	function createWithContents( $contents ) { $this->file->createWithContents( $contents ); }
+	function create( $contents ) { $this->file->create( $contents ); }
 
-	function appendContents( $contents ) { $this->file->appendContents( $contents ); }
+	function append( $contents ) { $this->file->append( $contents ); }
 
-	function removeDir() { $this->file->removeDir(); }
+	function rmdir() { $this->file->rmdir(); }
+
+	function chmod( $mode ) { $this->file->chmod( $mode ); }
 }
