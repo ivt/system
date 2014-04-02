@@ -58,9 +58,9 @@ class LoggingSystem extends WrappedSystem
 		$log( $data );
 	}
 
-	function wrap( System $sytem )
+	function wrap( System $system )
 	{
-		return new self( parent::wrap( $sytem ), $this->logHandler );
+		return new self( parent::wrap( $system ), $this->logHandler );
 	}
 
 	function file( $path )

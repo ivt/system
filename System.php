@@ -174,7 +174,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 * If this System happens to be a wrapper around another System, this
 	 * applies the same wrapping to the given system.
 	 */
-	function wrap( System $sytem ) { return $sytem; }
+	function wrap( System $system ) { return $system; }
 }
 
 abstract class File
@@ -278,5 +278,11 @@ abstract class File
 	 * @param int $mode
 	 */
 	abstract function chmod( $mode );
+
+	function mkdirIgnore()
+	{
+		if ( !$this->isDir() )
+			$this->mkdir();
+	}
 }
 

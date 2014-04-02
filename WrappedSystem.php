@@ -51,9 +51,9 @@ class WrappedSystem extends System
 		$this->system->writeError( $data );
 	}
 
-	function wrap( System $sytem )
+	function wrap( System $system )
 	{
-		return $this->system->wrap( parent::wrap( $sytem ) );
+		return $this->system->wrap( parent::wrap( $system ) );
 	}
 
 	function isPortOpen( $host, $port, $timeout )
