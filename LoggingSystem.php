@@ -234,7 +234,7 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
-	function read( $offset = 0, $maxLength = PHP_INT_MAX )
+	function read( $offset = 0, $maxLength = null )
 	{
 		$result = parent::read( $offset, $maxLength );
 		$this->log( array( "read", 'offset' => $offset, 'length' => $maxLength ), $result );
