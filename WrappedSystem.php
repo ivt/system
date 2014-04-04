@@ -66,7 +66,7 @@ class WrappedFile extends File
 {
 	private $file;
 
-	function __construct( WrappedSystem $system, $path, File $file )
+	function __construct( System $system, $path, File $file )
 	{
 		parent::__construct( $system, $path );
 		$this->file = $file;

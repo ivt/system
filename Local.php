@@ -18,15 +18,13 @@ class LocalSystem extends System
 
 	static function createLogging()
 	{
-		$self = new self;
+		$self   = new self;
+		$logger = new Logger( function ( $data ) use ( $self )
+		{
+			$self->writeOutput( $data );
+		} );
 
-		return new LoggingSystem(
-			$self,
-			function ( $data ) use ( $self )
-			{
-				$self->writeOutput( $data );
-			}
-		);
+		return new LoggingSystem( $self, $logger );
 	}
 
 	function file( $path )

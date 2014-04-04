@@ -4,18 +4,19 @@ namespace IVT\System;
 
 class LoggingSystem extends WrappedSystem
 {
-	private $logHandler;
+	private $logger;
 
-	function __construct( System $system, \Closure $logHandler )
+	function __construct( System $system, Logger $logger )
 	{
 		parent::__construct( $system );
 
-		$this->logHandler = $logHandler;
+		$this->logger = $logger;
 	}
 
 	protected function runImpl( $command, $input, CommandOutputHandler $output )
 	{
-		$logger = new CommandOutput( $output, $this->logHandler );
+		$logger1 = $this->logger;
+		$logger  = new CommandOutput( $output, function ( $x ) use ( $logger1 ) { $logger1->writeLog( $x ); } );
 		$logger->writeCommand( "$command\n" );
 		$logger->writeInput( $input );
 		$logger->flush();
@@ -24,14 +25,14 @@ class LoggingSystem extends WrappedSystem
 		if ( $exitStatus !== 0 )
 			$logger->writeExitStatus( $exitStatus );
 		$logger->flush();
-		$this->writeLog( "\n" );
+		$logger1->writeLog( "\n" );
 
 		return $exitStatus;
 	}
 
 	function cd( $dir )
 	{
-		$this->log( array( 'cd', $dir ) );
+		$this->logger->log( array( 'cd', $dir ) );
 
 		parent::cd( $dir );
 	}
@@ -39,7 +40,7 @@ class LoggingSystem extends WrappedSystem
 	function pwd()
 	{
 		$result = parent::pwd();
-		$this->log( 'pwd', $result );
+		$this->logger->log( 'pwd', $result );
 
 		return $result;
 	}
@@ -47,27 +48,32 @@ class LoggingSystem extends WrappedSystem
 	function isPortOpen( $host, $port, $timeout )
 	{
 		$result = parent::isPortOpen( $host, $port, $timeout );
-		$this->log( array( 'is port open', 'host' => $host, 'port' => $port, 'timeout' => "{$timeout}s" ), $result );
+		$this->logger->log( array( 'is port open', 'host' => $host, 'port' => $port, 'timeout' => "{$timeout}s" ),
+		                    $result );
 
 		return $result;
 	}
 
-	function writeLog( $data )
-	{
-		$log = $this->logHandler;
-		$log( $data );
-	}
-
 	function wrap( System $system )
 	{
-		return new self( parent::wrap( $system ), $this->logHandler );
+		return new self( parent::wrap( $system ), $this->logger );
 	}
 
 	function file( $path )
 	{
-		return new LoggingFile( $this, $path, parent::file( $path ) );
+		return new LoggingFile( $this, $path, parent::file( $path ), $this->logger );
 	}
 
+	function connectDB( \DatabaseConnectionInfo $dsn )
+	{
+		$this->logger->log( array( 'connect db', $dsn->__toString() ) );
+
+		return new LoggingDB( parent::connectDB( $dsn ), $this->logger );
+	}
+}
+
+class Logger
+{
 	function log( $input, $output = null, $context = null )
 	{
 		$result = self::dump( $input );
@@ -81,34 +87,34 @@ class LoggingSystem extends WrappedSystem
 		$this->writeLog( "$result\n" );
 	}
 
-	static function dump( $value )
+	private static function delimit( array $value )
+	{
+		$result = array();
+		foreach ( $value as $k => $v )
+		{
+			if ( is_int( $k ) )
+				$result[ ] = self::dump( $v );
+			else
+				$result[ ] = self::dump( $k ) . ': ' . self::dump( $v );
+		}
+
+		return join( ', ', $result );
+	}
+
+	private static function dump( $value )
 	{
 		if ( is_array( $value ) )
 		{
-			$delimit = function ( $value )
-			{
-				$result = array();
-				foreach ( $value as $k => $v )
-				{
-					if ( is_int( $k ) )
-						$result[ ] = LoggingSystem::dump( $v );
-					else
-						$result[ ] = LoggingSystem::dump( $k ) . ': ' . LoggingSystem::dump( $v );
-				}
-
-				return join( ', ', $result );
-			};
-
 			if ( count( $value ) > 6 )
 			{
-				$start = $delimit( array_slice( $value, 0, 3 ) );
-				$end   = $delimit( array_slice( $value, -3 ) );
+				$start = self::delimit( array_slice( $value, 0, 3 ) );
+				$end   = self::delimit( array_slice( $value, -3 ) );
 
 				return "[$start ... $end]";
 			}
 			else
 			{
-				return "[{$delimit( $value )}]";
+				return "[" . self::delimit( $value ) . "]";
 			}
 		}
 		else if ( is_bool( $value ) )
@@ -138,16 +144,29 @@ class LoggingSystem extends WrappedSystem
 			throw new \Exception( "Invalid type: " . gettype( $value ) );
 		}
 	}
+
+	private $callback;
+
+	function __construct( \Closure $callback )
+	{
+		$this->callback = $callback;
+	}
+
+	function writeLog( $string )
+	{
+		$callback = $this->callback;
+		$callback( $string );
+	}
 }
 
 class LoggingFile extends WrappedFile
 {
-	private $system;
+	private $logger;
 
-	function __construct( LoggingSystem $system, $path, File $file )
+	function __construct( System $system, $path, File $file, Logger $logger )
 	{
-		$this->system = $system;
 		parent::__construct( $system, $path, $file );
+		$this->logger = $logger;
 	}
 
 	function isFile()
@@ -266,14 +285,58 @@ class LoggingFile extends WrappedFile
 		parent::rmdir();
 	}
 
-	private function log( $input, $output = null )
-	{
-		$this->system->log( $input, $output, $this->path() );
-	}
-
 	function chmod( $mode )
 	{
 		$this->log( array( 'chmod', decoct( $mode ) ) );
 		parent::chmod( $mode );
 	}
+
+	function log( $input, $output = null )
+	{
+		$this->logger->log( $input, $output, $this->path() );
+	}
 }
+
+class LoggingDB extends \Dbase_SQL_Driver_Delegate
+{
+	private $logger;
+
+	function __construct( \Dbase_SQL_Driver_Abstract $driver, Logger $logger )
+	{
+		parent::__construct( $driver );
+		$this->logger = $logger;
+	}
+
+	function query( $sql )
+	{
+		$this->logger->log( array( 'query start', $sql ) );
+
+		$result = parent::query( $sql );
+
+		if ( $result instanceof \Dbase_SQL_Query_Result )
+			$result1 = "{$result->num_rows()} rows";
+		else
+			$result1 = "no result set";
+
+		$this->logger->log( array( 'query end', $result1 ) );
+
+		return $result;
+	}
+
+	function insertId()
+	{
+		$result = parent::insertId();
+		$this->logger->log( 'get insert id', $result );
+
+		return $result;
+	}
+
+	function affectedRows()
+	{
+		$result = parent::affectedRows();
+		$this->logger->log( 'get affected rows', $result );
+
+		return $result;
+	}
+}
+
