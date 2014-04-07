@@ -33,7 +33,9 @@ class SSHSystem extends System
 {
 	const EXIT_CODE_MARKER = "*EXIT CODE: ";
 
-	private $ssh, $sftp, $credentials, $cwd;
+	private $credentials;
+	private $ssh, $sftp, $cwd;
+	private $connected = false;
 	private $outputHandler;
 
 	function credentials() { return $this->credentials; }
@@ -42,6 +44,16 @@ class SSHSystem extends System
 	{
 		$this->credentials   = $credentials;
 		$this->outputHandler = $outputHandler;
+	}
+
+	private function connect()
+	{
+		if ( $this->connected )
+			return;
+
+		$this->connected = true;
+
+		$credentials = $this->credentials;
 
 		$host = $credentials->host();
 		$port = $credentials->port();
@@ -66,6 +78,8 @@ class SSHSystem extends System
 
 	function file( $path )
 	{
+		$this->connect();
+
 		return new SSHFile( $this, $this->sftp, $path );
 	}
 
@@ -100,6 +114,8 @@ class SSHSystem extends System
 	 */
 	private function sshRunCommand( $command, CommandOutputHandler $output )
 	{
+		$this->connect();
+
 		assertNotFalse( $stdOut = ssh2_exec( $this->ssh, $command ) );
 		assertNotFalse( $stdErr = ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
 
@@ -120,6 +136,8 @@ class SSHSystem extends System
 
 	private function wrapCommand( $command, $stdIn = '' )
 	{
+		$this->connect();
+
 		$cwdSh            = self::escapeCmd( $this->cwd );
 		$stdInSh          = self::escapeCmd( $stdIn );
 		$exitCodeMarkerSh = self::escapeCmd( self::EXIT_CODE_MARKER );
@@ -164,6 +182,8 @@ s;
 
 	function pwd()
 	{
+		$this->connect();
+
 		return $this->cwd;
 	}
 
