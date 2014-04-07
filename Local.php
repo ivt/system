@@ -192,9 +192,9 @@ class LocalFile extends File
 		return $result;
 	}
 
-	function read( $offset = 0, $maxLength = PHP_INT_MAX )
+	function read( $offset = 0, $maxLength = null )
 	{
-		if ( $maxLength == PHP_INT_MAX )
+		if ( $maxLength === null )
 		{
 			assertNotFalse( $result = file_get_contents( $this->fsPath(), false, null, $offset ) );
 		}

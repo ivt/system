@@ -3,7 +3,7 @@
 namespace IVT\System;
 
 use IVT\Exception;
-use IVT\str;
+use IVT\StringBuffer;
 
 class SSHCredentials
 {
@@ -180,59 +180,58 @@ s;
 
 class ExitCodeStream extends DelegateOutputHandler
 {
-	private $buffer = '', $marker = SSHSystem::EXIT_CODE_MARKER;
+	/** @var StringBuffer */
+	private $buffer;
+	/** @var StringBuffer */
+	private $marker;
+
+	function __construct( CommandOutputHandler $output )
+	{
+		$this->buffer = new StringBuffer;
+		$this->marker = new StringBuffer( SSHSystem::EXIT_CODE_MARKER );
+
+		parent::__construct( $output );
+	}
 
 	function exitCode()
 	{
-		$buffer = str::mk( $this->buffer );
-		$marker = str::mk( $this->marker );
+		$marker = $this->marker;
+		$buffer = $this->buffer;
 
-		assertEqual( $this->marker, $buffer->take( $marker->len() ) );
+		assertEqual( "$marker", $buffer->remove( $marker->len() ) );
 
-		return $buffer->skip( $marker->len() );
+		return $buffer->removeAll();
 	}
 
 	function writeOutput( $data )
 	{
-		$buffer = str::mk( $this->buffer .= $data );
-		$marker = str::mk( $this->marker );
+		$buffer = $this->buffer;
+		$marker = $this->marker;
 
-		if ( $buffer->contains( $marker, true ) )
+		$buffer->append( $data );
+
+		$markerPos = $buffer->findLast( $marker );
+
+		if ( $markerPos !== false )
 		{
-			// Send data up to the last marker we found.
-			$this->send( $buffer->lastPos( $marker ) );
-
+			parent::writeOutput( $buffer->remove( $markerPos ) );
+			
 			return;
 		}
 
-		// Loop from $buffer->len() - $marker->len() to $buffer->len(), each time checking
-		// if this part of the buffer is the start of a marker.
-		//
-		// Once we reach $buffer->len(), the whole buffer is sent.
+		$pos = max( 0, $buffer->len() - $marker->len() );
 
-		for ( $pos = max( 0, $buffer->len() - $marker->len() ); $pos <= $buffer->len(); $pos++ )
+		for ( ; ; $pos++ )
 		{
-			if ( $marker->startsWith( $buffer->skip( $pos ) ) )
+			if ( $marker->startsWith( $buffer->after( $pos ) ) )
 			{
-				$this->send( $pos );
+				parent::writeOutput( $buffer->remove( $pos ) );
 
 				return;
 			}
 		}
 
 		throw new Exception( "The code above should always return. Why are we here?" );
-	}
-
-	/**
-	 * Send data from the buffer up to $pos.
-	 *
-	 * @param int $pos
-	 */
-	private function send( $pos )
-	{
-		$buffer = str::mk( $this->buffer );
-		parent::writeOutput( $buffer->take( $pos ) );
-		$this->buffer = $buffer->skip( $pos );
 	}
 }
 
@@ -253,11 +252,11 @@ class SSHFile extends File
 		parent::__construct( $system, $path );
 	}
 
-	function read( $offset = 0, $maxLength = PHP_INT_MAX )
+	function read( $offset = 0, $maxLength = null )
 	{
 		clearstatcache( true );
 
-		if ( $maxLength == PHP_INT_MAX )
+		if ( $maxLength === null )
 		{
 			assertNotFalse( $result = file_get_contents( $this->sftpURL(), false, null, $offset ) );
 		}

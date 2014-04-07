@@ -97,7 +97,7 @@ class WrappedFile extends File
 
 	function ctime() { return $this->file->ctime(); }
 
-	function read( $offset = 0, $maxLength = PHP_INT_MAX )
+	function read( $offset = 0, $maxLength = null )
 	{
 		return $this->file->read( $offset, $maxLength );
 	}
