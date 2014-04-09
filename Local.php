@@ -100,6 +100,14 @@ class LocalSystem extends System
 
 class LocalFile extends File
 {
+	private $system;
+
+	function __construct( LocalSystem $system, $path )
+	{
+		parent::__construct( $system, $path );
+		$this->system = $system;
+	}
+
 	function isFile()
 	{
 		clearstatcache( true );
@@ -216,6 +224,12 @@ class LocalFile extends File
 	function append( $contents ) { $this->writeImpl( $contents, 'ab' ); }
 
 	function write( $contents ) { $this->writeImpl( $contents, 'wb' ); }
+
+	protected function renameImpl( $to )
+	{
+		$to = $this->system->file( $to );
+		assertNotFalse( rename( $this->fsPath(), $to->fsPath() ) );
+	}
 
 	private function writeImpl( $data, $mode )
 	{

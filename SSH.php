@@ -424,4 +424,9 @@ class SSHFile extends File
 		/** @noinspection PhpUndefinedFunctionInspection */
 		assertNotFalse( ssh2_sftp_chmod( $this->sftp, $this->absolutePath(), $mode ) );
 	}
+
+	protected function renameImpl( $to )
+	{
+		assertNotFalse( ssh2_sftp_rename( $this->sftp, $this->absolutePath(), $to ) );
+	}
 }

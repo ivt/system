@@ -295,6 +295,12 @@ class LoggingFile extends WrappedFile
 	{
 		$this->logger->log( $input, $output, $this->path() );
 	}
+
+	protected function renameImpl( $to )
+	{
+		$this->logger->log( array( 'rename', 'from' => $this->path(), 'to' => $to ) );
+		parent::renameImpl( $to );
+	}
 }
 
 class LoggingDB extends \Dbase_SQL_Driver_Delegate

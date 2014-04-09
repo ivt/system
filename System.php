@@ -274,6 +274,14 @@ abstract class File
 
 	abstract function rmdir();
 
+	abstract protected function renameImpl( $to );
+
+	final function rename( $to )
+	{
+		$this->renameImpl( $to );
+		$this->path = $to;
+	}
+
 	/**
 	 * @param int $mode
 	 */
