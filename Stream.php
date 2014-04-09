@@ -26,7 +26,7 @@ class LinePrefixStream
 		$this->buffer .= $data;
 		$length = strlen( $this->buffer );
 
-		if ( $length > 5000 || !mb_check_encoding( $this->buffer, 'UTF-8' ) )
+		if ( !mb_check_encoding( $this->buffer, 'UTF-8' ) )
 		{
 			$this->send( "$length bytes\n" );
 			$this->buffer = '';
