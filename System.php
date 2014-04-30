@@ -179,7 +179,10 @@ abstract class System implements CommandOutputHandler, FileSystem
 
 abstract class File
 {
-	private $path, $system;
+	/** @var string */
+	private $path;
+	/** @var FileSystem */
+	private $system;
 
 	function __construct( FileSystem $system, $path )
 	{
