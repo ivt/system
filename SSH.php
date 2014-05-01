@@ -424,4 +424,11 @@ class SSHFile extends File
 		/** @noinspection PhpUndefinedFunctionInspection */
 		assertNotFalse( ssh2_sftp_chmod( $this->sftp, $this->absolutePath(), $mode ) );
 	}
+
+	function realpath()
+	{
+		assertNotFalse( $result = ssh2_sftp_realpath( $this->sftp, $this->absolutePath() ) );
+
+		return $result;
+	}
 }

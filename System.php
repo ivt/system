@@ -282,6 +282,11 @@ abstract class File
 	 */
 	abstract function chmod( $mode );
 
+	/**
+	 * @return string
+	 */
+	abstract function realpath();
+
 	function mkdirIgnore()
 	{
 		if ( !$this->isDir() )

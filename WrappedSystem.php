@@ -111,4 +111,6 @@ class WrappedFile extends File
 	function rmdir() { $this->file->rmdir(); }
 
 	function chmod( $mode ) { $this->file->chmod( $mode ); }
+
+	function realpath() { return $this->file->realpath(); }
 }
