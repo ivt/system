@@ -254,4 +254,11 @@ class LocalFile extends File
 	{
 		assertNotFalse( chmod( $this->fsPath(), $mode ) );
 	}
+
+	function realpath()
+	{
+		assertNotFalse( $result = realpath( $this->path() ) );
+
+		return $result;
+	}
 }

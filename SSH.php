@@ -429,4 +429,11 @@ class SSHFile extends File
 	{
 		assertNotFalse( ssh2_sftp_rename( $this->sftp, $this->absolutePath(), $to ) );
 	}
+
+	function realpath()
+	{
+		assertNotFalse( $result = ssh2_sftp_realpath( $this->sftp, $this->absolutePath() ) );
+
+		return $result;
+	}
 }

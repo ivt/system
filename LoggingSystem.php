@@ -291,6 +291,14 @@ class LoggingFile extends WrappedFile
 		parent::chmod( $mode );
 	}
 
+	function realpath()
+	{
+		$result = parent::realpath();
+		$this->log( 'realpath', $result );
+
+		return $result;
+	}
+
 	function log( $input, $output = null )
 	{
 		$this->logger->log( $input, $output, $this->path() );

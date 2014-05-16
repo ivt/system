@@ -200,6 +200,26 @@ abstract class File
 	}
 
 	/**
+	 * @return string /blah/foo.txt => /blah
+	 */
+	final function dirname() { return pathinfo( $this->path, PATHINFO_DIRNAME ); }
+
+	/**
+	 * @return string /blah/foo.txt => blah.txt
+	 */
+	final function basename() { return pathinfo( $this->path, PATHINFO_BASENAME ); }
+
+	/**
+	 * @return string /blah/foo.txt => txt
+	 */
+	final function extension() { return pathinfo( $this->path, PATHINFO_EXTENSION ); }
+
+	/**
+	 * @return string /blah/foo.txt => foo
+	 */
+	final function filename() { return pathinfo( $this->path, PATHINFO_FILENAME ); }
+
+	/**
 	 * @return bool
 	 */
 	abstract function isFile();
@@ -289,6 +309,11 @@ abstract class File
 	 * @param int $mode
 	 */
 	abstract function chmod( $mode );
+
+	/**
+	 * @return string
+	 */
+	abstract function realpath();
 
 	function mkdirIgnore()
 	{

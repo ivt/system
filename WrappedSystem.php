@@ -113,4 +113,6 @@ class WrappedFile extends File
 	function chmod( $mode ) { $this->file->chmod( $mode ); }
 
 	protected function renameImpl( $to ) { $this->file->renameImpl( $to ); }
+
+	function realpath() { return $this->file->realpath(); }
 }
