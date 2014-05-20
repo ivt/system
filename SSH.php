@@ -60,7 +60,7 @@ class SSHSystem extends System
 
 		$local = new LocalSystem;
 
-		if ( !$local->isPortOpen( $host, $port, 5 ) )
+		if ( !$local->isPortOpen( $host, $port, 20 ) )
 		{
 			throw new Exception( "Port $port is not open on $host" );
 		}
