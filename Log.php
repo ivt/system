@@ -24,15 +24,25 @@ class NullCommandOutputHandler implements CommandOutputHandler
 
 class AccumulateOutputHandler implements CommandOutputHandler
 {
-	private $out = '', $err = '';
+	private $out = '', $err = '', $both = '';
 
-	function writeOutput( $data ) { $this->out .= $data; }
+	function writeOutput( $data )
+	{
+		$this->out .= $data;
+		$this->both .= $data;
+	}
 
-	function writeError( $data ) { $this->err .= $data; }
+	function writeError( $data )
+	{
+		$this->err .= $data;
+		$this->both .= $data;
+	}
 
 	function stdErr() { return $this->err; }
 
 	function stdOut() { return $this->out; }
+
+	function stdBoth() { return $this->both; }
 }
 
 class DelegateOutputHandler implements CommandOutputHandler

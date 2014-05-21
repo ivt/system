@@ -6,17 +6,15 @@ use Symfony\Component\Process\Process;
 
 class CommandOutput extends DelegateOutputHandler
 {
-	private $cmd, $in, $out, $err, $exit;
+	private $cmd, $in, $out;
 
 	function __construct( CommandOutputHandler $output, \Closure $log )
 	{
 		parent::__construct( $output );
 
-		$this->cmd  = new LinePrefixStream( '>>> ', $log );
-		$this->in   = new LinePrefixStream( ' IN ', $log );
-		$this->out  = new LinePrefixStream( '<<< ', $log );
-		$this->err  = new LinePrefixStream( '!!! ', $log );
-		$this->exit = new LinePrefixStream( '=== ', $log );
+		$this->cmd  = new LinePrefixStream( '>>> ', '... ', $log );
+		$this->in   = new LinePrefixStream( ' IN ', ' .. ', $log );
+		$this->out  = new LinePrefixStream( '  ', '  ', $log );
 	}
 
 	function writeCommand( $command )
@@ -29,11 +27,9 @@ class CommandOutput extends DelegateOutputHandler
 		$this->in->write( $stdIn );
 	}
 
-	function writeExitStatus( $exitStatus )
+	static function exitCodeMessage( $exitStatus )
 	{
-		$exitMessage = array_get( Process::$exitCodes, $exitStatus, "Unknown error" );
-
-		$this->exit->write( "$exitStatus $exitMessage\n" );
+		return "$exitStatus " . array_get( Process::$exitCodes, $exitStatus, "Unknown error" );
 	}
 
 	function writeOutput( $data )
@@ -45,7 +41,7 @@ class CommandOutput extends DelegateOutputHandler
 	function writeError( $data )
 	{
 		parent::writeError( $data );
-		$this->err->write( $data );
+		$this->out->write( $data );
 	}
 
 	function flush()
@@ -53,8 +49,6 @@ class CommandOutput extends DelegateOutputHandler
 		$this->cmd->flush();
 		$this->in->flush();
 		$this->out->flush();
-		$this->err->flush();
-		$this->exit->flush();
 	}
 }
 
@@ -122,7 +116,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 		$output   = new AccumulateOutputHandler;
 		$exitCode = $this->runImpl( $command, $stdIn, $output );
 
-		return new CommandResult( $command, $stdIn, $output->stdOut(), $output->stdErr(), $exitCode );
+		return new CommandResult( $command, $stdIn, $output, $exitCode );
 	}
 
 	/**

@@ -4,16 +4,18 @@ namespace IVT\System;
 
 class LinePrefixStream
 {
-	private $buffer = '', $prefix, $delegate;
+	private $buffer = '', $firstPrefix, $prefix, $delegate, $lineNo = 0;
 
 	/**
+	 * @param string   $firstPrefix
 	 * @param string   $prefix
 	 * @param \Closure $delegate
 	 */
-	function __construct( $prefix, \Closure $delegate )
+	function __construct( $firstPrefix, $prefix, \Closure $delegate )
 	{
-		$this->prefix   = $prefix;
-		$this->delegate = $delegate;
+		$this->firstPrefix = $firstPrefix;
+		$this->prefix      = $prefix;
+		$this->delegate    = $delegate;
 	}
 
 	function __destruct()
@@ -24,20 +26,14 @@ class LinePrefixStream
 	function write( $data )
 	{
 		$this->buffer .= $data;
-		$length = strlen( $this->buffer );
+		$lines        = explode( "\n", $this->buffer );
+		$this->buffer = array_pop( $lines );
 
-		if ( !mb_check_encoding( $this->buffer, 'UTF-8' ) )
+		foreach ( $lines as $line )
 		{
-			$this->send( "$length bytes\n" );
-			$this->buffer = '';
-		}
-		else
-		{
-			$lines        = explode( "\n", $this->buffer );
-			$this->buffer = array_pop( $lines );
-
-			foreach ( $lines as $line )
-				$this->send( "$this->prefix$line\n" );
+			$prefix = $this->lineNo == 0 ? $this->firstPrefix : $this->prefix;
+			$this->send( "$prefix$line\n" );
+			$this->lineNo++;
 		}
 	}
 
