@@ -16,12 +16,15 @@ class LocalSystem extends System
 		return true;
 	}
 
-	static function createLogging()
+	static function createLogging( $useStdErr = false )
 	{
 		$self   = new self;
-		$logger = new Logger( function ( $data ) use ( $self )
+		$logger = new Logger( function ( $data ) use ( $self, $useStdErr )
 		{
-			$self->writeOutput( $data );
+			if ( $useStdErr )
+				$self->writeError( $data );
+			else
+				$self->writeOutput( $data );
 		} );
 
 		return new LoggingSystem( $self, $logger );
