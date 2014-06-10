@@ -60,6 +60,11 @@ class WrappedSystem extends System
 	{
 		return $this->system->isPortOpen( $host, $port, $timeout );
 	}
+
+	function describe()
+	{
+		return $this->system->describe();
+	}
 }
 
 class WrappedFile extends File

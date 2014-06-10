@@ -99,6 +99,11 @@ class LocalSystem extends System
 	{
 		assertNotFalse( fwrite( STDERR, $data ) );
 	}
+
+	function describe()
+	{
+		return 'localhost';
+	}
 }
 
 class LocalFile extends File

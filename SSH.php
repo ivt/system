@@ -27,6 +27,8 @@ class SSHCredentials
 	function keyFile() { return $this->privateKeyFile; }
 
 	function keyFilePublic() { return $this->publicKeyFile; }
+
+	function describe() { return "$this->user@$this->host"; }
 }
 
 class SSHSystem extends System
@@ -37,8 +39,6 @@ class SSHSystem extends System
 	private $ssh, $sftp, $cwd;
 	private $connected = false;
 	private $outputHandler;
-
-	function credentials() { return $this->credentials; }
 
 	function __construct( SSHCredentials $credentials, CommandOutputHandler $outputHandler )
 	{
@@ -195,6 +195,11 @@ s;
 	function writeError( $data )
 	{
 		$this->outputHandler->writeError( $data );
+	}
+
+	function describe()
+	{
+		return $this->credentials->describe();
 	}
 }
 

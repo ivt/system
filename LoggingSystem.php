@@ -10,6 +10,8 @@ class LoggingSystem extends WrappedSystem
 	{
 		parent::__construct( $system );
 
+		$logger->log( array( 'new', $this->describe() ) );
+
 		$this->logger = $logger;
 	}
 

@@ -169,6 +169,11 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 * applies the same wrapping to the given system.
 	 */
 	function wrap( System $system ) { return $system; }
+
+	/**
+	 * @return string
+	 */
+	abstract function describe();
 }
 
 abstract class File
