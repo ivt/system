@@ -326,7 +326,7 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 
 		$result = parent::query( $sql );
 
-		if ( $result instanceof \Dbase_SQL_Query_Result )
+		if ( $result instanceof \Dbase_SQL_Query_Result_Select )
 			$result1 = "{$result->num_rows()} rows";
 		else
 			$result1 = "no result set";
