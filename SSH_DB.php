@@ -157,11 +157,11 @@ class SSHForwardedPort
 		// I don't know why but just checking $process->isRunning() &&
 		// $this->isPortOpen() succeeds sometimes even when the port hasn't
 		// been forwarded yet. So instead, the port must appear to be
-		// successfully forwarded at least 4 times in a row with a 0.1s
+		// successfully forwarded at least 4 times in a row with a 0.01s
 		// interval.
 		for ( $i = 0; $i < 4; $this->isPortOpen() ? $i++ : $i = 0 )
 		{
-			usleep( 100000 );
+			usleep( 10000 );
 
 			if ( !$process->isRunning() )
 			{
