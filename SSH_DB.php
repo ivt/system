@@ -18,14 +18,14 @@ class SSHDBConnection extends \Dbase_SQL_Driver
 	private $forwardedPort;
 
 	/**
-	 * @param SSHCredentials         $ssh
+	 * @param SSHForwardedPorts      $ssh
 	 * @param DatabaseConnectionInfo $dsn
 	 *
 	 * @throws DbaseConnectionFailed
 	 */
-	function __construct( SSHCredentials $ssh, DatabaseConnectionInfo $dsn )
+	function __construct( SSHForwardedPorts $ssh, DatabaseConnectionInfo $dsn )
 	{
-		$this->forwardedPort = new SSHForwardedPort( $ssh, $dsn->host(), $dsn->port() ? : '3306' );
+		$this->forwardedPort = $ssh->forward( $dsn->host(), $dsn->port() ? : '3306' );
 
 		try
 		{
@@ -41,6 +41,28 @@ class SSHDBConnection extends \Dbase_SQL_Driver
 
 			throw new DbaseConnectionFailed( $e->getMessage(), $e->getCode(), $e2 );
 		}
+	}
+}
+
+class SSHForwardedPorts
+{
+	/** @var SSHCredentials */
+	private $credentials;
+	private $forwardedPorts = array();
+
+	function __construct( SSHCredentials $ssh )
+	{
+		$this->credentials = $ssh;
+	}
+
+	function forward( $remoteHost, $reportPort )
+	{
+		$forwarded =& $this->forwardedPorts[ $remoteHost ][ $reportPort ];
+
+		if ( !$forwarded )
+			$forwarded = new SSHForwardedPort( $this->credentials, $remoteHost, $reportPort );
+
+		return $forwarded;
 	}
 }
 

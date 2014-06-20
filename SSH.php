@@ -35,15 +35,25 @@ class SSHSystem extends System
 {
 	const EXIT_CODE_MARKER = "*EXIT CODE: ";
 
+	/** @var SSHCredentials */
 	private $credentials;
-	private $ssh, $sftp, $cwd;
+	/** @var resource */
+	private $ssh;
+	/** @var resource */
+	private $sftp;
+	/** @var string */
+	private $cwd;
 	private $connected = false;
+	/** @var CommandOutputHandler */
 	private $outputHandler;
+	/** @var  SSHForwardedPorts */
+	private $forwardedPorts;
 
 	function __construct( SSHCredentials $credentials, CommandOutputHandler $outputHandler )
 	{
-		$this->credentials   = $credentials;
-		$this->outputHandler = $outputHandler;
+		$this->credentials    = $credentials;
+		$this->outputHandler  = $outputHandler;
+		$this->forwardedPorts = new SSHForwardedPorts( $credentials );
 	}
 
 	private function connect()
@@ -100,7 +110,7 @@ class SSHSystem extends System
 
 	function connectDB( \DatabaseConnectionInfo $dsn )
 	{
-		return new SSHDBConnection( $this->credentials, $dsn );
+		return new SSHDBConnection( $this->forwardedPorts, $dsn );
 	}
 
 	function time()
