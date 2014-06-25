@@ -270,7 +270,7 @@ class ExitCodeStream extends DelegateOutputHandler
 	}
 }
 
-class SSHFile extends File
+class SSHFile extends FOpenWrapperFile
 {
 	private $sftp, $system;
 
@@ -287,105 +287,29 @@ class SSHFile extends File
 		parent::__construct( $system, $path );
 	}
 
-	function read( $offset = 0, $maxLength = null )
-	{
-		clearstatcache( true );
-
-		if ( $maxLength === null )
-		{
-			assertNotFalse( $result = file_get_contents( $this->sftpURL(), false, null, $offset ) );
-		}
-		else
-		{
-			assertNotFalse( $result = file_get_contents( $this->sftpURL(), false, null, $offset, $maxLength ) );
-		}
-
-		return $result;
-	}
-
-	function isFile()
-	{
-		clearstatcache( true );
-
-		return is_file( $this->sftpURL() );
-	}
-
-	function scandir()
-	{
-		clearstatcache( true );
-
-		assertNotFalse( $result = scandir( $this->sftpURL() ) );
-
-		return $result;
-	}
-
-	function isDir()
-	{
-		clearstatcache( true );
-
-		return is_dir( $this->sftpURL() );
-	}
-
 	function mkdir( $mode = 0777, $recursive = false )
 	{
-		assertNotFalse( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ) );
-	}
-
-	function isLink()
-	{
-		clearstatcache( true );
-
-		return is_link( $this->sftpURL() );
+		assertEqual( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ), true );
 	}
 
 	function readlink()
 	{
-		assertNotFalse( $result = ssh2_sftp_readlink( $this->sftp, $this->absolutePath() ) );
+		assert( is_string( $result = ssh2_sftp_readlink( $this->sftp, $this->absolutePath() ) ) );
 
 		return $result;
 	}
 
-	function exists()
-	{
-		clearstatcache( true );
-
-		return file_exists( $this->sftpURL() );
-	}
-
-	function size()
-	{
-		clearstatcache( true );
-
-		assertNotFalse( $size = filesize( $this->sftpURL() ) );
-
-		return $size;
-	}
-
 	function unlink()
 	{
-		assertNotFalse( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ) );
-	}
-
-	function mtime()
-	{
-		clearstatcache( true );
-
-		assertNotFalse( $mtime = filemtime( $this->sftpURL() ) );
-
-		return $mtime;
+		assertEqual( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ), true );
 	}
 
 	function ctime()
 	{
 		// ctime is not supported over SFTP2, so we run a command to get it instead.
-		$stdout = $this->system->exec( "stat -c %Z " . SSHSystem::escapeCmd( $this->path() ) );
+		$stdout = $this->system->execArgs( array( 'stat', '-c', '%Z', $this->path() ) );
 
 		return (int) substr( $stdout, 0, -1 );
-	}
-
-	function rmdir()
-	{
-		assertNotFalse( rmdir( $this->sftpURL() ) );
 	}
 
 	function append( $contents ) { $this->writeImpl( $contents, true, false ); }
@@ -409,13 +333,13 @@ class SSHFile extends File
 		else
 			$mode = 'wb';
 
-		assertNotFalse( $handle = fopen( $this->sftpURL(), $mode ) );
+		assert( is_resource( $handle = fopen( $this->url(), $mode ) ) );
 
 		if ( $append )
 			assertEqual( fseek( $handle, 0, SEEK_END ), 0 );
 
 		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
-		assertNotFalse( fclose( $handle ) );
+		assertEqual( fclose( $handle ), true );
 	}
 
 	private function absolutePath()
@@ -428,12 +352,7 @@ class SSHFile extends File
 		return starts_with( $path, '/' ) ? $path : $this->system->pwd() . '/' . $path;
 	}
 
-	private function sftpURL()
-	{
-		return $this->sftpURL1( $this->path() );
-	}
-
-	private function sftpURL1( $path )
+	protected function pathToUrl( $path )
 	{
 		return "ssh2.sftp://$this->sftp{$this->absolutePath1( $path )}";
 	}
@@ -441,23 +360,18 @@ class SSHFile extends File
 	function chmod( $mode )
 	{
 		/** @noinspection PhpUndefinedFunctionInspection */
-		assertNotFalse( ssh2_sftp_chmod( $this->sftp, $this->absolutePath(), $mode ) );
+		assertEqual( ssh2_sftp_chmod( $this->sftp, $this->absolutePath(), $mode ), true );
 	}
 
 	protected function renameImpl( $to )
 	{
-		assertNotFalse( ssh2_sftp_rename( $this->sftp, $this->absolutePath(), $to ) );
+		assertEqual( ssh2_sftp_rename( $this->sftp, $this->absolutePath(), $to ), true );
 	}
 
 	function realpath()
 	{
-		assertNotFalse( $result = ssh2_sftp_realpath( $this->sftp, $this->absolutePath() ) );
+		assert( is_string( $result = ssh2_sftp_realpath( $this->sftp, $this->absolutePath() ) ) );
 
 		return $result;
-	}
-
-	function copy( $dest )
-	{
-		assertNotFalse( copy( $this->sftpURL(), $this->sftpURL1( $dest ) ) );
 	}
 }

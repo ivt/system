@@ -331,3 +331,143 @@ abstract class File
 	}
 }
 
+abstract class FOpenWrapperFile extends File
+{
+	function isFile()
+	{
+		clearstatcache( true );
+
+		return is_file( $this->url() );
+	}
+
+	function isExecutable()
+	{
+		clearstatcache( true );
+
+		return is_executable( $this->url() );
+	}
+
+	function isDir()
+	{
+		clearstatcache( true );
+
+		return is_dir( $this->url() );
+	}
+
+	function mkdir( $mode = 0777, $recursive = false )
+	{
+		clearstatcache( true );
+
+		assertEqual( mkdir( $this->url(), $mode, $recursive ), true );
+	}
+
+	function isLink()
+	{
+		clearstatcache( true );
+
+		return is_link( $this->url() );
+	}
+
+	function exists()
+	{
+		clearstatcache( true );
+
+		return file_exists( $this->url() );
+	}
+
+	function size()
+	{
+		clearstatcache( true );
+
+		assert( is_int( $size = filesize( $this->url() ) ) );
+
+		return $size;
+	}
+
+	function unlink()
+	{
+		clearstatcache( true );
+
+		assertEqual( unlink( $this->url() ), true );
+	}
+
+	function ctime()
+	{
+		clearstatcache( true );
+
+		assert( is_int( $result = filectime( $this->url() ) ) );
+
+		return $result;
+	}
+
+	function rmdir()
+	{
+		assertEqual( rmdir( $this->url() ), true );
+	}
+
+	protected function renameImpl( $to )
+	{
+		assertEqual( rename( $this->url(), $this->pathToUrl( $to ) ), true );
+	}
+
+	function copy( $dest )
+	{
+		assertEqual( copy( $this->url(), $this->pathToUrl( $dest ) ), true );
+	}
+
+	function create( $contents ) { $this->writeImpl( $contents, 'xb' ); }
+
+	function append( $contents ) { $this->writeImpl( $contents, 'ab' ); }
+
+	function write( $contents ) { $this->writeImpl( $contents, 'wb' ); }
+
+	function read( $offset = 0, $maxLength = null )
+	{
+		clearstatcache( true );
+
+		if ( $maxLength === null )
+		{
+			assert( is_string( $result = file_get_contents( $this->url(), false, null, $offset ) ) );
+		}
+		else
+		{
+			assert( is_string( $result = file_get_contents( $this->url(), false, null, $offset, $maxLength ) ) );
+		}
+
+		return $result;
+	}
+
+	function scandir()
+	{
+		clearstatcache( true );
+
+		assert( is_array( $result = scandir( $this->url() ) ) );
+
+		return $result;
+	}
+
+	function mtime()
+	{
+		clearstatcache( true );
+
+		assert( is_int( $mtime = filemtime( $this->url() ) ) );
+
+		return $mtime;
+	}
+
+	private function writeImpl( $data, $mode )
+	{
+		assert( is_resource( $handle = fopen( $this->url(), $mode ) ) );
+		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
+		assertEqual( fclose( $handle ), true );
+	}
+
+	/**
+	 * @param string $path
+	 * @return string
+	 */
+	abstract protected function pathToUrl( $path );
+
+	protected function url() { return $this->pathToUrl( $this->path() ); }
+}
+

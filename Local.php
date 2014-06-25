@@ -106,7 +106,7 @@ class LocalSystem extends System
 	}
 }
 
-class LocalFile extends File
+class LocalFile extends FOpenWrapperFile
 {
 	private $system;
 
@@ -116,142 +116,16 @@ class LocalFile extends File
 		$this->system = $system;
 	}
 
-	function isFile()
-	{
-		clearstatcache( true );
-
-		return is_file( $this->fsPath() );
-	}
-
-	function is_executable()
-	{
-		clearstatcache( true );
-
-		return is_executable( $this->fsPath() );
-	}
-
-	function scandir()
-	{
-		assertNotFalse( $result = scandir( $this->fsPath() ) );
-
-		return $result;
-	}
-
-	function isDir()
-	{
-		clearstatcache( true );
-
-		return is_dir( $this->fsPath() );
-	}
-
-	function mkdir( $mode = 0777, $recursive = false )
-	{
-		clearstatcache( true );
-
-		assertNotFalse( mkdir( $this->fsPath(), $mode, $recursive ) );
-	}
-
-	function isLink()
-	{
-		clearstatcache( true );
-
-		return is_link( $this->fsPath() );
-	}
-
 	function readlink()
 	{
 		clearstatcache( true );
 
-		assertNotFalse( $result = readlink( $this->fsPath() ) );
+		assert( is_string( $result = readlink( $this->path() ) ) );
 
 		return $result;
 	}
 
-	function exists()
-	{
-		clearstatcache( true );
-
-		return file_exists( $this->fsPath() );
-	}
-
-	function size()
-	{
-		clearstatcache( true );
-
-		assertNotFalse( $size = filesize( $this->fsPath() ) );
-
-		return $size;
-	}
-
-	function unlink()
-	{
-		clearstatcache( true );
-
-		assertNotFalse( unlink( $this->fsPath() ) );
-	}
-
-	function mtime()
-	{
-		clearstatcache( true );
-
-		assertNotFalse( $result = filemtime( $this->fsPath() ) );
-
-		return $result;
-	}
-
-	function ctime()
-	{
-		clearstatcache( true );
-
-		assertNotFalse( $result = filectime( $this->fsPath() ) );
-
-		return $result;
-	}
-
-	function read( $offset = 0, $maxLength = null )
-	{
-		if ( $maxLength === null )
-		{
-			assertNotFalse( $result = file_get_contents( $this->fsPath(), false, null, $offset ) );
-		}
-		else
-		{
-			assertNotFalse( $result = file_get_contents( $this->fsPath(), false, null, $offset, $maxLength ) );
-		}
-
-		return $result;
-	}
-
-	function rmdir()
-	{
-		assertNotFalse( rmdir( $this->fsPath() ) );
-	}
-
-	function create( $contents ) { $this->writeImpl( $contents, 'xb' ); }
-
-	function append( $contents ) { $this->writeImpl( $contents, 'ab' ); }
-
-	function write( $contents ) { $this->writeImpl( $contents, 'wb' ); }
-
-	protected function renameImpl( $to )
-	{
-		$to = $this->system->file( $to );
-		assertNotFalse( rename( $this->fsPath(), $to->fsPath() ) );
-	}
-
-	private function writeImpl( $data, $mode )
-	{
-		assertNotFalse( $handle = fopen( $this->fsPath(), $mode ) );
-		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
-		assertNotFalse( fclose( $handle ) );
-	}
-
-	private function fsPath()
-	{
-		return $this->fsPath1( $this->path() );
-	}
-
-	private function fsPath1( $path )
+	protected function pathToUrl( $path )
 	{
 		$isAbsolute = \PCRE::create( '^(/|\w:|' . \PCRE::quote( '\\' ) . ')' )->wholeString()->matches( $path );
 
@@ -260,18 +134,13 @@ class LocalFile extends File
 
 	function chmod( $mode )
 	{
-		assertNotFalse( chmod( $this->fsPath(), $mode ) );
+		assertEqual( chmod( $this->path(), $mode ), true );
 	}
 
 	function realpath()
 	{
-		assertNotFalse( $result = realpath( $this->path() ) );
+		assert( is_string( $result = realpath( $this->path() ) ) );
 
 		return $result;
-	}
-
-	function copy( $dest )
-	{
-		assertNotFalse( copy( $this->fsPath(), $this->fsPath1( $dest ) ) );
 	}
 }
