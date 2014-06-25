@@ -127,9 +127,10 @@ class LocalFile extends FOpenWrapperFile
 
 	protected function pathToUrl( $path )
 	{
-		$isAbsolute = \PCRE::create( '^(/|\w:|' . \PCRE::quote( '\\' ) . ')' )->wholeString()->matches( $path );
-
-		return $isAbsolute ? $path : '.' . DIRECTORY_SEPARATOR . $path;
+		if ( DIRECTORY_SEPARATOR === '\\' )
+			return \PCRE::create( '^([A-Za-z]:\\\\|\\\\\\\\|\\\\)' )->wholeString()->matches( $path ) ? $path : ".\\$path";
+		else
+			return starts_with( $path, '/' ) ? $path : "./$path";
 	}
 
 	function chmod( $mode )
