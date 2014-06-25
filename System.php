@@ -204,7 +204,7 @@ abstract class File
 	final function dirname() { return pathinfo( $this->path, PATHINFO_DIRNAME ); }
 
 	/**
-	 * @return string /blah/foo.txt => blah.txt
+	 * @return string /blah/foo.txt => foo.txt
 	 */
 	final function basename() { return pathinfo( $this->path, PATHINFO_BASENAME ); }
 
@@ -217,6 +217,12 @@ abstract class File
 	 * @return string /blah/foo.txt => foo
 	 */
 	final function filename() { return pathinfo( $this->path, PATHINFO_FILENAME ); }
+
+	/**
+	 * @param string $dest
+	 * @return void
+	 */
+	abstract function copy( $dest );
 
 	/**
 	 * @return bool
@@ -236,6 +242,7 @@ abstract class File
 	/**
 	 * @param int  $mode
 	 * @param bool $recursive
+	 * @return void
 	 */
 	abstract function mkdir( $mode = 0777, $recursive = false );
 
@@ -274,23 +281,25 @@ abstract class File
 	/**
 	 * @param int      $offset
 	 * @param int|null $maxLength
-	 *
 	 * @return string
 	 */
 	abstract function read( $offset = 0, $maxLength = null );
 
 	/**
 	 * @param string $contents
+	 * @return void
 	 */
 	abstract function write( $contents );
 
 	/**
 	 * @param string $contents
+	 * @return void
 	 */
 	abstract function create( $contents );
 
 	/**
 	 * @param string $contents
+	 * @return void
 	 */
 	abstract function append( $contents );
 
@@ -306,6 +315,7 @@ abstract class File
 
 	/**
 	 * @param int $mode
+	 * @return void
 	 */
 	abstract function chmod( $mode );
 

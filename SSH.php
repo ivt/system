@@ -420,18 +420,22 @@ class SSHFile extends File
 
 	private function absolutePath()
 	{
-		$path = $this->path();
+		return $this->absolutePath1( $this->path() );
+	}
 
+	private function absolutePath1( $path )
+	{
 		return starts_with( $path, '/' ) ? $path : $this->system->pwd() . '/' . $path;
 	}
 
 	private function sftpURL()
 	{
-		$result = "ssh2.sftp://$this->sftp{$this->absolutePath()}";
+		return $this->sftpURL1( $this->path() );
+	}
 
-		clearstatcache( true );
-
-		return $result;
+	private function sftpURL1( $path )
+	{
+		return "ssh2.sftp://$this->sftp{$this->absolutePath1( $path )}";
 	}
 
 	function chmod( $mode )
@@ -450,5 +454,10 @@ class SSHFile extends File
 		assertNotFalse( $result = ssh2_sftp_realpath( $this->sftp, $this->absolutePath() ) );
 
 		return $result;
+	}
+
+	function copy( $dest )
+	{
+		assertNotFalse( copy( $this->sftpURL(), $this->sftpURL1( $dest ) ) );
 	}
 }

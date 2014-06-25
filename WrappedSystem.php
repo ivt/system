@@ -120,4 +120,6 @@ class WrappedFile extends File
 	protected function renameImpl( $to ) { $this->file->renameImpl( $to ); }
 
 	function realpath() { return $this->file->realpath(); }
+
+	function copy( $dest ) { $this->file->copy( $dest ); }
 }

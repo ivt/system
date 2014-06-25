@@ -248,14 +248,14 @@ class LocalFile extends File
 
 	private function fsPath()
 	{
-		$path = $this->path();
-
-		return $this->isPathAbsolute() ? $path : '.' . DIRECTORY_SEPARATOR . $path;
+		return $this->fsPath1( $this->path() );
 	}
 
-	private function isPathAbsolute()
+	private function fsPath1( $path )
 	{
-		return \PCRE::create( '^(/|\w:|' . \PCRE::quote( '\\' ) . ')' )->wholeString()->matches( $this->path() );
+		$isAbsolute = \PCRE::create( '^(/|\w:|' . \PCRE::quote( '\\' ) . ')' )->wholeString()->matches( $path );
+
+		return $isAbsolute ? $path : '.' . DIRECTORY_SEPARATOR . $path;
 	}
 
 	function chmod( $mode )
@@ -268,5 +268,10 @@ class LocalFile extends File
 		assertNotFalse( $result = realpath( $this->path() ) );
 
 		return $result;
+	}
+
+	function copy( $dest )
+	{
+		assertNotFalse( copy( $this->fsPath(), $this->fsPath1( $dest ) ) );
 	}
 }
