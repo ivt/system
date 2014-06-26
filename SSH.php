@@ -2,6 +2,7 @@
 
 namespace IVT\System;
 
+use IVT\Assert;
 use IVT\Exception;
 use IVT\StringBuffer;
 
@@ -75,15 +76,15 @@ class SSHSystem extends System
 			throw new Exception( "Port $port is not open on $host" );
 		}
 
-		assertNotFalse( $this->ssh = ssh2_connect( $host, $port ), "Connection failed" );
+		Assert::resource( $this->ssh = ssh2_connect( $host, $port ) );
 
-		assertNotFalse( ssh2_auth_pubkey_file( $this->ssh,
-		                                       $credentials->user(),
-		                                       $credentials->keyFilePublic(),
-		                                       $credentials->keyFile() ), "authentication failed" );
+		Assert::true( ssh2_auth_pubkey_file( $this->ssh,
+		                                   $credentials->user(),
+		                                   $credentials->keyFilePublic(),
+		                                   $credentials->keyFile() ) );
 
-		assertNotFalse( $this->sftp = ssh2_sftp( $this->ssh ), "Failed to get SFTP subsystem" );
-		assertNotFalse( $this->cwd = substr( $this->exec( 'pwd' ), 0, -1 ) );
+		Assert::resource( $this->sftp = ssh2_sftp( $this->ssh ) );
+		Assert::string( $this->cwd = substr( $this->exec( 'pwd' ), 0, -1 ) );
 	}
 
 	function file( $path )
@@ -126,11 +127,11 @@ class SSHSystem extends System
 	{
 		$this->connect();
 
-		assertNotFalse( $stdOut = ssh2_exec( $this->ssh, $command ) );
-		assertNotFalse( $stdErr = ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
+		Assert::resource( $stdOut = ssh2_exec( $this->ssh, $command ) );
+		Assert::resource( $stdErr = ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
 
-		assertNotFalse( stream_set_blocking( $stdOut, false ) );
-		assertNotFalse( stream_set_blocking( $stdErr, false ) );
+		Assert::true( stream_set_blocking( $stdOut, false ) );
+		Assert::true( stream_set_blocking( $stdErr, false ) );
 
 		$stdErrDone = false;
 		$stdOutDone = false;
@@ -163,7 +164,7 @@ s;
 
 	private function readStream( $resource, CommandOutputHandler $output, $isError )
 	{
-		assertNotFalse( $data = fread( $resource, 8192 ) );
+		Assert::string( $data = fread( $resource, 8192 ) );
 
 		if ( !$isError )
 			$output->writeOutput( $data );
@@ -174,10 +175,9 @@ s;
 		{
 			// For some reason, with SSH2, we have to set the stream to blocking mode and call
 			// fread() again, otherwise the next call to ssh2_exec() will fail.
-			assertNotFalse( stream_set_blocking( $resource, true ) );
-			assertNotFalse( $data = fread( $resource, 8192 ) );
-			assertEqual( $data, '' );
-			assertNotFalse( fclose( $resource ) );
+			Assert::true( stream_set_blocking( $resource, true ) );
+			Assert::equal( fread( $resource, 8192 ), '' );
+			Assert::true( fclose( $resource ) );
 
 			return true;
 		}
@@ -233,7 +233,7 @@ class ExitCodeStream extends DelegateOutputHandler
 		$marker = $this->marker;
 		$buffer = $this->buffer;
 
-		assertEqual( "$marker", $buffer->remove( $marker->len() ) );
+		Assert::equal( "$marker", $buffer->remove( $marker->len() ) );
 
 		return $buffer->removeAll();
 	}
@@ -289,19 +289,17 @@ class SSHFile extends FOpenWrapperFile
 
 	function mkdir( $mode = 0777, $recursive = false )
 	{
-		assertEqual( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ), true );
+		Assert::true( ssh2_sftp_mkdir( $this->sftp, $this->absolutePath(), $mode, $recursive ) );
 	}
 
 	function readlink()
 	{
-		assert( is_string( $result = ssh2_sftp_readlink( $this->sftp, $this->absolutePath() ) ) );
-
-		return $result;
+		return Assert::string( ssh2_sftp_readlink( $this->sftp, $this->absolutePath() ) );
 	}
 
 	function unlink()
 	{
-		assertEqual( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ), true );
+		Assert::true( ssh2_sftp_unlink( $this->sftp, $this->absolutePath() ) );
 	}
 
 	function ctime()
@@ -333,13 +331,13 @@ class SSHFile extends FOpenWrapperFile
 		else
 			$mode = 'wb';
 
-		assert( is_resource( $handle = fopen( $this->url(), $mode ) ) );
+		Assert::resource( $handle = fopen( $this->url(), $mode ) );
 
 		if ( $append )
-			assertEqual( fseek( $handle, 0, SEEK_END ), 0 );
+			Assert::equal( fseek( $handle, 0, SEEK_END ), 0 );
 
-		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
-		assertEqual( fclose( $handle ), true );
+		Assert::equal( fwrite( $handle, $data ), strlen( $data ) );
+		Assert::true( fclose( $handle ) );
 	}
 
 	private function absolutePath()
@@ -360,18 +358,16 @@ class SSHFile extends FOpenWrapperFile
 	function chmod( $mode )
 	{
 		/** @noinspection PhpUndefinedFunctionInspection */
-		assertEqual( ssh2_sftp_chmod( $this->sftp, $this->absolutePath(), $mode ), true );
+		Assert::true( ssh2_sftp_chmod( $this->sftp, $this->absolutePath(), $mode ) );
 	}
 
 	protected function renameImpl( $to )
 	{
-		assertEqual( ssh2_sftp_rename( $this->sftp, $this->absolutePath(), $to ), true );
+		Assert::true( ssh2_sftp_rename( $this->sftp, $this->absolutePath(), $to ) );
 	}
 
 	function realpath()
 	{
-		assert( is_string( $result = ssh2_sftp_realpath( $this->sftp, $this->absolutePath() ) ) );
-
-		return $result;
+		return Assert::string( ssh2_sftp_realpath( $this->sftp, $this->absolutePath() ) );
 	}
 }

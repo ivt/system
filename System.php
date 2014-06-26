@@ -2,6 +2,7 @@
 
 namespace IVT\System;
 
+use IVT\Assert;
 use Symfony\Component\Process\Process;
 
 class CommandOutput extends DelegateOutputHandler
@@ -358,7 +359,7 @@ abstract class FOpenWrapperFile extends File
 	{
 		clearstatcache( true );
 
-		assertEqual( mkdir( $this->url(), $mode, $recursive ), true );
+		Assert::true( mkdir( $this->url(), $mode, $recursive ) );
 	}
 
 	function isLink()
@@ -379,40 +380,36 @@ abstract class FOpenWrapperFile extends File
 	{
 		clearstatcache( true );
 
-		assert( is_int( $size = filesize( $this->url() ) ) );
-
-		return $size;
+		return Assert::int( filesize( $this->url() ) );
 	}
 
 	function unlink()
 	{
 		clearstatcache( true );
 
-		assertEqual( unlink( $this->url() ), true );
+		Assert::true( unlink( $this->url() ) );
 	}
 
 	function ctime()
 	{
 		clearstatcache( true );
 
-		assert( is_int( $result = filectime( $this->url() ) ) );
-
-		return $result;
+		return Assert::int( filectime( $this->url() ) );
 	}
 
 	function rmdir()
 	{
-		assertEqual( rmdir( $this->url() ), true );
+		Assert::true( rmdir( $this->url() ) );
 	}
 
 	protected function renameImpl( $to )
 	{
-		assertEqual( rename( $this->url(), $this->pathToUrl( $to ) ), true );
+		Assert::true( rename( $this->url(), $this->pathToUrl( $to ) ) );
 	}
 
 	function copy( $dest )
 	{
-		assertEqual( copy( $this->url(), $this->pathToUrl( $dest ) ), true );
+		Assert::true( copy( $this->url(), $this->pathToUrl( $dest ) ) );
 	}
 
 	function create( $contents ) { $this->writeImpl( $contents, 'xb' ); }
@@ -427,39 +424,33 @@ abstract class FOpenWrapperFile extends File
 
 		if ( $maxLength === null )
 		{
-			assert( is_string( $result = file_get_contents( $this->url(), false, null, $offset ) ) );
+			return Assert::string( file_get_contents( $this->url(), false, null, $offset ) );
 		}
 		else
 		{
-			assert( is_string( $result = file_get_contents( $this->url(), false, null, $offset, $maxLength ) ) );
+			return Assert::string( file_get_contents( $this->url(), false, null, $offset, $maxLength ) );
 		}
-
-		return $result;
 	}
 
 	function scandir()
 	{
 		clearstatcache( true );
 
-		assert( is_array( $result = scandir( $this->url() ) ) );
-
-		return $result;
+		return Assert::isArray( scandir( $this->url() ) );
 	}
 
 	function mtime()
 	{
 		clearstatcache( true );
 
-		assert( is_int( $mtime = filemtime( $this->url() ) ) );
-
-		return $mtime;
+		return Assert::int( filemtime( $this->url() ) );
 	}
 
 	private function writeImpl( $data, $mode )
 	{
-		assert( is_resource( $handle = fopen( $this->url(), $mode ) ) );
-		assertEqual( fwrite( $handle, $data ), strlen( $data ) );
-		assertEqual( fclose( $handle ), true );
+		Assert::resource( $handle = fopen( $this->url(), $mode ) );
+		Assert::equal( fwrite( $handle, $data ), strlen( $data ) );
+		Assert::true( fclose( $handle ) );
 	}
 
 	/**

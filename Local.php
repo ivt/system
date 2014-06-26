@@ -2,6 +2,7 @@
 
 namespace IVT\System;
 
+use IVT\Assert;
 use Symfony\Component\Process\Process;
 
 class LocalSystem extends System
@@ -80,24 +81,22 @@ class LocalSystem extends System
 
 	function cd( $dir )
 	{
-		assertNotFalse( chdir( $dir ) );
+		Assert::true( chdir( $dir ) );
 	}
 
 	function pwd()
 	{
-		assertNotFalse( $result = getcwd() );
-
-		return $result;
+		return Assert::string( getcwd() );
 	}
 
 	function writeOutput( $data )
 	{
-		assertNotFalse( fwrite( STDOUT, $data ) );
+		Assert::equal( fwrite( STDOUT, $data ), strlen( $data ) );
 	}
 
 	function writeError( $data )
 	{
-		assertNotFalse( fwrite( STDERR, $data ) );
+		Assert::equal( fwrite( STDERR, $data ), strlen( $data ) );
 	}
 
 	function describe()
@@ -120,9 +119,7 @@ class LocalFile extends FOpenWrapperFile
 	{
 		clearstatcache( true );
 
-		assert( is_string( $result = readlink( $this->path() ) ) );
-
-		return $result;
+		return Assert::string( readlink( $this->path() ) );
 	}
 
 	protected function pathToUrl( $path )
@@ -135,13 +132,11 @@ class LocalFile extends FOpenWrapperFile
 
 	function chmod( $mode )
 	{
-		assertEqual( chmod( $this->path(), $mode ), true );
+		Assert::true( chmod( $this->path(), $mode ) );
 	}
 
 	function realpath()
 	{
-		assert( is_string( $result = realpath( $this->path() ) ) );
-
-		return $result;
+		return Assert::string( realpath( $this->path() ) );
 	}
 }
