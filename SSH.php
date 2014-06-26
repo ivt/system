@@ -310,13 +310,13 @@ class SSHFile extends FOpenWrapperFile
 		return (int) substr( $stdout, 0, -1 );
 	}
 
-	function append( $contents ) { $this->writeImpl( $contents, true, false ); }
+	function append( $contents ) { $this->_write( $contents, true, false ); }
 
-	function create( $contents ) { $this->writeImpl( $contents, false, true ); }
+	function create( $contents ) { $this->_write( $contents, false, true ); }
 
-	function write( $contents ) { $this->writeImpl( $contents, false, false ); }
+	function write( $contents ) { $this->_write( $contents, false, false ); }
 
-	private function writeImpl( $data, $append, $bailIfExists )
+	private function _write( $data, $append, $bailIfExists )
 	{
 		// In the case of append, 'a' doesn't work, so we need to open the file and seek to the end instead.
 		// If the file exists, 'w' will truncate it, and 'x' will throw an error. 'c' is not supported by the library.
