@@ -31,6 +31,13 @@ class LocalSystem extends System
 		return new LoggingSystem( $self, $logger );
 	}
 
+	private $outputHandler;
+
+	function __construct()
+	{
+		$this->outputHandler = PHP_SAPI === 'cli' ? new CLIOutputHandler : new WebOutputHandler;
+	}
+
 	function file( $path )
 	{
 		return new LocalFile( $this, $path );
@@ -91,6 +98,24 @@ class LocalSystem extends System
 
 	function writeOutput( $data )
 	{
+		$this->outputHandler->writeOutput( $data );
+	}
+
+	function writeError( $data )
+	{
+		$this->outputHandler->writeError( $data );
+	}
+
+	function describe()
+	{
+		return 'localhost';
+	}
+}
+
+class CLIOutputHandler implements CommandOutputHandler
+{
+	function writeOutput( $data )
+	{
 		Assert::equal( fwrite( STDOUT, $data ), strlen( $data ) );
 	}
 
@@ -98,10 +123,45 @@ class LocalSystem extends System
 	{
 		Assert::equal( fwrite( STDERR, $data ), strlen( $data ) );
 	}
+}
 
-	function describe()
+class WebOutputHandler implements CommandOutputHandler
+{
+	private $initDone = false;
+
+	function writeOutput( $data )
 	{
-		return 'localhost';
+		$this->send( $data, false );
+	}
+
+	function writeError( $data )
+	{
+		$this->send( $data, true );
+	}
+
+	private function send( $data = '', $isError = false )
+	{
+		if ( !$this->initDone )
+		{
+			if ( !headers_sent() )
+				header( 'Content-Type: text/html; charset=utf8' );
+
+			echo "<!DOCTYPE html><html><body>";
+
+			while ( ob_get_level() > 0 && ob_end_flush() )
+			{
+			}
+
+			$this->initDone = true;
+		}
+
+		$color = $isError ? "darkred" : "darkblue";
+		echo "<pre style=\"display: inline; margin: 0; padding: 0; color: $color;\">";
+		echo html( $data );
+		echo "</pre>";
+		echo "<script>window.scrollTo( 0, document.body.scrollHeight );</script>";
+
+		flush();
 	}
 }
 
