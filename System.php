@@ -262,6 +262,12 @@ abstract class File
 	 */
 	abstract function exists();
 
+	final function ensureNotExists()
+	{
+		if ( $this->exists() )
+			$this->unlink();
+	}
+
 	/**
 	 * @return int
 	 */
