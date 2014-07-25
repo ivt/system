@@ -346,7 +346,6 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 	{
 		$result = parent::insertId();
 		$this->logger->log( 'get insert id', $result );
-
 		return $result;
 	}
 
@@ -354,8 +353,38 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 	{
 		$result = parent::affectedRows();
 		$this->logger->log( 'get affected rows', $result );
-
 		return $result;
+	}
+
+	function isInTransaction()
+	{
+		$result = parent::isInTransaction();
+		$this->logger->log( 'in transaction?', $result );
+		return $result;
+	}
+
+	function startTransaction()
+	{
+		$this->logger->log( 'start transaction' );
+		parent::startTransaction();
+	}
+
+	function rollback()
+	{
+		$this->logger->log( 'rollback' );
+		parent::rollback();
+	}
+
+	function commit()
+	{
+		$this->logger->log( 'commit' );
+		parent::commit();
+	}
+
+	function selectDB( $dbName )
+	{
+		$this->logger->log( array( 'select db', $dbName ) );
+		parent::selectDB( $dbName );
 	}
 }
 
