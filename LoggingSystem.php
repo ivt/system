@@ -363,24 +363,6 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		return $result;
 	}
 
-	function startTransaction()
-	{
-		$this->logger->log( 'start transaction' );
-		parent::startTransaction();
-	}
-
-	function rollback()
-	{
-		$this->logger->log( 'rollback' );
-		parent::rollback();
-	}
-
-	function commit()
-	{
-		$this->logger->log( 'commit' );
-		parent::commit();
-	}
-
 	function selectDB( $dbName )
 	{
 		$this->logger->log( array( 'select db', $dbName ) );
