@@ -190,7 +190,7 @@ class SSHForwardedPort
 		$user       = System::escapeCmd( $this->ssh->user() );
 
 		return <<<s
-ssh -o ExitOnForwardFailure=yes -o BatchMode=yes \
+ssh -o ExitOnForwardFailure=yes -o BatchMode=yes -o StrictHostKeyChecking=no \
 	-i $key -N -L $localHost:$localPort:$remoteHost:$remotePort $user@$host &
 
 PID=$!
