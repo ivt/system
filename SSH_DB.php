@@ -200,7 +200,7 @@ s;
 	}
 }
 
-class SSHForwardPortAlreadyOpen extends \Exception
+class SSHForwardPortAlreadyOpen extends \IVT\Exception
 {
 }
 
