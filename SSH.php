@@ -220,7 +220,7 @@ s;
 			while ( $local->isPortOpen( 'localhost', $port, 1 ) );
 
 			$process = new Process( <<<s
-ssh -o ExitOnForwardFailure=yes -o BatchMode=yes \
+ssh -o ExitOnForwardFailure=yes -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
 	-i $this->privateKeyFile -N -L localhost:$port:$remoteHost:$remotePort $this->user@$this->host &
 
 PID=$!
