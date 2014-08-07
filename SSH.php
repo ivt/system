@@ -5,39 +5,16 @@ namespace IVT\System;
 use IVT\Assert;
 use IVT\Exception;
 use IVT\StringBuffer;
-
-class SSHCredentials
-{
-	private $user, $host, $port, $privateKeyFile, $publicKeyFile;
-
-	function __construct( $user, $host, $port, $privateKeyFile, $publicKeyFile )
-	{
-		$this->user           = $user;
-		$this->host           = $host;
-		$this->port           = $port;
-		$this->privateKeyFile = $privateKeyFile;
-		$this->publicKeyFile  = $publicKeyFile;
-	}
-
-	function user() { return $this->user; }
-
-	function host() { return $this->host; }
-
-	function port() { return $this->port; }
-
-	function keyFile() { return $this->privateKeyFile; }
-
-	function keyFilePublic() { return $this->publicKeyFile; }
-
-	function describe() { return "$this->user@$this->host"; }
-}
+use Symfony\Component\Process\Process;
 
 class SSHSystem extends System
 {
 	const EXIT_CODE_MARKER = "*EXIT CODE: ";
 
-	/** @var SSHCredentials */
-	private $credentials;
+	/** @var string */
+	private $user;
+	/** @var string */
+	private $host;
 	/** @var resource */
 	private $ssh;
 	/** @var resource */
@@ -47,14 +24,28 @@ class SSHSystem extends System
 	private $connected = false;
 	/** @var CommandOutputHandler */
 	private $outputHandler;
-	/** @var  SSHForwardedPorts */
-	private $forwardedPorts;
+	/** @var array */
+	private $forwardedPorts = array();
+	/** @var string */
+	private $publicKeyFile;
+	/** @var string */
+	private $privateKeyFile;
 
-	function __construct( SSHCredentials $credentials, CommandOutputHandler $outputHandler )
+	function __construct( $user, $host, CommandOutputHandler $outputHandler )
 	{
-		$this->credentials    = $credentials;
-		$this->outputHandler  = $outputHandler;
-		$this->forwardedPorts = new SSHForwardedPorts( $credentials );
+		$this->user          = $user;
+		$this->host          = $host;
+		$this->outputHandler = $outputHandler;
+	}
+
+	function setPublicKeyFile( $file = null )
+	{
+		$this->publicKeyFile = $file;
+	}
+
+	function setPrivateKeyFile( $file = null )
+	{
+		$this->privateKeyFile = $file;
 	}
 
 	private function connect()
@@ -64,25 +55,15 @@ class SSHSystem extends System
 
 		$this->connected = true;
 
-		$credentials = $this->credentials;
-
-		$host = $credentials->host();
-		$port = $credentials->port();
-
 		$local = new LocalSystem;
 
-		if ( !$local->isPortOpen( $host, $port, 20 ) )
+		if ( !$local->isPortOpen( $this->host, 22, 20 ) )
 		{
-			throw new Exception( "Port $port is not open on $host" );
+			throw new Exception( "Port 22 is not open on $this->host" );
 		}
 
-		Assert::resource( $this->ssh = ssh2_connect( $host, $port ) );
-
-		Assert::true( ssh2_auth_pubkey_file( $this->ssh,
-		                                   $credentials->user(),
-		                                   $credentials->keyFilePublic(),
-		                                   $credentials->keyFile() ) );
-
+		Assert::resource( $this->ssh = ssh2_connect( $this->host, 22 ) );
+		Assert::true( ssh2_auth_pubkey_file( $this->ssh, $this->user, $this->publicKeyFile, $this->privateKeyFile ) );
 		Assert::resource( $this->sftp = ssh2_sftp( $this->ssh ) );
 		Assert::string( $this->cwd = substr( $this->exec( 'pwd' ), 0, -1 ) );
 	}
@@ -111,7 +92,7 @@ class SSHSystem extends System
 
 	function connectDB( \DatabaseConnectionInfo $dsn )
 	{
-		return new SSHDBConnection( $this->forwardedPorts, $dsn );
+		return new SSHDBConnection( $this, $dsn );
 	}
 
 	function time()
@@ -209,8 +190,70 @@ s;
 
 	function describe()
 	{
-		return $this->credentials->describe();
+		return "$this->user@$this->host";
 	}
+
+	function forwardPort( $remoteHost, $remotePort )
+	{
+		$forwarded =& $this->forwardedPorts[ $remoteHost ][ $remotePort ];
+
+		if ( !$forwarded )
+			$forwarded = $this->doPortForward( $remoteHost, $remotePort );
+
+		return $forwarded;
+	}
+
+	private function doPortForward( $remoteHost, $remotePort )
+	{
+		if ( $remoteHost === 'localhost' )
+			$remoteHost = '127.0.0.1';
+
+		$process = null;
+		$local   = new LocalSystem;
+
+		for ( $attempts = 0; $attempts < 10; $attempts++ )
+		{
+			do
+			{
+				$port = \mt_rand( 49152, 65535 );
+			}
+			while ( $local->isPortOpen( 'localhost', $port, 1 ) );
+
+			$process = new Process( <<<s
+ssh -o ExitOnForwardFailure=yes -o BatchMode=yes \
+	-i $this->privateKeyFile -N -L localhost:$port:$remoteHost:$remotePort $this->user@$this->host &
+
+PID=$!
+trap "kill \$PID" INT TERM EXIT
+wait \$PID
+s
+			);
+			$process->setTimeout( null );
+			$process->start();
+
+			$checks = 0;
+			while ( $process->isRunning() )
+			{
+				usleep( 10000 );
+
+				if ( $local->isPortOpen( 'localhost', $port, 1 ) )
+					$checks++;
+				else
+					$checks = 0;
+
+				if ( $checks >= 4 )
+					return new SSHForwardedPort( $process, $port );
+			}
+		}
+
+		$e = $process ? new CommandFailedException( CommandResult::fromSymfonyProcess( $process ) ) : null;
+
+		throw new SSHForwardPortFailed( "Failed to forward a port after $attempts attempts :(", 0, $e );
+	}
+}
+
+class SSHForwardPortFailed extends Exception
+{
 }
 
 class ExitCodeStream extends DelegateOutputHandler
