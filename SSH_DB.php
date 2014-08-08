@@ -33,11 +33,12 @@ class SSHDBConnection extends \Dbase_SQL_Driver
 			throw new DbaseConnectionFailed( 'Could not forward port', 0, $e );
 		}
 
-		parent::__construct( new DatabaseConnectionInfo( $dsn->type(),
-		                                                 "127.0.0.1:{$forwardedPort->localPort()}",
-		                                                 $dsn->user(),
-		                                                 $dsn->password(),
-		                                                 $dsn->database() ) );
+		parent::__construct( new DatabaseConnectionInfo(
+			"127.0.0.1:{$forwardedPort->localPort()}",
+			$dsn->user(),
+			$dsn->password(),
+			$dsn->database()
+		) );
 
 		$this->forwardedPort = $forwardedPort;
 	}
