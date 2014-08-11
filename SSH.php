@@ -7,35 +7,19 @@ use IVT\Exception;
 use IVT\StringBuffer;
 use Symfony\Component\Process\Process;
 
-class SSHSystem extends System
+class SSHAuth
 {
-	const EXIT_CODE_MARKER = "*EXIT CODE: ";
-
-	/** @var string */
 	private $user;
-	/** @var string */
 	private $host;
-	/** @var resource */
-	private $ssh;
-	/** @var resource */
-	private $sftp;
-	/** @var string */
-	private $cwd;
-	private $connected = false;
-	/** @var CommandOutputHandler */
-	private $outputHandler;
-	/** @var array */
-	private $forwardedPorts = array();
-	/** @var string */
+	private $port;
 	private $publicKeyFile;
-	/** @var string */
 	private $privateKeyFile;
 
-	function __construct( $user, $host, CommandOutputHandler $outputHandler )
+	function __construct( $user, $host, $port = 22 )
 	{
-		$this->user          = $user;
-		$this->host          = $host;
-		$this->outputHandler = $outputHandler;
+		$this->user = $user;
+		$this->host = $host;
+		$this->port = $port;
 	}
 
 	function setPublicKeyFile( $file = null )
@@ -48,22 +32,65 @@ class SSHSystem extends System
 		$this->privateKeyFile = $file;
 	}
 
-	private function connect()
+	function connect()
 	{
-		if ( $this->connected )
-			return;
-
-		$this->connected = true;
-
 		$local = new LocalSystem;
 
-		if ( !$local->isPortOpen( $this->host, 22, 20 ) )
+		if ( !$local->isPortOpen( $this->host, $this->port, 20 ) )
 		{
 			throw new Exception( "Port 22 is not open on $this->host" );
 		}
 
-		Assert::resource( $this->ssh = ssh2_connect( $this->host, 22 ) );
-		Assert::true( ssh2_auth_pubkey_file( $this->ssh, $this->user, $this->publicKeyFile, $this->privateKeyFile ) );
+		Assert::resource( $ssh = ssh2_connect( $this->host, $this->port ) );
+		Assert::true( ssh2_auth_pubkey_file( $ssh, $this->user, $this->publicKeyFile, $this->privateKeyFile ) );
+
+		return $ssh;
+	}
+
+	function forwardPortCmd( $localPort, $remoteHost, $remotePort )
+	{
+		return <<<s
+ssh -o ExitOnForwardFailure=yes -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+	-i $this->privateKeyFile -N -L localhost:$localPort:$remoteHost:$remotePort $this->user@$this->host &
+
+PID=$!
+trap "kill \$PID" INT TERM EXIT
+wait \$PID
+s;
+	}
+
+	function describe() { return "$this->user@$this->host"; }
+}
+
+class SSHSystem extends System
+{
+	const EXIT_CODE_MARKER = "*EXIT CODE: ";
+
+	/** @var SSHAuth */
+	private $auth;
+	/** @var resource */
+	private $ssh;
+	/** @var resource */
+	private $sftp;
+	/** @var string */
+	private $cwd;
+	/** @var CommandOutputHandler */
+	private $outputHandler;
+	/** @var array */
+	private $forwardedPorts = array();
+
+	function __construct( SSHAuth $auth, CommandOutputHandler $outputHandler )
+	{
+		$this->auth          = $auth;
+		$this->outputHandler = $outputHandler;
+	}
+
+	private function connect()
+	{
+		if ( $this->ssh )
+			return;
+
+		$this->ssh = $this->auth->connect();
 		Assert::resource( $this->sftp = ssh2_sftp( $this->ssh ) );
 		Assert::string( $this->cwd = substr( $this->exec( 'pwd' ), 0, -1 ) );
 	}
@@ -190,7 +217,7 @@ s;
 
 	function describe()
 	{
-		return "$this->user@$this->host";
+		return $this->auth->describe();
 	}
 
 	function forwardPort( $remoteHost, $remotePort )
@@ -219,15 +246,7 @@ s;
 			}
 			while ( $local->isPortOpen( 'localhost', $port, 1 ) );
 
-			$process = new Process( <<<s
-ssh -o ExitOnForwardFailure=yes -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-	-i $this->privateKeyFile -N -L localhost:$port:$remoteHost:$remotePort $this->user@$this->host &
-
-PID=$!
-trap "kill \$PID" INT TERM EXIT
-wait \$PID
-s
-			);
+			$process = new Process( $this->auth->forwardPortCmd( $port, $remoteHost, $remotePort ) );
 			$process->setTimeout( null );
 			$process->start();
 
