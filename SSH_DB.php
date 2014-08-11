@@ -26,16 +26,16 @@ class SSHDBConnection extends \Dbase_SQL_Driver
 	{
 		try
 		{
-			$forwardedPort = $ssh->forwardPort( $dsn->host, $dsn->port ? : 3306 );
+			$forwardedPort = $ssh->forwardPort( $dsn->host(), $dsn->port() ? : 3306 );
 		}
 		catch ( SSHForwardPortFailed $e )
 		{
 			throw new DbaseConnectionFailed( 'Could not forward port', 0, $e );
 		}
 
-		$dsn       = clone $dsn;
-		$dsn->host = '127.0.0.1';
-		$dsn->port = $forwardedPort->localPort();
+		$dsn = clone $dsn;
+		$dsn->setHost( '127.0.0.1' );
+		$dsn->setPort( $forwardedPort->localPort() );
 		parent::__construct( $dsn );
 
 		$this->forwardedPort = $forwardedPort;
