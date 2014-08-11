@@ -37,7 +37,7 @@ class SSHAuth
 
 		if ( !$local->isPortOpen( $this->host, $this->port, 20 ) )
 		{
-			throw new Exception( "Port 22 is not open on $this->host" );
+			throw new Exception( "Port $this->port is not open on $this->host" );
 		}
 
 		Assert::resource( $ssh = ssh2_connect( $this->host, $this->port ) );
