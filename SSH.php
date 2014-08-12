@@ -6,28 +6,57 @@ use IVT\Assert;
 use IVT\Exception;
 use IVT\StringBuffer;
 
-class SSHCredentials
+class SSHAuth
 {
-	private $user, $host, $port, $privateKeyFile, $publicKeyFile;
+	private $user;
+	private $host;
+	private $port;
+	private $publicKeyFile;
+	private $privateKeyFile;
 
-	function __construct( $user, $host, $port, $privateKeyFile, $publicKeyFile )
+	function __construct( $user, $host, $port = 22 )
 	{
-		$this->user           = $user;
-		$this->host           = $host;
-		$this->port           = $port;
-		$this->privateKeyFile = $privateKeyFile;
-		$this->publicKeyFile  = $publicKeyFile;
+		$this->user = $user;
+		$this->host = $host;
+		$this->port = $port;
 	}
 
-	function user() { return $this->user; }
+	function setPublicKeyFile( $file = null )
+	{
+		$this->publicKeyFile = $file;
+	}
 
-	function host() { return $this->host; }
+	function setPrivateKeyFile( $file = null )
+	{
+		$this->privateKeyFile = $file;
+	}
 
-	function port() { return $this->port; }
+	function connect()
+	{
+		$local = new LocalSystem;
 
-	function keyFile() { return $this->privateKeyFile; }
+		if ( !$local->isPortOpen( $this->host, $this->port, 20 ) )
+		{
+			throw new Exception( "Port $this->port is not open on $this->host" );
+		}
 
-	function keyFilePublic() { return $this->publicKeyFile; }
+		Assert::resource( $ssh = ssh2_connect( $this->host, $this->port ) );
+		Assert::true( ssh2_auth_pubkey_file( $ssh, $this->user, $this->publicKeyFile, $this->privateKeyFile ) );
+
+		return $ssh;
+	}
+
+	function forwardPortCmd( $localPort, $remoteHost, $remotePort )
+	{
+		return <<<s
+ssh -o ExitOnForwardFailure=yes -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+	-i $this->privateKeyFile -N -L localhost:$localPort:$remoteHost:$remotePort $this->user@$this->host &
+
+PID=$!
+trap "kill \$PID" INT TERM EXIT
+wait \$PID
+s;
+	}
 
 	function describe() { return "$this->user@$this->host"; }
 }
@@ -36,53 +65,32 @@ class SSHSystem extends System
 {
 	const EXIT_CODE_MARKER = "*EXIT CODE: ";
 
-	/** @var SSHCredentials */
-	private $credentials;
+	/** @var SSHAuth */
+	private $auth;
 	/** @var resource */
 	private $ssh;
 	/** @var resource */
 	private $sftp;
 	/** @var string */
 	private $cwd;
-	private $connected = false;
 	/** @var CommandOutputHandler */
 	private $outputHandler;
-	/** @var  SSHForwardedPorts */
+	/** @var SSHForwardedPorts */
 	private $forwardedPorts;
 
-	function __construct( SSHCredentials $credentials, CommandOutputHandler $outputHandler )
+	function __construct( SSHAuth $auth, CommandOutputHandler $outputHandler )
 	{
-		$this->credentials    = $credentials;
+		$this->auth           = $auth;
 		$this->outputHandler  = $outputHandler;
-		$this->forwardedPorts = new SSHForwardedPorts( $credentials );
+		$this->forwardedPorts = new SSHForwardedPorts( $auth );
 	}
 
 	private function connect()
 	{
-		if ( $this->connected )
+		if ( $this->ssh )
 			return;
 
-		$this->connected = true;
-
-		$credentials = $this->credentials;
-
-		$host = $credentials->host();
-		$port = $credentials->port();
-
-		$local = new LocalSystem;
-
-		if ( !$local->isPortOpen( $host, $port, 20 ) )
-		{
-			throw new Exception( "Port $port is not open on $host" );
-		}
-
-		Assert::resource( $this->ssh = ssh2_connect( $host, $port ) );
-
-		Assert::true( ssh2_auth_pubkey_file( $this->ssh,
-		                                   $credentials->user(),
-		                                   $credentials->keyFilePublic(),
-		                                   $credentials->keyFile() ) );
-
+		$this->ssh = $this->auth->connect();
 		Assert::resource( $this->sftp = ssh2_sftp( $this->ssh ) );
 		Assert::string( $this->cwd = substr( $this->exec( 'pwd' ), 0, -1 ) );
 	}
@@ -209,8 +217,12 @@ s;
 
 	function describe()
 	{
-		return $this->credentials->describe();
+		return $this->auth->describe();
 	}
+}
+
+class SSHForwardPortFailed extends Exception
+{
 }
 
 class ExitCodeStream extends DelegateOutputHandler

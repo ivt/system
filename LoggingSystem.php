@@ -363,28 +363,40 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		return $result;
 	}
 
+	function selectDB( $dbName )
+	{
+		$this->logger->log( array( 'select db', $dbName ) );
+		parent::selectDB( $dbName );
+	}
+
 	function startTransaction()
 	{
-		$this->logger->log( 'start transaction' );
-		parent::startTransaction();
+		return new LoggingTransaction( parent::startTransaction(), $this->logger );
+	}
+}
+
+class LoggingTransaction extends \WrappedDatabaseTransaction
+{
+	/** @var Logger */
+	private $logger;
+
+	function __construct( \DatabaseTransaction $txn, Logger $logger )
+	{
+		parent::__construct( $txn );
+		$this->logger = $logger;
+		$this->logger->log( array( 'start transaction', $this->name() ) );
 	}
 
 	function rollback()
 	{
-		$this->logger->log( 'rollback' );
+		$this->logger->log( array( 'rollback', $this->name() ) );
 		parent::rollback();
 	}
 
 	function commit()
 	{
-		$this->logger->log( 'commit' );
+		$this->logger->log( array( 'commit', $this->name() ) );
 		parent::commit();
-	}
-
-	function selectDB( $dbName )
-	{
-		$this->logger->log( array( 'select db', $dbName ) );
-		parent::selectDB( $dbName );
 	}
 }
 
