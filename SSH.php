@@ -46,16 +46,41 @@ class SSHAuth
 		return $ssh;
 	}
 
-	function forwardPortCmd( $localPort, $remoteHost, $remotePort )
+	function wrapCmd( System $system, $cmd )
 	{
-		return <<<s
-ssh -o ExitOnForwardFailure=yes -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-	-i $this->privateKeyFile -N -L localhost:$localPort:$remoteHost:$remotePort $this->user@$this->host &
+		return $this->sshCmd( $system, null, "$cmd" );
+	}
 
+	function forwardPortCmd( System $system, $localPort, $remoteHost, $remotePort )
+	{
+		$ssh = $this->sshCmd( $system, "-N -L localhost:$localPort:$remoteHost:$remotePort" );
+
+		return <<<s
+$ssh &
 PID=$!
 trap "kill \$PID" INT TERM EXIT
 wait \$PID
 s;
+	}
+
+	private function sshCmd( System $system, $opts = null, $command = null )
+	{
+		$cmd[ ] = "ssh";
+		$cmd[ ] = " -o ExitOnForwardFailure=yes";
+		$cmd[ ] = " -o BatchMode=yes";
+		$cmd[ ] = " -o StrictHostKeyChecking=no";
+		$cmd[ ] = " -o UserKnownHostsFile=/dev/null";
+		$cmd[ ] = " -i " . $system->escapeCmd( $this->privateKeyFile );
+
+		if ( $opts !== null )
+			$cmd[ ] = $opts;
+
+		$cmd[ ] = $system->escapeCmd( "$this->user@$this->host" );
+
+		if ( $command !== null )
+			$cmd[ ] = $system->escapeCmd( $command );
+
+		return join( ' ', $cmd );
 	}
 
 	function describe() { return "$this->user@$this->host"; }

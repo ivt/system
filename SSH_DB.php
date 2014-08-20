@@ -80,7 +80,7 @@ class SSHForwardedPorts
 			}
 			while ( $local->isPortOpen( 'localhost', $port, 1 ) );
 
-			$process = new Process( $this->auth->forwardPortCmd( $port, $remoteHost, $remotePort ) );
+			$process = new Process( $this->auth->forwardPortCmd( $local, $port, $remoteHost, $remotePort ) );
 			$process->setTimeout( null );
 			$process->start();
 
