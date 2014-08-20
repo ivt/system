@@ -157,9 +157,9 @@ class SSHSystem extends System
 	{
 		$this->connect();
 
-		$cwdSh            = self::escapeCmd( $this->cwd );
-		$stdInSh          = self::escapeCmd( $stdIn );
-		$exitCodeMarkerSh = self::escapeCmd( self::EXIT_CODE_MARKER );
+		$cwdSh            = $this->escapeCmd( $this->cwd );
+		$stdInSh          = $this->escapeCmd( $stdIn );
+		$exitCodeMarkerSh = $this->escapeCmd( self::EXIT_CODE_MARKER );
 
 		$cdCmd = isset( $this->cwd ) ? "cd $cwdSh" : '';
 
@@ -195,7 +195,7 @@ s;
 
 	function cd( $dir )
 	{
-		$this->cwd = substr( $this->exec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
+		$this->cwd = substr( $this->exec( "cd " . $this->escapeCmd( $dir ) . " && pwd" ), 0, -1 );
 	}
 
 	function pwd()

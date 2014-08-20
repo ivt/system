@@ -75,12 +75,12 @@ interface FileSystem
 
 abstract class System implements CommandOutputHandler, FileSystem
 {
-	static function escapeCmd( $arg )
+	final function escapeCmd( $arg )
 	{
 		return ProcessBuilder::escape( $arg );
 	}
 
-	static function escapeCmdArgs( array $args )
+	final function escapeCmdArgs( array $args )
 	{
 		return ProcessBuilder::escapeArgs( $args );
 	}
@@ -128,7 +128,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 */
 	final function runCommandArgs( array $command, $stdIn = '' )
 	{
-		return $this->runCommand( self::escapeCmdArgs( $command ), $stdIn );
+		return $this->runCommand( $this->escapeCmdArgs( $command ), $stdIn );
 	}
 
 	final function printLineError( $string = '' ) { $this->writeError( "$string\n" ); }
