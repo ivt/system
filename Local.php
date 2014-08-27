@@ -144,9 +144,10 @@ class WebOutputHandler implements CommandOutputHandler
 		if ( !$this->initDone )
 		{
 			if ( !headers_sent() )
+			{
 				header( 'Content-Type: text/html; charset=utf8' );
-
-			echo "<!DOCTYPE html><html><body>";
+				echo "<!DOCTYPE html><html><body>";
+			}
 
 			while ( ob_get_level() > 0 && ob_end_flush() )
 			{
@@ -159,7 +160,6 @@ class WebOutputHandler implements CommandOutputHandler
 		echo "<pre style=\"display: inline; margin: 0; padding: 0; color: $color;\">";
 		echo html( $data );
 		echo "</pre>";
-		echo "<script>window.scrollTo( 0, document.body.scrollHeight );</script>";
 
 		flush();
 	}
@@ -185,7 +185,7 @@ class LocalFile extends FOpenWrapperFile
 	protected function pathToUrl( $path )
 	{
 		if ( DIRECTORY_SEPARATOR === '\\' )
-			return \PCRE::create( '^([A-Za-z]:\\\\|\\\\\\\\|\\\\)' )->wholeString()->matches( $path ) ? $path : ".\\$path";
+			return \PCRE::create( '^([A-Za-z]:\\\\|\\\\\\\\|\\\\)', 'D' )->matches( $path ) ? $path : ".\\$path";
 		else
 			return starts_with( $path, '/' ) ? $path : "./$path";
 	}
