@@ -331,10 +331,10 @@ abstract class File
 	 */
 	abstract function realpath();
 
-	function mkdirIgnore()
+	function mkdirIgnore( $mode = 0777, $recursive = false )
 	{
 		if ( !$this->isDir() )
-			$this->mkdir();
+			$this->mkdir( $mode, $recursive );
 	}
 }
 
