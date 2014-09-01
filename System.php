@@ -85,6 +85,15 @@ abstract class System implements CommandOutputHandler, FileSystem
 		return ProcessBuilder::escapeArgs( $args );
 	}
 
+	final function outputWriter()
+	{
+		$self = $this;
+		return function ( $string ) use ( $self )
+		{
+			$self->writeOutput( $string );
+		};
+	}
+
 	final function execArgs( array $command, $stdIn = '' )
 	{
 		return $this->runCommandArgs( $command, $stdIn )->assertSuccess()->stdOut();
