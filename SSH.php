@@ -46,16 +46,41 @@ class SSHAuth
 		return $ssh;
 	}
 
-	function forwardPortCmd( $localPort, $remoteHost, $remotePort )
+	function wrapCmd( System $system, $cmd )
 	{
-		return <<<s
-ssh -o ExitOnForwardFailure=yes -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-	-i $this->privateKeyFile -N -L localhost:$localPort:$remoteHost:$remotePort $this->user@$this->host &
+		return $this->sshCmd( $system, null, "$cmd" );
+	}
 
+	function forwardPortCmd( System $system, $localPort, $remoteHost, $remotePort )
+	{
+		$ssh = $this->sshCmd( $system, "-N -L localhost:$localPort:$remoteHost:$remotePort" );
+
+		return <<<s
+$ssh &
 PID=$!
 trap "kill \$PID" INT TERM EXIT
 wait \$PID
 s;
+	}
+
+	private function sshCmd( System $system, $opts = null, $command = null )
+	{
+		$cmd[ ] = "ssh";
+		$cmd[ ] = " -o ExitOnForwardFailure=yes";
+		$cmd[ ] = " -o BatchMode=yes";
+		$cmd[ ] = " -o StrictHostKeyChecking=no";
+		$cmd[ ] = " -o UserKnownHostsFile=/dev/null";
+		$cmd[ ] = " -i " . $system->escapeCmd( $this->privateKeyFile );
+
+		if ( $opts !== null )
+			$cmd[ ] = $opts;
+
+		$cmd[ ] = $system->escapeCmd( "$this->user@$this->host" );
+
+		if ( $command !== null )
+			$cmd[ ] = $system->escapeCmd( $command );
+
+		return join( ' ', $cmd );
 	}
 
 	function describe() { return "$this->user@$this->host"; }
@@ -157,9 +182,9 @@ class SSHSystem extends System
 	{
 		$this->connect();
 
-		$cwdSh            = self::escapeCmd( $this->cwd );
-		$stdInSh          = self::escapeCmd( $stdIn );
-		$exitCodeMarkerSh = self::escapeCmd( self::EXIT_CODE_MARKER );
+		$cwdSh            = $this->escapeCmd( $this->cwd );
+		$stdInSh          = $this->escapeCmd( $stdIn );
+		$exitCodeMarkerSh = $this->escapeCmd( self::EXIT_CODE_MARKER );
 
 		$cdCmd = isset( $this->cwd ) ? "cd $cwdSh" : '';
 
@@ -195,7 +220,7 @@ s;
 
 	function cd( $dir )
 	{
-		$this->cwd = substr( $this->exec( "cd " . self::escapeCmd( $dir ) . " && pwd" ), 0, -1 );
+		$this->cwd = substr( $this->exec( "cd " . $this->escapeCmd( $dir ) . " && pwd" ), 0, -1 );
 	}
 
 	function pwd()

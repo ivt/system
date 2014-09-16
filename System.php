@@ -75,14 +75,23 @@ interface FileSystem
 
 abstract class System implements CommandOutputHandler, FileSystem
 {
-	static function escapeCmd( $arg )
+	final function escapeCmd( $arg )
 	{
 		return ProcessBuilder::escape( $arg );
 	}
 
-	static function escapeCmdArgs( array $args )
+	final function escapeCmdArgs( array $args )
 	{
 		return ProcessBuilder::escapeArgs( $args );
+	}
+
+	final function outputWriter()
+	{
+		$self = $this;
+		return function ( $string ) use ( $self )
+		{
+			$self->writeOutput( $string );
+		};
 	}
 
 	final function execArgs( array $command, $stdIn = '' )
@@ -128,7 +137,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 */
 	final function runCommandArgs( array $command, $stdIn = '' )
 	{
-		return $this->runCommand( self::escapeCmdArgs( $command ), $stdIn );
+		return $this->runCommand( $this->escapeCmdArgs( $command ), $stdIn );
 	}
 
 	final function printLineError( $string = '' ) { $this->writeError( "$string\n" ); }
@@ -331,10 +340,10 @@ abstract class File
 	 */
 	abstract function realpath();
 
-	function mkdirIgnore()
+	function mkdirIgnore( $mode = 0777, $recursive = false )
 	{
 		if ( !$this->isDir() )
-			$this->mkdir();
+			$this->mkdir( $mode, $recursive );
 	}
 }
 
