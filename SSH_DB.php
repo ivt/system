@@ -64,6 +64,10 @@ class SSHForwardedPorts
 		return $forwarded;
 	}
 
+	/**
+	 * @throws SSHForwardPortFailed
+	 * @return SSHForwardedPort
+	 */
 	private function doPortForward( $remoteHost, $remotePort )
 	{
 		if ( $remoteHost === 'localhost' )
