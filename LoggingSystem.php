@@ -140,7 +140,7 @@ class Logger
 		}
 		else
 		{
-			throw new \Exception( "Invalid type: " . gettype( $value ) );
+			throw new \IVT\Exception( "Invalid type: " . gettype( $value ) );
 		}
 	}
 
