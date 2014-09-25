@@ -65,6 +65,8 @@ class SSHForwardedPorts
 	}
 
 	/**
+	 * @param string $remoteHost
+	 * @param int    $remotePort
 	 * @throws SSHForwardPortFailed
 	 * @return SSHForwardedPort
 	 */
