@@ -327,6 +327,22 @@ abstract class File
 
 	/**
 	 * @param string $contents
+	 * @return boolean
+	 */
+	function writeIfChanged( $contents )
+	{
+		$oldContents = $this->read();
+		if ( $oldContents != $contents )
+		{
+			$this->write( $contents );
+			return true;
+		}
+		else
+			return false;
+	}
+
+	/**
+	 * @param string $contents
 	 * @return void
 	 */
 	abstract function create( $contents );
