@@ -329,7 +329,7 @@ abstract class File
 	 * @param string $contents
 	 * @return boolean
 	 */
-	function writeIfChanged( $contents )
+	final function writeIfChanged( $contents )
 	{
 		$oldContents = $this->read();
 		if ( $oldContents != $contents )
