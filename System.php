@@ -331,14 +331,10 @@ abstract class File
 	 */
 	final function writeIfChanged( $contents )
 	{
-		$oldContents = $this->read();
-		if ( $oldContents != $contents )
-		{
+		$changed = !$this->exists() || $this->read() !== "$contents";
+		if ( $changed )
 			$this->write( $contents );
-			return true;
-		}
-		else
-			return false;
+		return $changed;
 	}
 
 	/**
