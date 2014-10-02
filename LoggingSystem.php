@@ -19,7 +19,11 @@ class LoggingSystem extends WrappedSystem
 	{
 		$logger1 = $this->logger;
 		$logger  = new CommandOutput( $output, function ( $x ) use ( $logger1 ) { $logger1->writeLog( $x ); } );
-		$logger->writeCommand( "$command\n" );
+
+		// Remove github credentials from log
+		$commandForLog = \PCRE::create( '(\w+(:\w+)?)(?=@github.com)' )->replace( $command, '[HIDDEN]' )->result();
+		$logger->writeCommand( "$commandForLog\n" );
+
 		$logger->writeInput( $input );
 		$logger->flush();
 		$exitStatus = parent::runImpl( $command, $input, $logger );
