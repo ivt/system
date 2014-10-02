@@ -104,6 +104,24 @@ abstract class System implements CommandOutputHandler, FileSystem
 		return $this->runCommand( $command, $stdIn )->assertSuccess()->stdOut();
 	}
 
+	/**
+	 * @param string $search
+	 * @param string $replace
+	 * @param string $file
+	 */
+	final function replaceInFile( $search, $replace, $file )
+	{
+		$chars  = str_split( '/^.[$()|*+?{' );
+		$chars2 = array_map( function ( $x ) { return "\\$x"; }, $chars );
+		$search = str_replace( $chars, $chars2, str_replace( '\\', '\\', $search ) );
+
+		$chars   = str_split( '/&' );
+		$chars2  = array_map( function ( $x ) { return "\\$x"; }, $chars );
+		$replace = str_replace( $chars, $chars2, str_replace( '\\', '\\', $replace ) );
+
+		$this->execArgs( array( 'sed', '-ri', "s/$search/$replace/g", $file ) );
+	}
+
 	final function now()
 	{
 		// The timezone passed in the constructor of \DateTime is ignored in the case of a timestamp, because a
@@ -311,16 +329,12 @@ abstract class File
 	 * @param string $contents
 	 * @return boolean
 	 */
-	function writeIfChanged( $contents )
+	final function writeIfChanged( $contents )
 	{
-		$oldContents = $this->read();
-		if ( $oldContents != $contents )
-		{
+		$changed = !$this->exists() || $this->read() !== "$contents";
+		if ( $changed )
 			$this->write( $contents );
-			return true;
-		}
-		else
-			return false;
+		return $changed;
 	}
 
 	/**

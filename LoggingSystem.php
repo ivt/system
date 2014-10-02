@@ -100,6 +100,11 @@ class Logger
 		return join( ', ', $result );
 	}
 
+	/**
+	 * @param array|bool|null|string|int|float $value
+	 * @return string
+	 * @throws \IVT\Exception
+	 */
 	private static function dump( $value )
 	{
 		if ( is_array( $value ) )
@@ -264,23 +269,6 @@ class LoggingFile extends WrappedFile
 	{
 		$this->log( array( "write", $contents ) );
 		parent::write( $contents );
-	}
-
-	function writeIfChanged( $contents )
-	{
-		$this->log( array( 'writeIfChanged', $contents ) );
-		$oldContents = $this->read();
-		if ( $oldContents != $contents )
-		{
-			$this->log( array( 'writeIfChanged', "Updating old contents because they are different." ) );
-			$this->write( $contents );
-			return true;
-		}
-		else
-		{
-			$this->log( array( 'writeIfChanged', "NOT updating old contents, as they have not changed." ) );
-			return false;
-		}
 	}
 
 	function create( $contents )
