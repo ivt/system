@@ -250,7 +250,17 @@ abstract class File
 	 * @param string $dest
 	 * @return void
 	 */
-	abstract function copy( $dest );
+	abstract protected function copyImpl( $dest );
+
+	/**
+	 * @param string $dest
+	 * @return File the new file
+	 */
+	final function copy( $dest )
+	{
+		$this->copyImpl( $dest );
+		return $this->system->file( $dest );
+	}
 
 	/**
 	 * @return bool
@@ -452,7 +462,7 @@ abstract class FOpenWrapperFile extends File
 		Assert::true( rename( $this->url(), $this->pathToUrl( $to ) ) );
 	}
 
-	function copy( $dest )
+	protected function copyImpl( $dest )
 	{
 		Assert::true( copy( $this->url(), $this->pathToUrl( $dest ) ) );
 	}

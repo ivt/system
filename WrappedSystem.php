@@ -121,5 +121,5 @@ class WrappedFile extends File
 
 	function realpath() { return $this->file->realpath(); }
 
-	function copy( $dest ) { $this->file->copy( $dest ); }
+	protected function copyImpl( $dest ) { $this->file->copyImpl( $dest ); }
 }

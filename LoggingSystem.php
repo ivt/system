@@ -307,10 +307,10 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
-	function copy( $dest )
+	protected function copyImpl( $dest )
 	{
 		$this->log( array( 'copy to', $dest ) );
-		parent::copy( $dest );
+		parent::copyImpl( $dest );
 	}
 
 	function log( $input, $output = null )
