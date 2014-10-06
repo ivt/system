@@ -111,7 +111,6 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 */
 	final function replaceInFile( $search, $replace, $file )
 	{
-		// see http://stackoverflow.com/questions/407523/escape-a-string-for-a-sed-replace-pattern
 		foreach ( str_split( '\\/^.[$()|*+?{' ) as $char )
 			$search = str_replace( $char, "\\$char", $search );
 
