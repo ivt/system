@@ -363,6 +363,16 @@ abstract class File
 	 */
 	abstract function read( $offset = 0, $maxLength = null );
 
+	final function readIfFile()
+	{
+		return $this->isFile() ? $this->read() : null;
+	}
+
+	final function readLinkIfLink()
+	{
+		return $this->isLink() ? $this->readlink() : null;
+	}
+
 	/**
 	 * @param string $contents
 	 * @return void
