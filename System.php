@@ -258,6 +258,12 @@ abstract class File
 	 */
 	final function filename() { return pathinfo( $this->path, PATHINFO_FILENAME ); }
 
+	final function createDirs( $mode = 0777 )
+	{
+		$this->system->file( $this->dirname() )->mkdirIgnore( $mode, true );
+		return $this;
+	}
+
 	/**
 	 * @param string $dest
 	 * @return void
