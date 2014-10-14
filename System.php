@@ -110,6 +110,15 @@ abstract class System implements CommandOutputHandler, FileSystem
 	}
 
 	/**
+	 * @param string $linkFile
+	 * @param string $linkContents
+	 */
+	final function writeLink( $linkFile, $linkContents )
+	{
+		$this->execArgs( array( 'ln', '-sTf', $linkContents, $linkFile ) );
+	}
+
+	/**
 	 * @param string $search
 	 * @param string $replace
 	 * @param string $file
