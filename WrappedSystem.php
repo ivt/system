@@ -26,6 +26,11 @@ class WrappedSystem extends System
 		return new WrappedFile( $this, $path, $this->system->file( $path ) );
 	}
 
+	function dirSep()
+	{
+		return $this->system->dirSep();
+	}
+
 	function connectDB( \DatabaseConnectionInfo $dsn )
 	{
 		return $this->system->connectDB( $dsn );

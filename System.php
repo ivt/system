@@ -71,6 +71,11 @@ interface FileSystem
 	 * @return File
 	 */
 	function file( $path );
+
+	/**
+	 * @return string
+	 */
+	function dirSep();
 }
 
 abstract class System implements CommandOutputHandler, FileSystem
@@ -269,6 +274,22 @@ abstract class File
 	 * @return string[]
 	 */
 	abstract function scandir();
+
+	final function subFiles()
+	{
+		$path   = $this->path;
+		$dirSep = $this->system->dirSep();
+
+		if ( !ends_with( $path, $dirSep ) )
+			$path .= $dirSep;
+
+		/** @var self[] $files */
+		$files = array();
+		foreach ( $this->scandir() as $p )
+			if ( $p !== '.' && $p !== '..' )
+				$files[ ] = $this->system->file( $path . $p );
+		return $files;
+	}
 
 	/**
 	 * @return bool

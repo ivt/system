@@ -43,6 +43,8 @@ class LocalSystem extends System
 		return new LocalFile( $this, $path );
 	}
 
+	function dirSep() { return DIRECTORY_SEPARATOR; }
+
 	protected function runImpl( $command, $input, CommandOutputHandler $output )
 	{
 		return self::runLocal( $command, $input, $output, null, null );
