@@ -184,17 +184,15 @@ class SSHSystem extends System
 	{
 		$this->connect();
 
-		$cwdSh            = $this->escapeCmd( $this->cwd );
-		$stdInSh          = $this->escapeCmd( $stdIn );
-		$exitCodeMarkerSh = $this->escapeCmd( self::EXIT_CODE_MARKER );
-
-		$cdCmd = isset( $this->cwd ) ? "cd $cwdSh" : '';
-
-		return <<<s
-$cdCmd
-echo -nE $stdInSh | ($command)
-echo -nE $exitCodeMarkerSh\$?
+		$cmd = <<<s
+echo -nE {$this->escapeCmd( $stdIn )} | ($command)
+echo -nE {$this->escapeCmd( self::EXIT_CODE_MARKER )}\$?
 s;
+
+		if ( isset( $this->cwd ) )
+			$cmd = "cd {$this->escapeCmd( $this->cwd )}\n$cmd";
+
+		return $cmd;
 	}
 
 	private function readStream( $resource, CommandOutputHandler $output, $isError )
