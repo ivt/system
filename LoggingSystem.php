@@ -15,20 +15,37 @@ class LoggingSystem extends WrappedSystem
 		$this->logger = $logger;
 	}
 
-	protected function runImpl( $command, $input, CommandOutputHandler $output )
+	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
-		$logger1 = $this->logger;
-		$logger  = new CommandOutput( $output, function ( $x ) use ( $logger1 ) { $logger1->writeLog( $x ); } );
+		$logger = $this->logger;
+		$log    = function ( $x ) use ( $logger ) { $logger->writeLog( $x ); };
+		$cmd    = new LinePrefixStream( '>>> ', '... ', $log );
+		$in     = new LinePrefixStream( ' IN ', ' .. ', $log );
+		$out    = new LinePrefixStream( '  ', '  ', $log );
 
 		// Remove github credentials from log
 		$commandForLog = \PCRE::create( '(\w+(:\w+)?)(?=@github.com)' )->replace( $command, '[HIDDEN]' )->result();
-		$logger->writeCommand( "$commandForLog\n" );
+		$cmd->write( "$commandForLog\n" );
+		$cmd->flush();
 
-		$logger->writeInput( $input );
-		$logger->flush();
-		$exitStatus = parent::runImpl( $command, $input, $logger );
-		$logger->flush();
-		$logger->flush();
+		$in->write( $stdIn );
+		$in->flush();
+
+		$exitStatus = parent::runImpl(
+			$command,
+			$stdIn,
+			function ( $data ) use ( $out, $stdOut )
+			{
+				$out->write( $data );
+				$stdOut( $data );
+			},
+			function ( $data ) use ( $out, $stdErr )
+			{
+				$out->write( $data );
+				$stdErr( $data );
+			}
+		);
+		$out->flush();
 
 		return $exitStatus;
 	}

@@ -3,55 +3,6 @@
 namespace IVT\System;
 
 use IVT\Assert;
-use Symfony\Component\Process\Process;
-
-class CommandOutput extends DelegateOutputHandler
-{
-	private $cmd, $in, $out;
-
-	function __construct( CommandOutputHandler $output, \Closure $log )
-	{
-		parent::__construct( $output );
-
-		$this->cmd  = new LinePrefixStream( '>>> ', '... ', $log );
-		$this->in   = new LinePrefixStream( ' IN ', ' .. ', $log );
-		$this->out  = new LinePrefixStream( '  ', '  ', $log );
-	}
-
-	function writeCommand( $command )
-	{
-		$this->cmd->write( $command );
-	}
-
-	function writeInput( $stdIn )
-	{
-		$this->in->write( $stdIn );
-	}
-
-	static function exitCodeMessage( $exitStatus )
-	{
-		return "$exitStatus " . array_get( Process::$exitCodes, $exitStatus, "Unknown error" );
-	}
-
-	function writeOutput( $data )
-	{
-		parent::writeOutput( $data );
-		$this->out->write( $data );
-	}
-
-	function writeError( $data )
-	{
-		parent::writeError( $data );
-		$this->out->write( $data );
-	}
-
-	function flush()
-	{
-		$this->cmd->flush();
-		$this->in->flush();
-		$this->out->flush();
-	}
-}
 
 interface FileSystem
 {
@@ -139,10 +90,25 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 */
 	final function runCommand( $command, $stdIn = '' )
 	{
-		$output   = new AccumulateOutputHandler;
-		$exitCode = $this->runImpl( $command, $stdIn, $output );
+		$stdOut   = '';
+		$stdErr   = '';
+		$stdBoth  = '';
+		$exitCode = $this->runImpl(
+			$command,
+			$stdIn,
+			function ( $s ) use ( &$stdOut, &$stdBoth )
+			{
+				$stdOut .= $s;
+				$stdBoth .= $s;
+			},
+			function ( $s ) use ( &$stdErr, &$stdBoth )
+			{
+				$stdErr .= $s;
+				$stdBoth .= $s;
+			}
+		);
 
-		return new CommandResult( $command, $stdIn, $output, $exitCode );
+		return new CommandResult( $command, $stdIn, $stdOut, $stdErr, $stdBoth, $exitCode );
 	}
 
 	/**
@@ -182,13 +148,14 @@ abstract class System implements CommandOutputHandler, FileSystem
 	abstract function time();
 
 	/**
-	 * @param string               $command
-	 * @param string               $input
-	 * @param CommandOutputHandler $output
+	 * @param string   $command
+	 * @param string   $stdIn
+	 * @param callable $stdOut
+	 * @param callable $stdErr
 	 *
 	 * @return int exit code
 	 */
-	abstract protected function runImpl( $command, $input, CommandOutputHandler $output );
+	abstract protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr );
 
 	/**
 	 * If this System happens to be a wrapper around another System, this

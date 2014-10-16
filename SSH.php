@@ -4,7 +4,6 @@ namespace IVT\System;
 
 use IVT\Assert;
 use IVT\Exception;
-use IVT\StringBuffer;
 
 class SSHAuth
 {
@@ -88,8 +87,6 @@ s;
 
 class SSHSystem extends System
 {
-	const EXIT_CODE_MARKER = "*EXIT CODE: ";
-
 	/** @var SSHAuth */
 	private $auth;
 	/** @var resource */
@@ -128,18 +125,49 @@ class SSHSystem extends System
 	}
 
 	/**
-	 * @param string               $command
-	 * @param string               $input
-	 * @param CommandOutputHandler $output
-	 *
+	 * @param string   $command
+	 * @param string   $stdIn
+	 * @param callable $stdOut
+	 * @param callable $stdErr
 	 * @return int
 	 */
-	protected function runImpl( $command, $input, CommandOutputHandler $output )
+	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
-		$this->sshRunCommand( $this->wrapCommand( $command, $input ),
-		                      $exitCodePruner = new ExitCodeStream( $output ) );
+		$this->connect();
 
-		return (int) $exitCodePruner->exitCode();
+		$marker  = "*EXIT CODE: ";
+		$wrapped = <<<s
+echo -nE {$this->escapeCmd( $stdIn )} | ($command)
+echo -nE {$this->escapeCmd( $marker )}\$?
+s;
+
+		if ( isset( $this->cwd ) )
+			$wrapped = "cd {$this->escapeCmd( $this->cwd )}\n$wrapped";
+
+		$buffer = '';
+		$stdOut = function ( $data ) use ( $stdOut, &$buffer, $marker )
+		{
+			$buffer .= $data;
+
+			$pos = strrpos( $buffer, $marker );
+
+			if ( $pos === false )
+			{
+				$pos = max( 0, strlen( $buffer ) - strlen( $marker ) );
+
+				while ( !starts_with( $marker, substr( $buffer, $pos ) ) )
+					$pos++;
+			}
+
+			$stdOut( substr( $buffer, 0, $pos ) );
+			$buffer = substr( $buffer, $pos );
+		};
+
+		$this->sshRunCommand( $wrapped, $stdOut, $stdErr );
+
+		Assert::equal( $marker, substr( $buffer, 0, strlen( $marker ) ) );
+
+		return (int) substr( $buffer, strlen( $marker ) );
 	}
 
 	function connectDB( \DatabaseConnectionInfo $dsn )
@@ -153,10 +181,11 @@ class SSHSystem extends System
 	}
 
 	/**
-	 * @param string               $command
-	 * @param CommandOutputHandler $output
+	 * @param string   $command
+	 * @param callable $fStdOut
+	 * @param callable $fStdErr
 	 */
-	private function sshRunCommand( $command, CommandOutputHandler $output )
+	private function sshRunCommand( $command, \Closure $fStdOut, \Closure $fStdErr )
 	{
 		$this->connect();
 
@@ -171,38 +200,18 @@ class SSHSystem extends System
 
 		while ( !$stdErrDone || !$stdOutDone )
 		{
-			$stdOutDone = $stdOutDone || $this->readStream( $stdOut, $output, false );
-			$stdErrDone = $stdErrDone || $this->readStream( $stdErr, $output, true );
+			$stdOutDone = $stdOutDone || $this->readStream( $stdOut, $fStdOut );
+			$stdErrDone = $stdErrDone || $this->readStream( $stdErr, $fStdErr );
 
 			usleep( 100000 );
 		}
 	}
 
-	private function wrapCommand( $command, $stdIn = '' )
-	{
-		$this->connect();
-
-		$cwdSh            = $this->escapeCmd( $this->cwd );
-		$stdInSh          = $this->escapeCmd( $stdIn );
-		$exitCodeMarkerSh = $this->escapeCmd( self::EXIT_CODE_MARKER );
-
-		$cdCmd = isset( $this->cwd ) ? "cd $cwdSh" : '';
-
-		return <<<s
-$cdCmd
-echo -nE $stdInSh | ($command)
-echo -nE $exitCodeMarkerSh\$?
-s;
-	}
-
-	private function readStream( $resource, CommandOutputHandler $output, $isError )
+	private function readStream( $resource, \Closure $into )
 	{
 		Assert::string( $data = fread( $resource, 8192 ) );
 
-		if ( !$isError )
-			$output->writeOutput( $data );
-		else
-			$output->writeError( $data );
+		$into( $data );
 
 		if ( feof( $resource ) )
 		{
@@ -248,63 +257,6 @@ s;
 
 class SSHForwardPortFailed extends Exception
 {
-}
-
-class ExitCodeStream extends DelegateOutputHandler
-{
-	/** @var StringBuffer */
-	private $buffer;
-	/** @var StringBuffer */
-	private $marker;
-
-	function __construct( CommandOutputHandler $output )
-	{
-		$this->buffer = new StringBuffer;
-		$this->marker = new StringBuffer( SSHSystem::EXIT_CODE_MARKER );
-
-		parent::__construct( $output );
-	}
-
-	function exitCode()
-	{
-		$marker = $this->marker;
-		$buffer = $this->buffer;
-
-		Assert::equal( "$marker", $buffer->remove( $marker->len() ) );
-
-		return $buffer->removeAll();
-	}
-
-	function writeOutput( $data )
-	{
-		$buffer = $this->buffer;
-		$marker = $this->marker;
-
-		$buffer->append( $data );
-
-		$markerPos = $buffer->findLast( $marker );
-
-		if ( $markerPos !== false )
-		{
-			parent::writeOutput( $buffer->remove( $markerPos ) );
-			
-			return;
-		}
-
-		$pos = max( 0, $buffer->len() - $marker->len() );
-
-		for ( ; ; $pos++ )
-		{
-			if ( $marker->startsWith( $buffer->after( $pos ) ) )
-			{
-				parent::writeOutput( $buffer->remove( $pos ) );
-
-				return;
-			}
-		}
-
-		throw new Exception( "The code above should always return. Why are we here?" );
-	}
 }
 
 class SSHFile extends FOpenWrapperFile

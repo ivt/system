@@ -43,31 +43,31 @@ class LocalSystem extends System
 		return new LocalFile( $this, $path );
 	}
 
-	protected function runImpl( $command, $input, CommandOutputHandler $output )
+	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
-		return self::runLocal( $command, $input, $output, null, null );
+		return self::runLocal( $command, $stdIn, $stdOut, $stdErr, null, null );
 	}
 
 	/**
-	 * @param string               $command
-	 * @param string               $input
-	 * @param CommandOutputHandler $output
-	 * @param string|null          $cwd
-	 * @param string[]|null        $environment
-	 *
+	 * @param string        $command
+	 * @param string        $stdIn
+	 * @param callable      $stdOut
+	 * @param callable      $stdErr
+	 * @param string|null   $cwd
+	 * @param string[]|null $environment
 	 * @return int
 	 */
-	static function runLocal( $command, $input, CommandOutputHandler $output, $cwd, $environment )
+	static function runLocal( $command, $stdIn, \Closure $stdOut, \Closure $stdErr, $cwd, $environment )
 	{
-		$process = new Process( $command, $cwd, $environment, $input, null );
+		$process = new Process( $command, $cwd, $environment, $stdIn, null );
 
-		return $process->run( function ( $type, $data ) use ( $output )
+		return $process->run( function ( $type, $data ) use ( $stdOut, $stdErr )
 		{
 			if ( $type === Process::OUT )
-				$output->writeOutput( $data );
+				$stdOut( $data );
 
 			if ( $type === Process::ERR )
-				$output->writeError( $data );
+				$stdErr( $data );
 		} );
 	}
 
