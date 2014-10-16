@@ -92,23 +92,14 @@ abstract class System implements CommandOutputHandler, FileSystem
 	{
 		$stdOut   = '';
 		$stdErr   = '';
-		$stdBoth  = '';
 		$exitCode = $this->runImpl(
 			$command,
 			$stdIn,
-			function ( $s ) use ( &$stdOut, &$stdBoth )
-			{
-				$stdOut .= $s;
-				$stdBoth .= $s;
-			},
-			function ( $s ) use ( &$stdErr, &$stdBoth )
-			{
-				$stdErr .= $s;
-				$stdBoth .= $s;
-			}
+			function ( $s ) use ( &$stdOut ) { $stdOut .= $s; },
+			function ( $s ) use ( &$stdErr ) { $stdErr .= $s; }
 		);
 
-		return new CommandResult( $command, $stdIn, $stdOut, $stdErr, $stdBoth, $exitCode );
+		return new CommandResult( $command, $stdIn, $stdOut, $stdErr, $exitCode );
 	}
 
 	/**
