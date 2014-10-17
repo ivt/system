@@ -344,7 +344,7 @@ abstract class File
 	final function ensureNotExists()
 	{
 		if ( $this->exists() )
-			$this->unlink();
+			$this->removeRecursive();
 	}
 
 	/**
@@ -353,6 +353,35 @@ abstract class File
 	abstract function size();
 
 	abstract function unlink();
+
+	/**
+	 * Recursive version of remove()
+	 */
+	final function removeRecursive()
+	{
+		if ( $this->isDir() && !$this->isLink() )
+		{
+			foreach ( $this->dirContents() as $file )
+				$file->removeRecursive();
+
+			$this->rmdir();
+		}
+		else
+		{
+			$this->unlink();
+		}
+	}
+
+	/**
+	 * Calls unlink() for files and rmdir() for directories, like remove() in C.
+	 */
+	final function remove()
+	{
+		if ( $this->isDir() && !$this->isLink() )
+			$this->rmdir();
+		else
+			$this->unlink();
+	}
 
 	/**
 	 * @return int
