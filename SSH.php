@@ -124,6 +124,8 @@ class SSHSystem extends System
 		return new SSHFile( $this, $this->sftp, $path );
 	}
 
+	function dirSep() { return '/'; }
+
 	/**
 	 * @param string   $command
 	 * @param string   $stdIn

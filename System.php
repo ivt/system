@@ -22,6 +22,11 @@ interface FileSystem
 	 * @return File
 	 */
 	function file( $path );
+
+	/**
+	 * @return string
+	 */
+	function dirSep();
 }
 
 abstract class System implements CommandOutputHandler, FileSystem
@@ -53,6 +58,15 @@ abstract class System implements CommandOutputHandler, FileSystem
 	final function exec( $command, $stdIn = '' )
 	{
 		return $this->runCommand( $command, $stdIn )->assertSuccess()->stdOut();
+	}
+
+	/**
+	 * @param string $linkFile
+	 * @param string $linkContents
+	 */
+	final function writeLink( $linkFile, $linkContents )
+	{
+		$this->execArgs( array( 'ln', '-sTf', $linkContents, $linkFile ) );
 	}
 
 	/**
@@ -202,6 +216,12 @@ abstract class File
 	 */
 	final function filename() { return pathinfo( $this->path, PATHINFO_FILENAME ); }
 
+	final function createDirs( $mode = 0777 )
+	{
+		$this->system->file( $this->dirname() )->mkdirIgnore( $mode, true );
+		return $this;
+	}
+
 	/**
 	 * @param string $dest
 	 * @return void
@@ -227,6 +247,22 @@ abstract class File
 	 * @return string[]
 	 */
 	abstract function scandir();
+
+	final function subFiles()
+	{
+		$path   = $this->path;
+		$dirSep = $this->system->dirSep();
+
+		if ( !ends_with( $path, $dirSep ) )
+			$path .= $dirSep;
+
+		/** @var self[] $files */
+		$files = array();
+		foreach ( $this->scandir() as $p )
+			if ( $p !== '.' && $p !== '..' )
+				$files[ ] = $this->system->file( $path . $p );
+		return $files;
+	}
 
 	/**
 	 * @return bool
@@ -284,6 +320,16 @@ abstract class File
 	 * @return string
 	 */
 	abstract function read( $offset = 0, $maxLength = null );
+
+	final function readIfFile()
+	{
+		return $this->isFile() ? $this->read() : null;
+	}
+
+	final function readLinkIfLink()
+	{
+		return $this->isLink() ? $this->readlink() : null;
+	}
 
 	/**
 	 * @param string $contents
