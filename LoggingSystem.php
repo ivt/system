@@ -365,13 +365,6 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		return $result;
 	}
 
-	function isInTransaction()
-	{
-		$result = parent::isInTransaction();
-		$this->logger->log( 'in transaction?', $result );
-		return $result;
-	}
-
 	function selectDB( $dbName )
 	{
 		$this->logger->log( array( 'select db', $dbName ) );
