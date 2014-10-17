@@ -233,11 +233,6 @@ abstract class File
 
 	final function __toString() { return $this->path(); }
 
-	final function concat( $append )
-	{
-		return $this->system->file( $this->path . $append );
-	}
-
 	/**
 	 * @return string /blah/foo.txt => /blah
 	 */
@@ -262,6 +257,25 @@ abstract class File
 	{
 		$this->system->file( $this->dirname() )->mkdirIgnore( $mode, true );
 		return $this;
+	}
+
+	/**
+	 * Combine this path with the given path, placing a directory separator
+	 * between them if necessary
+	 *
+	 * @param string $path
+	 * @return File
+	 */
+	final function combine( $path )
+	{
+		$dirSep = $this->system->dirSep();
+
+		if ( starts_with( $path, $dirSep ) || ends_with( $this->path, $dirSep ) )
+			$path = $this->path . $path;
+		else
+			$path = $this->path . $dirSep . $path;
+
+		return $this->system->file( $path );
 	}
 
 	/**
@@ -290,19 +304,13 @@ abstract class File
 	 */
 	abstract function scandir();
 
-	final function subFiles()
+	final function dirContents()
 	{
-		$path   = $this->path;
-		$dirSep = $this->system->dirSep();
-
-		if ( !ends_with( $path, $dirSep ) )
-			$path .= $dirSep;
-
 		/** @var self[] $files */
 		$files = array();
 		foreach ( $this->scandir() as $p )
 			if ( $p !== '.' && $p !== '..' )
-				$files[ ] = $this->system->file( $path . $p );
+				$files[ ] = $this->combine( $p );
 		return $files;
 	}
 
