@@ -371,6 +371,12 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		parent::selectDB( $dbName );
 	}
 
+	function simpleSelect( $table, array $columns, array $where, \Closure $allWheres = null )
+	{
+		$this->logger->log( array( 'simple select', $table, $columns, $where ) );
+		return parent::simpleSelect( $table, $columns, $where, $allWheres );
+	}
+
 	function startTransaction()
 	{
 		return new LoggingTransaction( parent::startTransaction(), $this->logger );
