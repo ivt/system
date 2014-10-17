@@ -255,7 +255,7 @@ abstract class File
 
 	final function createDirs( $mode = 0777 )
 	{
-		$this->system->file( $this->dirname() )->mkdirIgnore( $mode, true );
+		$this->system->file( $this->dirname() )->ensureIsDir( $mode, true );
 		return $this;
 	}
 
@@ -461,7 +461,7 @@ abstract class File
 	 */
 	abstract function realpath();
 
-	function mkdirIgnore( $mode = 0777, $recursive = false )
+	function ensureIsDir( $mode = 0777, $recursive = false )
 	{
 		if ( !$this->isDir() )
 			$this->mkdir( $mode, $recursive );
