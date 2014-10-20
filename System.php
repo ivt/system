@@ -191,11 +191,6 @@ abstract class File
 
 	final function __toString() { return $this->path(); }
 
-	final function concat( $append )
-	{
-		return $this->system->file( $this->path . $append );
-	}
-
 	/**
 	 * @return string /blah/foo.txt => /blah
 	 */
@@ -218,8 +213,27 @@ abstract class File
 
 	final function createDirs( $mode = 0777 )
 	{
-		$this->system->file( $this->dirname() )->mkdirIgnore( $mode, true );
+		$this->system->file( $this->dirname() )->ensureIsDir( $mode, true );
 		return $this;
+	}
+
+	/**
+	 * Combine this path with the given path, placing a directory separator
+	 * between them if necessary
+	 *
+	 * @param string $path
+	 * @return File
+	 */
+	final function combine( $path )
+	{
+		$dirSep = $this->system->dirSep();
+
+		if ( starts_with( $path, $dirSep ) || ends_with( $this->path, $dirSep ) )
+			$path = $this->path . $path;
+		else
+			$path = $this->path . $dirSep . $path;
+
+		return $this->system->file( $path );
 	}
 
 	/**
@@ -248,19 +262,13 @@ abstract class File
 	 */
 	abstract function scandir();
 
-	final function subFiles()
+	final function dirContents()
 	{
-		$path   = $this->path;
-		$dirSep = $this->system->dirSep();
-
-		if ( !ends_with( $path, $dirSep ) )
-			$path .= $dirSep;
-
 		/** @var self[] $files */
 		$files = array();
 		foreach ( $this->scandir() as $p )
 			if ( $p !== '.' && $p !== '..' )
-				$files[ ] = $this->system->file( $path . $p );
+				$files[ ] = $this->combine( $p );
 		return $files;
 	}
 
@@ -294,7 +302,7 @@ abstract class File
 	final function ensureNotExists()
 	{
 		if ( $this->exists() )
-			$this->unlink();
+			$this->removeRecursive();
 	}
 
 	/**
@@ -303,6 +311,35 @@ abstract class File
 	abstract function size();
 
 	abstract function unlink();
+
+	/**
+	 * Recursive version of remove()
+	 */
+	final function removeRecursive()
+	{
+		if ( $this->isDir() && !$this->isLink() )
+		{
+			foreach ( $this->dirContents() as $file )
+				$file->removeRecursive();
+
+			$this->rmdir();
+		}
+		else
+		{
+			$this->unlink();
+		}
+	}
+
+	/**
+	 * Calls unlink() for files and rmdir() for directories, like remove() in C.
+	 */
+	final function remove()
+	{
+		if ( $this->isDir() && !$this->isLink() )
+			$this->rmdir();
+		else
+			$this->unlink();
+	}
 
 	/**
 	 * @return int
@@ -382,7 +419,7 @@ abstract class File
 	 */
 	abstract function realpath();
 
-	function mkdirIgnore( $mode = 0777, $recursive = false )
+	function ensureIsDir( $mode = 0777, $recursive = false )
 	{
 		if ( !$this->isDir() )
 			$this->mkdir( $mode, $recursive );
