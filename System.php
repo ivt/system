@@ -226,12 +226,22 @@ abstract class File
 	 */
 	final function combinePath( $path )
 	{
+		return $this->combinePaths( $this->path, $path );
+	}
+
+	/**
+	 * @param string $path1
+	 * @param string $path2
+	 * @return string
+	 */
+	final function combinePaths( $path1, $path2 )
+	{
 		$dirSep = $this->system->dirSep();
 
-		if ( starts_with( $path, $dirSep ) || ends_with( $this->path, $dirSep ) )
-			return $this->path . $path;
+		if ( starts_with( $path2, $dirSep ) || ends_with( $path1, $dirSep ) )
+			return $path1 . $path2;
 		else
-			return $this->path . $dirSep . $path;
+			return $path1 . $dirSep . $path2;
 	}
 
 	final function combine( $path )
@@ -256,21 +266,26 @@ abstract class File
 	}
 
 	/**
+	 * @param string $dir
+	 */
+	final function copyDirContents( $dir )
+	{
+		foreach ( $this->scanDirNoDots() as $file )
+			$this->combine( $file )->copyRecursive( $this->combinePaths( $dir, $file ) );
+	}
+
+	/**
 	 * @param string $to
-	 * @param int    $mode Mode to create directories with
 	 * @return \IVT\System\File
 	 */
-	final function copyRecursive( $to, $mode = 0777 )
+	final function copyRecursive( $to )
 	{
 		if ( $this->isDir() && !$this->isLink() )
 		{
-			$toFile = $this->system->file( $to );
-			$toFile->mkdir( $mode );
-
-			foreach ( $this->scanDirNoDots() as $file )
-				$this->system->file( $file )->copyRecursive( $toFile->combinePath( $file ), $mode );
-
-			return $toFile;
+			$to = $this->system->file( $to );
+			$to->mkdir();
+			$this->copyDirContents( $to->path );
+			return $to;
 		}
 		else
 		{
