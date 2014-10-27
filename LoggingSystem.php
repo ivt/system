@@ -202,9 +202,9 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
-	function scandir()
+	function scanDir()
 	{
-		$result = parent::scandir();
+		$result = parent::scanDir();
 		$this->log( "scandir", $result );
 
 		return $result;

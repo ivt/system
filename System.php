@@ -260,15 +260,19 @@ abstract class File
 	/**
 	 * @return string[]
 	 */
-	abstract function scandir();
+	abstract function scanDir();
+
+	final function scanDirNoDots()
+	{
+		return array_diff( $this->scanDir(), array( '.', '..' ) );
+	}
 
 	final function dirContents()
 	{
 		/** @var self[] $files */
 		$files = array();
-		foreach ( $this->scandir() as $p )
-			if ( $p !== '.' && $p !== '..' )
-				$files[ ] = $this->combine( $p );
+		foreach ( $this->scanDirNoDots() as $p )
+			$files[ ] = $this->combine( $p );
 		return $files;
 	}
 
@@ -526,7 +530,7 @@ abstract class FOpenWrapperFile extends File
 		}
 	}
 
-	function scandir()
+	function scanDir()
 	{
 		clearstatcache( true );
 
