@@ -112,9 +112,9 @@ class SSHSystem extends System
 		if ( $this->ssh )
 			return;
 
-		$this->ssh = $this->auth->connect();
-		Assert::resource( $this->sftp = ssh2_sftp( $this->ssh ) );
-		Assert::string( $this->cwd = substr( $this->exec( 'pwd' ), 0, -1 ) );
+		$this->ssh  = $this->auth->connect();
+		$this->sftp = Assert::resource( ssh2_sftp( $this->ssh ) );
+		$this->cwd  = Assert::string( substr( $this->exec( 'pwd' ), 0, -1 ) );
 	}
 
 	function file( $path )
@@ -126,28 +126,55 @@ class SSHSystem extends System
 
 	function dirSep() { return '/'; }
 
+	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	{
+		if ( strlen( $stdIn ) < 1000 )
+		{
+			return $this->runImplHandleExitCode(
+				"echo -nE {$this->escapeCmd( $stdIn )} | ($command)",
+				$stdOut,
+				$stdErr
+			);
+		}
+		else
+		{
+			$tmpFile = $this->file( "/tmp/tmp-ssh-command-input-" . random_string( 12 ) );
+
+			try
+			{
+				$tmpFile->write( $stdIn );
+
+				$result = $this->runImplHandleExitCode(
+					"($command) < {$this->escapeCmd( $tmpFile->path() )}",
+					$stdOut,
+					$stdErr
+				);
+
+				$tmpFile->unlink();
+
+				return $result;
+			}
+			catch ( \Exception $e )
+			{
+				$tmpFile->ensureNotExists();
+
+				throw $e;
+			}
+		}
+	}
+
 	/**
 	 * @param string   $command
-	 * @param string   $stdIn
 	 * @param callable $stdOut
 	 * @param callable $stdErr
 	 * @return int
 	 */
-	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	private function runImplHandleExitCode( $command, \Closure $stdOut, \Closure $stdErr )
 	{
-		$this->connect();
-
 		$marker  = "*EXIT CODE: ";
-		$wrapped = <<<s
-echo -nE {$this->escapeCmd( $stdIn )} | ($command)
-echo -nE {$this->escapeCmd( $marker )}\$?
-s;
-
-		if ( isset( $this->cwd ) )
-			$wrapped = "cd {$this->escapeCmd( $this->cwd )}\n$wrapped";
-
-		$buffer = '';
-		$stdOut = function ( $data ) use ( $stdOut, &$buffer, $marker )
+		$wrapped = "$command\necho -nE {$this->escapeCmd( $marker )}$?";
+		$buffer  = '';
+		$stdOut  = function ( $data ) use ( $stdOut, &$buffer, $marker )
 		{
 			$buffer .= $data;
 
@@ -189,10 +216,13 @@ s;
 	 */
 	private function sshRunCommand( $command, \Closure $fStdOut, \Closure $fStdErr )
 	{
+		if ( isset( $this->cwd ) )
+			$command = "cd {$this->escapeCmd( $this->cwd )}\n$command";
+
 		$this->connect();
 
-		Assert::resource( $stdOut = ssh2_exec( $this->ssh, $command ) );
-		Assert::resource( $stdErr = ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
+		$stdOut = Assert::resource( ssh2_exec( $this->ssh, $command ) );
+		$stdErr = Assert::resource( ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
 
 		Assert::true( stream_set_blocking( $stdOut, false ) );
 		Assert::true( stream_set_blocking( $stdErr, false ) );
@@ -231,7 +261,10 @@ s;
 
 	function cd( $dir )
 	{
-		$this->cwd = substr( $this->exec( "cd " . $this->escapeCmd( $dir ) . " && pwd" ), 0, -1 );
+		$dir = $this->exec( "cd {$this->escapeCmd( $dir )} && pwd" );
+		$dir = substr( $dir, 0, -1 );
+
+		$this->cwd = $dir;
 	}
 
 	function pwd()
