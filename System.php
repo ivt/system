@@ -91,6 +91,12 @@ abstract class System implements CommandOutputHandler, FileSystem
 		$this->execArgs( array( 'sed', '-ri', "s/$search/$replace/g", $file ) );
 	}
 
+	final function replaceInFileMany( $file, array $replacements )
+	{
+		foreach ( $replacements as $search => $replace )
+			$this->replaceInFile( $search, $replace, $file );
+	}
+
 	final function now()
 	{
 		// The timezone passed in the constructor of \DateTime is ignored in the case of a timestamp, because a
