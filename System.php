@@ -33,12 +33,18 @@ abstract class System implements CommandOutputHandler, FileSystem
 {
 	final function escapeCmd( $arg )
 	{
-		return ProcessBuilder::escape( $arg );
+		$arg1    = str_replace( str_split( "=:_+./-" ), '', $arg );
+		$isValid = $arg1 === '' || ctype_alnum( $arg1 );
+
+		return $isValid && $arg !== '' ? $arg : escapeshellarg( $arg );
 	}
 
 	final function escapeCmdArgs( array $args )
 	{
-		return ProcessBuilder::escapeArgs( $args );
+		foreach ( $args as &$arg)
+			$arg = $this->escapeCmd( $arg );
+
+		return join( ' ', $args );
 	}
 
 	final function outputWriter()
