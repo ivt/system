@@ -23,9 +23,7 @@ class LoggingSystem extends WrappedSystem
 		$in     = new LinePrefixStream( ' IN ', ' .. ', $log );
 		$out    = new LinePrefixStream( '  ', '  ', $log );
 
-		// Remove github credentials from log
-		$commandForLog = \PCRE::create( '(\w+(:\w+)?)(?=@github.com)' )->replace( $command, '[HIDDEN]' )->result();
-		$cmd->write( "$commandForLog\n" );
+		$cmd->write( self::removeGitHubCredentials( "$command\n" ) );
 		$cmd->flush();
 
 		$in->write( $stdIn );
