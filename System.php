@@ -204,6 +204,11 @@ abstract class File
 		$this->system = $system;
 	}
 
+	final function is( self $other )
+	{
+		return $this->path === $other->path;
+	}
+
 	final function path() { return $this->path; }
 
 	final function __toString() { return $this->path(); }
@@ -244,6 +249,11 @@ abstract class File
 	final function combinePath( $path )
 	{
 		return $this->combinePaths( $this->path, $path );
+	}
+
+	final function startsWith( $string )
+	{
+		return $this->read( 0, strlen( $string ) ) === "$string";
 	}
 
 	/**

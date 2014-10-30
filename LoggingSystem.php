@@ -114,7 +114,7 @@ class Logger
 			$result = "$result => " . self::dump( $output );
 
 		if ( $context !== null )
-			$result = "$context: $result";
+			$result = self::dump( $context ) .  ": $result";
 
 		$this->writeLog( "$result\n" );
 	}
@@ -142,10 +142,10 @@ class Logger
 	{
 		if ( is_array( $value ) )
 		{
-			if ( count( $value ) > 6 )
+			if ( count( $value ) > 4 )
 			{
-				$start = self::delimit( array_slice( $value, 0, 3 ) );
-				$end   = self::delimit( array_slice( $value, -3 ) );
+				$start = self::delimit( array_slice( $value, 0, 2, true ) );
+				$end   = self::delimit( array_slice( $value, -2, null, true ) );
 
 				return "[$start ... $end]";
 			}
@@ -164,13 +164,21 @@ class Logger
 		}
 		else if ( is_string( $value ) )
 		{
-			$value = \PCRE::create( '([^[:print:]]|\s)+' )->replace( $value, ' ' )->result();
+			$maxLength  = 40;
+			$isReserved = in_array( $value, array( 'null', 'yes', 'no' ) );
+			$isWords    = \PCRE::create( '^[A-Za-z_][A-Za-z0-9_ ]+$' )->matches( $value );
+			$isShort    = strlen( $value ) < $maxLength;
+
+			if ( !$isReserved && $isWords && $isShort )
+				return $value;
+
+			$value = \PCRE::create( '([^[:print:]]|\s+)+' )->replace( $value, ' ' )->result();
 			$value = trim( $value );
 
-			if ( strlen( $value ) > 60 )
-				return substr( $value, 0, 30 ) . "..." . substr( $value, -30 );
-			else
-				return $value;
+			if ( strlen( $value ) > $maxLength )
+				$value = substr( $value, 0, $maxLength / 2 ) . "..." . substr( $value, -$maxLength / 2 );
+
+			return "\"$value\"";
 		}
 		else if ( is_int( $value ) || is_float( $value ) )
 		{
@@ -373,8 +381,6 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 
 	function query( $sql )
 	{
-		$this->log( array( 'query start', $sql ) );
-
 		$result = parent::query( $sql );
 
 		if ( $result instanceof \Dbase_SQL_Query_Result_Select )
@@ -382,7 +388,7 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		else
 			$result1 = "no result set";
 
-		$this->log( array( 'query end', $result1 ) );
+		$this->log( array( 'query', $sql ), $result1 );
 
 		return $result;
 	}
