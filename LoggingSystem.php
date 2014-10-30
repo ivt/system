@@ -28,7 +28,7 @@ class LoggingSystem extends WrappedSystem
 		$logger = $this->logger;
 		$log    = function ( $x ) use ( $logger ) { $logger->writeLog( $x ); };
 		$cmd    = new LinePrefixStream( '>>> ', '... ', $log );
-		$in     = new LinePrefixStream( ' IN ', ' .. ', $log );
+		$in     = new LinePrefixStream( '--- ', '--- ', $log );
 		$out    = new LinePrefixStream( '  ', '  ', $log );
 
 		$cmd->write( self::removeGitHubCredentials( "$command\n" ) );
