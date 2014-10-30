@@ -366,7 +366,7 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 
 	function query( $sql )
 	{
-		$this->logger->log( array( 'query start', $sql ) );
+		$this->log( array( 'query start', $sql ) );
 
 		$result = parent::query( $sql );
 
@@ -375,7 +375,7 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		else
 			$result1 = "no result set";
 
-		$this->logger->log( array( 'query end', $result1 ) );
+		$this->log( array( 'query end', $result1 ) );
 
 		return $result;
 	}
@@ -383,32 +383,42 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 	function insertId()
 	{
 		$result = parent::insertId();
-		$this->logger->log( 'get insert id', $result );
+		$this->log( 'get insert id', $result );
 		return $result;
 	}
 
 	function affectedRows()
 	{
 		$result = parent::affectedRows();
-		$this->logger->log( 'get affected rows', $result );
+		$this->log( 'get affected rows', $result );
 		return $result;
 	}
 
 	function selectDB( $dbName )
 	{
-		$this->logger->log( array( 'select db', $dbName ) );
+		$this->log( array( 'select db', $dbName ) );
 		parent::selectDB( $dbName );
 	}
 
 	function simpleSelect( $table, array $columns, array $where, \Closure $allWheres = null )
 	{
-		$this->logger->log( array( 'simple select', $table, $columns, $where ) );
+		$this->log( array( 'simple select', $table, $columns, $where ) );
 		return parent::simpleSelect( $table, $columns, $where, $allWheres );
 	}
 
 	function startTransaction()
 	{
 		return new LoggingTransaction( parent::startTransaction(), $this->logger );
+	}
+
+	private function log( $input, $output = null )
+	{
+		$dsn  = $this->connectionInfo();
+		$user = $dsn->user();
+		$host = $dsn->host();
+		$db   = $dsn->database();
+
+		$this->logger->log( $input, $output, "$user@$host/$db" );
 	}
 }
 
