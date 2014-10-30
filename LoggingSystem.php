@@ -260,6 +260,13 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
+	function perms()
+	{
+		$result = parent::perms();
+		$this->log( 'perms', decoct( $result ) );
+		return $result;
+	}
+
 	function size()
 	{
 		$size = parent::size();

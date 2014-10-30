@@ -267,6 +267,11 @@ abstract class File
 	}
 
 	/**
+	 * @return int
+	 */
+	abstract function perms();
+
+	/**
 	 * @param string $dest
 	 * @return void
 	 */
@@ -551,6 +556,13 @@ abstract class FOpenWrapperFile extends File
 		clearstatcache( true );
 
 		return Assert::int( filectime( $this->url() ) );
+	}
+
+	function perms()
+	{
+		clearstatcache( true );
+
+		return Assert::int( fileperms( $this->url() ) );
 	}
 
 	function rmdir()
