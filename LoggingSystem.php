@@ -4,15 +4,18 @@ namespace IVT\System;
 
 class LoggingSystem extends WrappedSystem
 {
+	private $callback;
 	private $logger;
 
-	function __construct( System $system, Logger $logger )
+	function __construct( System $system, \Closure $callback )
 	{
 		parent::__construct( $system );
 
+		$logger = new Logger( $callback );
 		$logger->log( array( 'new', $this->describe() ) );
 
-		$this->logger = $logger;
+		$this->logger   = $logger;
+		$this->callback = $callback;
 	}
 
 	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
@@ -74,7 +77,7 @@ class LoggingSystem extends WrappedSystem
 
 	function wrap( System $system )
 	{
-		return new self( parent::wrap( $system ), $this->logger );
+		return new self( parent::wrap( $system ), $this->callback );
 	}
 
 	function file( $path )
