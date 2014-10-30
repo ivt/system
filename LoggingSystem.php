@@ -2,6 +2,8 @@
 
 namespace IVT\System;
 
+use IVT\Exception;
+
 class LoggingSystem extends WrappedSystem
 {
 	private $callback;
@@ -125,7 +127,7 @@ class Logger
 	/**
 	 * @param array|bool|null|string|int|float $value
 	 * @return string
-	 * @throws \IVT\Exception
+	 * @throws Exception
 	 */
 	private static function dump( $value )
 	{
@@ -167,7 +169,7 @@ class Logger
 		}
 		else
 		{
-			throw new \IVT\Exception( "Invalid type: " . gettype( $value ) );
+			throw new Exception( "Invalid type: " . gettype( $value ) );
 		}
 	}
 
