@@ -13,10 +13,13 @@ class LoggingSystem extends WrappedSystem
 	{
 		parent::__construct( $system );
 
-		$logger = new Logger( $callback );
-		$logger->log( array( 'new', $this->describe() ) );
+		$self = $this;
 
-		$this->logger   = $logger;
+		$this->logger = new Logger( function ( $x ) use ( $self, $callback )
+		{
+			$callback( "{$self->describe()}: $x" );
+		} );
+
 		$this->callback = $callback;
 	}
 

@@ -96,7 +96,7 @@ class LocalSystem extends System
 
 	function describe()
 	{
-		return 'localhost';
+		return 'local';
 	}
 }
 
