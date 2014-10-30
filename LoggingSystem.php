@@ -100,6 +100,12 @@ class LoggingSystem extends WrappedSystem
 
 class Logger
 {
+	/**
+	 * @param mixed  $input
+	 * @param mixed  $output
+	 * @param string $context
+	 * @throws Exception
+	 */
 	function log( $input, $output = null, $context = null )
 	{
 		$result = self::dump( $input );
@@ -108,7 +114,7 @@ class Logger
 			$result = "$result => " . self::dump( $output );
 
 		if ( $context !== null )
-			$result = self::dump( $context ) . ": $result";
+			$result = "$context: $result";
 
 		$this->writeLog( "$result\n" );
 	}
