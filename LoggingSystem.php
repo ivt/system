@@ -114,23 +114,9 @@ class Logger
 			$result = "$result => " . self::dump( $output );
 
 		if ( $context !== null )
-			$result = self::dump( $context ) .  ": $result";
+			$result = "$context: $result";
 
 		$this->writeLog( "$result\n" );
-	}
-
-	private static function delimit( array $value )
-	{
-		$result = array();
-		foreach ( $value as $k => $v )
-		{
-			if ( is_int( $k ) )
-				$result[ ] = self::dump( $v );
-			else
-				$result[ ] = self::dump( $k ) . ': ' . self::dump( $v );
-		}
-
-		return join( ', ', $result );
 	}
 
 	/**
@@ -138,21 +124,21 @@ class Logger
 	 * @return string
 	 * @throws Exception
 	 */
-	private static function dump( $value )
+	static function dump( $value )
 	{
 		if ( is_array( $value ) )
 		{
-			if ( count( $value ) > 4 )
+			$result = array();
+			foreach ( $value as $k => $v )
 			{
-				$start = self::delimit( array_slice( $value, 0, 2, true ) );
-				$end   = self::delimit( array_slice( $value, -2, null, true ) );
-
-				return "[$start ... $end]";
+				$s = self::dump( $v );
+				if ( !is_int( $k ) )
+					$s = self::dump( $k ) . ": $s";
+				$result[ ] = $s;
 			}
-			else
-			{
-				return "[" . self::delimit( $value ) . "]";
-			}
+			$result = '[' . join( ', ', $result ) . ']';
+			$result = self::trim( $result );
+			return $result;
 		}
 		else if ( is_bool( $value ) )
 		{
@@ -164,21 +150,14 @@ class Logger
 		}
 		else if ( is_string( $value ) )
 		{
-			$maxLength  = 40;
-			$isReserved = in_array( $value, array( 'null', 'yes', 'no' ) );
-			$isWords    = \PCRE::create( '^[A-Za-z_][A-Za-z0-9_ ]+$' )->matches( $value );
-			$isShort    = strlen( $value ) < $maxLength;
+			if ( !\PCRE::create( '^[A-Za-z0-9_ ]+$' )->matches( $value ) )
+			{
+				$value = \PCRE::create( '([^[:print:]]|\s+)+' )->replace( $value, ' ' )->result();
+				$value = trim( $value );
+				$value = "\"$value\"";
+			}
 
-			if ( !$isReserved && $isWords && $isShort )
-				return $value;
-
-			$value = \PCRE::create( '([^[:print:]]|\s+)+' )->replace( $value, ' ' )->result();
-			$value = trim( $value );
-
-			if ( strlen( $value ) > $maxLength )
-				$value = substr( $value, 0, $maxLength / 2 ) . "..." . substr( $value, -$maxLength / 2 );
-
-			return "\"$value\"";
+			return self::trim( $value );
 		}
 		else if ( is_int( $value ) || is_float( $value ) )
 		{
@@ -188,6 +167,14 @@ class Logger
 		{
 			throw new Exception( "Invalid type: " . gettype( $value ) );
 		}
+	}
+
+	private static function trim( $value )
+	{
+		if ( strlen( $value ) > 40 )
+			return substr( $value, 0, 20 ) . '...' . substr( $value, -20 );
+		else
+			return $value;
 	}
 
 	private $callback;
@@ -308,7 +295,13 @@ class LoggingFile extends WrappedFile
 	function read( $offset = 0, $maxLength = null )
 	{
 		$result = parent::read( $offset, $maxLength );
-		$this->log( array( "read", 'offset' => $offset, 'length' => $maxLength ), $result );
+
+		if ( $offset === 0 && $maxLength === null )
+			$input = 'read';
+		else
+			$input = array( 'read', 'offset' => $offset, 'length' => $maxLength );
+
+		$this->log( $input, $result );
 
 		return $result;
 	}
@@ -364,7 +357,7 @@ class LoggingFile extends WrappedFile
 
 	protected function renameImpl( $to )
 	{
-		$this->logger->log( array( 'rename', 'from' => $this->path(), 'to' => $to ) );
+		$this->log( array( 'rename to', $to ) );
 		parent::renameImpl( $to );
 	}
 }
@@ -396,14 +389,14 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 	function insertId()
 	{
 		$result = parent::insertId();
-		$this->log( 'get insert id', $result );
+		$this->log( 'insert id', $result );
 		return $result;
 	}
 
 	function affectedRows()
 	{
 		$result = parent::affectedRows();
-		$this->log( 'get affected rows', $result );
+		$this->log( 'affected rows', $result );
 		return $result;
 	}
 
@@ -415,8 +408,9 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 
 	function simpleSelect( $table, array $columns, array $where, \Closure $allWheres = null )
 	{
-		$this->log( array( 'simple select', $table, $columns, $where ) );
-		return parent::simpleSelect( $table, $columns, $where, $allWheres );
+		$rows = parent::simpleSelect( $table, $columns, $where, $allWheres );
+		$this->log( array( 'simple select', 'from' => $table ), count( $rows ) . ' rows' );
+		return $rows;
 	}
 
 	function startTransaction()
