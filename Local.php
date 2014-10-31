@@ -185,6 +185,8 @@ class LocalFile extends FOpenWrapperFile
 
 	function realpath()
 	{
+		clearstatcache( true );
+
 		return Assert::string( realpath( $this->path() ) );
 	}
 }
