@@ -81,6 +81,24 @@ abstract class System implements CommandOutputHandler, FileSystem
 	}
 
 	/**
+	 * @param string $directory
+	 * @return string
+	 */
+	final function createTarball( $directory )
+	{
+		return $this->execArgs( array( 'tar', '-cz', '-C', $directory, '.' ) );
+	}
+
+	/**
+	 * @param string $tarball
+	 * @param string $directory
+	 */
+	final function extractTarball( $tarball, $directory )
+	{
+		$this->execArgs( array( 'tar', '-xvz', '-C', $directory ), $tarball );
+	}
+
+	/**
 	 * @param string $search
 	 * @param string $replace
 	 * @param string $file
@@ -182,6 +200,8 @@ abstract class System implements CommandOutputHandler, FileSystem
 	/**
 	 * If this System happens to be a wrapper around another System, this
 	 * applies the same wrapping to the given system.
+	 * @param System $system
+	 * @return System
 	 */
 	function wrap( System $system ) { return $system; }
 
