@@ -18,13 +18,10 @@ class LinePrefixStream
 		$this->delegate    = $delegate;
 	}
 
-	function __destruct()
+	function __invoke( $data )
 	{
-		$this->flush();
-	}
+		$data = $this->clean( $data );
 
-	function write( $data )
-	{
 		$this->buffer .= $data;
 		$lines        = explode( "\n", $this->buffer );
 		$this->buffer = array_pop( $lines );
@@ -37,19 +34,85 @@ class LinePrefixStream
 		}
 	}
 
-	function flush()
+	function __destruct()
 	{
 		if ( $this->buffer !== '' )
 		{
-			$this->write( "\n" );
+			$this( "\n" );
 			$this->send( "^ no end of line\n" );
 		}
+	}
+
+	/**
+	 * @param string $bytes
+	 * @return string
+	 */
+	private function clean( $bytes )
+	{
+		if ( mb_check_encoding( $bytes, 'UTF-8' ) )
+			return $bytes;
+		else
+			return "[" . strlen( $bytes ) . " bytes]\n";
 	}
 
 	private function send( $data )
 	{
 		$delegate = $this->delegate;
 		$delegate( $data );
+	}
+}
+
+/**
+ * Causes continuous chunks of binary data to be sent to the underlying
+ * stream in a single chunk.
+ */
+class BinaryBuffer
+{
+	private $buffer = '';
+	private $delegate;
+
+	/**
+	 * @param callable $delegate
+	 */
+	function __construct( $delegate )
+	{
+		$this->delegate  = $delegate;
+	}
+
+	function __invoke( $data )
+	{
+		if ( $data === '' )
+			return;
+
+		if ( !mb_check_encoding( $data, 'UTF-8' ) )
+		{
+			$this->buffer .= $data;
+
+			if ( strlen( $this->buffer ) > 10000000 )
+				$this->flush();
+		}
+		else
+		{
+			$this->flush();
+			$this->send( $data );
+		}
+	}
+
+	function __destruct()
+	{
+		$this->flush();
+	}
+
+	private function flush()
+	{
+		$this->send( $this->buffer );
+		$this->buffer = '';
+	}
+
+	private function send( $s )
+	{
+		$f = $this->delegate;
+		$f( $s );
 	}
 }
 

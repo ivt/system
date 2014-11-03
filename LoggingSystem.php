@@ -27,31 +27,32 @@ class LoggingSystem extends WrappedSystem
 	{
 		$logger = $this->logger;
 		$log    = function ( $x ) use ( $logger ) { $logger->writeLog( $x ); };
-		$cmd    = new LinePrefixStream( '>>> ', '... ', $log );
-		$in     = new LinePrefixStream( '--- ', '--- ', $log );
-		$out    = new LinePrefixStream( '  ', '  ', $log );
+		$cmd    = new BinaryBuffer( new LinePrefixStream( '>>> ', '... ', $log ) );
+		$in     = new BinaryBuffer( new LinePrefixStream( '--- ', '--- ', $log ) );
+		$out    = new BinaryBuffer( new LinePrefixStream( '  ', '  ', $log ) );
 
-		$cmd->write( self::removeGitHubCredentials( "$command\n" ) );
-		$cmd->flush();
+		$cmd( self::removeGitHubCredentials( "$command\n" ) );
+		unset( $cmd );
 
-		$in->write( $stdIn );
-		$in->flush();
+		$in( $stdIn );
+		unset( $in );
 
 		$exitStatus = parent::runImpl(
 			$command,
 			$stdIn,
 			function ( $data ) use ( $out, $stdOut )
 			{
-				$out->write( $data );
+				$out( $data );
 				$stdOut( $data );
 			},
 			function ( $data ) use ( $out, $stdErr )
 			{
-				$out->write( $data );
+				$out( $data );
 				$stdErr( $data );
 			}
 		);
-		$out->flush();
+		unset( $out );
+		gc_collect_cycles();
 
 		return $exitStatus;
 	}

@@ -188,7 +188,7 @@ class SSHSystem extends System
 					$pos++;
 			}
 
-			$stdOut( substr( $buffer, 0, $pos ) );
+			$stdOut( (string) substr( $buffer, 0, $pos ) );
 			$buffer = substr( $buffer, $pos );
 		};
 
