@@ -99,6 +99,21 @@ abstract class System implements CommandOutputHandler, FileSystem
 	}
 
 	/**
+	 * @param string $from
+	 * @param string $to
+	 */
+	final function copy( $from, $to )
+	{
+		$this->execArgs( array( 'cp', '-rT', $from, $to ) );
+	}
+
+	final function ensureNotExists( $path )
+	{
+		if ( $this->file( $path )->exists() )
+			$this->execArgs( array( 'rm', '-rf', $path ) );
+	}
+
+	/**
 	 * @param string $search
 	 * @param string $replace
 	 * @param string $file
