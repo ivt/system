@@ -419,7 +419,7 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		return new LoggingTransaction( parent::startTransaction(), $this->logger );
 	}
 
-	private function log( $input, $output = null )
+	function log( $input, $output = null )
 	{
 		$dsn  = $this->connectionInfo();
 		$user = $dsn->user();
@@ -432,10 +432,10 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 
 class LoggingTransaction extends \WrappedDatabaseTransaction
 {
-	/** @var Logger */
+	/** @var LoggingDB */
 	private $logger;
 
-	function __construct( \DatabaseTransaction $txn, Logger $logger )
+	function __construct( \DatabaseTransaction $txn, LoggingDB $logger )
 	{
 		parent::__construct( $txn );
 		$this->logger = $logger;
