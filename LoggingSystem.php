@@ -416,7 +416,7 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 
 	function startTransaction()
 	{
-		return new LoggingTransaction( parent::startTransaction(), $this->logger );
+		return new LoggingTransaction( parent::startTransaction(), $this );
 	}
 
 	function log( $input, $output = null )
