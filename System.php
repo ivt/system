@@ -84,18 +84,18 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 * @param string $directory
 	 * @return string
 	 */
-	final function createTarball( $directory )
+	final function createTarXz( $directory )
 	{
-		return $this->execArgs( array( 'tar', '-cz', '-C', $directory, '.' ) );
+		return $this->execArgs( array( 'tar', '-cJ', '-C', $directory, '.' ) );
 	}
 
 	/**
 	 * @param string $tarball
 	 * @param string $directory
 	 */
-	final function extractTarball( $tarball, $directory )
+	final function extractTarXz( $tarball, $directory )
 	{
-		$this->execArgs( array( 'tar', '-xvz', '-C', $directory ), $tarball );
+		$this->execArgs( array( 'tar', '-xJ', '-C', $directory ), $tarball );
 	}
 
 	/**
