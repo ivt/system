@@ -52,7 +52,7 @@ class LinePrefixStream
 		if ( mb_check_encoding( $bytes, 'UTF-8' ) )
 			return $bytes;
 		else
-			return "[" . strlen( $bytes ) . " bytes]\n";
+			return "[" . sb_file_size_conversion( strlen( $bytes ) ) . " binary]\n";
 	}
 
 	private function send( $data )
