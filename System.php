@@ -109,8 +109,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 
 	final function ensureNotExists( $path )
 	{
-		if ( $this->file( $path )->exists() )
-			$this->execArgs( array( 'rm', '-rf', $path ) );
+		$this->execArgs( array( 'rm', '-rf', $path ) );
 	}
 
 	/**
