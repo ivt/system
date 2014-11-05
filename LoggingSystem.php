@@ -19,6 +19,7 @@ class LoggingSystem extends WrappedSystem
 		{
 			$callback( "{$self->describe()}: $x" );
 		} );
+		$this->logger->log( 'init' );
 
 		$this->callback = $callback;
 	}
