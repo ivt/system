@@ -392,6 +392,13 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		return parent::simpleSelect( $table, $columns, $where, $allWheres );
 	}
 
+	function update( $table, array $set = array(), array $where = array() )
+	{
+		$affected = parent::update( $table, $set, $where );
+		$this->logger->log( array( 'update', $table ), "$affected rows affected" );
+		return $affected;
+	}
+
 	function startTransaction()
 	{
 		return new LoggingTransaction( parent::startTransaction(), $this->logger );
