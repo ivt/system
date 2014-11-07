@@ -173,7 +173,7 @@ class LocalFile extends FOpenWrapperFile
 	protected function pathToUrl( $path )
 	{
 		if ( DIRECTORY_SEPARATOR === '\\' )
-			return \PCRE::create( '^([A-Za-z]:\\\\|\\\\\\\\|\\\\)', 'D' )->matches( $path ) ? $path : ".\\$path";
+			return \PCRE::matches( '^([A-Za-z]:\\\\|\\\\\\\\|\\\\)', $path, 0, 'D' ) ? $path : ".\\$path";
 		else
 			return starts_with( $path, '/' ) ? $path : "./$path";
 	}
