@@ -152,7 +152,7 @@ class Logger
 		}
 		else if ( is_string( $value ) )
 		{
-			if ( !\PCRE::matches( '^[A-Za-z0-9_ ]+$', $value ) )
+			if ( !\PCRE::match( '^[A-Za-z0-9_ ]+$', $value ) )
 			{
 				$value = \PCRE::replace( '([^[:print:]]|\s+)+', $value, ' ' );
 				$value = trim( $value );
