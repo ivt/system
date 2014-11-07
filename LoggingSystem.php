@@ -154,7 +154,7 @@ class Logger
 		{
 			if ( !\PCRE::create( '^[A-Za-z0-9_ ]+$' )->matches( $value ) )
 			{
-				$value = \PCRE::create( '([^[:print:]]|\s+)+' )->replace( $value, ' ' );
+				$value = \PCRE::replace( '([^[:print:]]|\s+)+', $value, ' ' );
 				$value = trim( $value );
 				$value = "\"$value\"";
 			}

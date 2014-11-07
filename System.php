@@ -33,7 +33,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 {
 	static function removeGitHubCredentials( $string )
 	{
-		return \PCRE::create( '(\w+(:\w+)?)(?=@github.com)' )->replace( $string, '[HIDDEN]' );
+		return \PCRE::replace( '(\w+(:\w+)?)(?=@github.com)', $string, '[HIDDEN]' );
 	}
 
 	final function escapeCmd( $arg )
