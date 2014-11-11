@@ -33,17 +33,23 @@ abstract class System implements CommandOutputHandler, FileSystem
 {
 	static function removeGitHubCredentials( $string )
 	{
-		return \PCRE::create( '(\w+(:\w+)?)(?=@github.com)' )->replace( $string, '[HIDDEN]' )->result();
+		return \PCRE::replace( '(\w+(:\w+)?)(?=@github.com)', $string, '[HIDDEN]' );
 	}
 
 	final function escapeCmd( $arg )
 	{
-		return ProcessBuilder::escape( $arg );
+		$arg1    = str_replace( str_split( "=:_+./-" ), '', $arg );
+		$isValid = $arg1 === '' || ctype_alnum( $arg1 );
+
+		return $isValid && $arg !== '' ? $arg : escapeshellarg( $arg );
 	}
 
 	final function escapeCmdArgs( array $args )
 	{
-		return ProcessBuilder::escapeArgs( $args );
+		foreach ( $args as &$arg)
+			$arg = $this->escapeCmd( $arg );
+
+		return join( ' ', $args );
 	}
 
 	final function outputWriter()
@@ -75,6 +81,38 @@ abstract class System implements CommandOutputHandler, FileSystem
 	}
 
 	/**
+	 * @param string $directory
+	 * @return string
+	 */
+	final function createTarXz( $directory )
+	{
+		return $this->execArgs( array( 'tar', '-cJ', '-C', $directory, '.' ) );
+	}
+
+	/**
+	 * @param string $tarball
+	 * @param string $directory
+	 */
+	final function extractTarXz( $tarball, $directory )
+	{
+		$this->execArgs( array( 'tar', '-xJ', '-C', $directory ), $tarball );
+	}
+
+	/**
+	 * @param string $from
+	 * @param string $to
+	 */
+	final function copy( $from, $to )
+	{
+		$this->execArgs( array( 'cp', '-rT', $from, $to ) );
+	}
+
+	final function ensureNotExists( $path )
+	{
+		$this->execArgs( array( 'rm', '-rf', $path ) );
+	}
+
+	/**
 	 * @param string $search
 	 * @param string $replace
 	 * @param string $file
@@ -88,6 +126,12 @@ abstract class System implements CommandOutputHandler, FileSystem
 			$replace = str_replace( $char, "\\$char", $replace );
 
 		$this->execArgs( array( 'sed', '-ri', "s/$search/$replace/g", $file ) );
+	}
+
+	final function replaceInFileMany( $file, array $replacements )
+	{
+		foreach ( $replacements as $search => $replace )
+			$this->replaceInFile( $search, $replace, $file );
 	}
 
 	final function now()
@@ -170,6 +214,8 @@ abstract class System implements CommandOutputHandler, FileSystem
 	/**
 	 * If this System happens to be a wrapper around another System, this
 	 * applies the same wrapping to the given system.
+	 * @param System $system
+	 * @return System
 	 */
 	function wrap( System $system ) { return $system; }
 
@@ -190,6 +236,11 @@ abstract class File
 	{
 		$this->path   = $path;
 		$this->system = $system;
+	}
+
+	final function is( self $other )
+	{
+		return $this->path === $other->path;
 	}
 
 	final function path() { return $this->path; }
@@ -227,19 +278,42 @@ abstract class File
 	 * between them if necessary
 	 *
 	 * @param string $path
-	 * @return File
+	 * @return string
 	 */
-	final function combine( $path )
+	final function combinePath( $path )
+	{
+		return $this->combinePaths( $this->path, $path );
+	}
+
+	final function startsWith( $string )
+	{
+		return $this->read( 0, strlen( $string ) ) === "$string";
+	}
+
+	/**
+	 * @param string $path1
+	 * @param string $path2
+	 * @return string
+	 */
+	final function combinePaths( $path1, $path2 )
 	{
 		$dirSep = $this->system->dirSep();
 
-		if ( starts_with( $path, $dirSep ) || ends_with( $this->path, $dirSep ) )
-			$path = $this->path . $path;
+		if ( starts_with( $path2, $dirSep ) || ends_with( $path1, $dirSep ) )
+			return $path1 . $path2;
 		else
-			$path = $this->path . $dirSep . $path;
-
-		return $this->system->file( $path );
+			return $path1 . $dirSep . $path2;
 	}
+
+	final function combine( $path )
+	{
+		return $this->system->file( $this->combinePath( $path ) );
+	}
+
+	/**
+	 * @return int
+	 */
+	abstract function perms();
 
 	/**
 	 * @param string $dest
@@ -248,13 +322,41 @@ abstract class File
 	abstract protected function copyImpl( $dest );
 
 	/**
-	 * @param string $dest
+	 * @param string $to
 	 * @return File the new file
 	 */
-	final function copy( $dest )
+	final function copy( $to )
 	{
-		$this->copyImpl( $dest );
-		return $this->system->file( $dest );
+		$this->copyImpl( $to );
+		return $this->system->file( $to );
+	}
+
+	/**
+	 * @param string $dir
+	 */
+	final function copyDirContents( $dir )
+	{
+		foreach ( $this->scanDirNoDots() as $file )
+			$this->combine( $file )->copyRecursive( $this->combinePaths( $dir, $file ) );
+	}
+
+	/**
+	 * @param string $to
+	 * @return \IVT\System\File
+	 */
+	final function copyRecursive( $to )
+	{
+		if ( $this->isDir() && !$this->isLink() )
+		{
+			$to = $this->system->file( $to );
+			$to->mkdir();
+			$this->copyDirContents( $to->path );
+			return $to;
+		}
+		else
+		{
+			return $this->copy( $to );
+		}
 	}
 
 	/**
@@ -265,15 +367,19 @@ abstract class File
 	/**
 	 * @return string[]
 	 */
-	abstract function scandir();
+	abstract function scanDir();
+
+	final function scanDirNoDots()
+	{
+		return array_diff( $this->scanDir(), array( '.', '..' ) );
+	}
 
 	final function dirContents()
 	{
 		/** @var self[] $files */
 		$files = array();
-		foreach ( $this->scandir() as $p )
-			if ( $p !== '.' && $p !== '..' )
-				$files[ ] = $this->combine( $p );
+		foreach ( $this->scanDirNoDots() as $p )
+			$files[ ] = $this->combine( $p );
 		return $files;
 	}
 
@@ -496,6 +602,13 @@ abstract class FOpenWrapperFile extends File
 		return Assert::int( filectime( $this->url() ) );
 	}
 
+	function perms()
+	{
+		clearstatcache( true );
+
+		return Assert::int( fileperms( $this->url() ) );
+	}
+
 	function rmdir()
 	{
 		Assert::true( rmdir( $this->url() ) );
@@ -531,7 +644,7 @@ abstract class FOpenWrapperFile extends File
 		}
 	}
 
-	function scandir()
+	function scanDir()
 	{
 		clearstatcache( true );
 

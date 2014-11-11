@@ -2,48 +2,58 @@
 
 namespace IVT\System;
 
+use IVT\Exception;
+
 class LoggingSystem extends WrappedSystem
 {
+	private $callback;
 	private $logger;
 
-	function __construct( System $system, Logger $logger )
+	function __construct( System $system, \Closure $callback )
 	{
 		parent::__construct( $system );
 
-		$logger->log( array( 'new', $this->describe() ) );
+		$self = $this;
 
-		$this->logger = $logger;
+		$this->logger = new Logger( function ( $x ) use ( $self, $callback )
+		{
+			$callback( "{$self->describe()}: $x" );
+		} );
+		$this->logger->log( 'init' );
+
+		$this->callback = $callback;
 	}
 
 	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
 		$logger = $this->logger;
 		$log    = function ( $x ) use ( $logger ) { $logger->writeLog( $x ); };
-		$cmd    = new LinePrefixStream( '>>> ', '... ', $log );
-		$in     = new LinePrefixStream( ' IN ', ' .. ', $log );
-		$out    = new LinePrefixStream( '  ', '  ', $log );
+		$cmd    = new BinaryBuffer( new LinePrefixStream( '>>> ', '... ', $log ) );
+		$in     = new BinaryBuffer( new LinePrefixStream( '--- ', '--- ', $log ) );
+		$out    = new BinaryBuffer( new LinePrefixStream( '  ', '  ', $log ) );
 
-		$cmd->write( self::removeGitHubCredentials( "$command\n" ) );
-		$cmd->flush();
+		$cmd( self::removeGitHubCredentials( "$command\n" ) );
+		unset( $cmd );
 
-		$in->write( $stdIn );
-		$in->flush();
+		$in( $stdIn );
+		unset( $in );
 
 		$exitStatus = parent::runImpl(
 			$command,
 			$stdIn,
 			function ( $data ) use ( $out, $stdOut )
 			{
-				$out->write( $data );
+				$out( $data );
 				$stdOut( $data );
 			},
 			function ( $data ) use ( $out, $stdErr )
 			{
-				$out->write( $data );
+				$out( $data );
 				$stdErr( $data );
 			}
 		);
-		$out->flush();
+		unset( $out );
+		gc_collect_cycles();
 
 		return $exitStatus;
 	}
@@ -74,7 +84,7 @@ class LoggingSystem extends WrappedSystem
 
 	function wrap( System $system )
 	{
-		return new self( parent::wrap( $system ), $this->logger );
+		return new self( parent::wrap( $system ), $this->callback );
 	}
 
 	function file( $path )
@@ -92,6 +102,12 @@ class LoggingSystem extends WrappedSystem
 
 class Logger
 {
+	/**
+	 * @param mixed  $input
+	 * @param mixed  $output
+	 * @param string $context
+	 * @throws Exception
+	 */
 	function log( $input, $output = null, $context = null )
 	{
 		$result = self::dump( $input );
@@ -100,45 +116,31 @@ class Logger
 			$result = "$result => " . self::dump( $output );
 
 		if ( $context !== null )
-			$result = self::dump( $context ) . ": $result";
+			$result = "$context: $result";
 
 		$this->writeLog( "$result\n" );
-	}
-
-	private static function delimit( array $value )
-	{
-		$result = array();
-		foreach ( $value as $k => $v )
-		{
-			if ( is_int( $k ) )
-				$result[ ] = self::dump( $v );
-			else
-				$result[ ] = self::dump( $k ) . ': ' . self::dump( $v );
-		}
-
-		return join( ', ', $result );
 	}
 
 	/**
 	 * @param array|bool|null|string|int|float $value
 	 * @return string
-	 * @throws \IVT\Exception
+	 * @throws Exception
 	 */
-	private static function dump( $value )
+	static function dump( $value )
 	{
 		if ( is_array( $value ) )
 		{
-			if ( count( $value ) > 6 )
+			$result = array();
+			foreach ( $value as $k => $v )
 			{
-				$start = self::delimit( array_slice( $value, 0, 3 ) );
-				$end   = self::delimit( array_slice( $value, -3 ) );
-
-				return "[$start ... $end]";
+				$s = self::dump( $v );
+				if ( !is_int( $k ) )
+					$s = self::dump( $k ) . ": $s";
+				$result[ ] = $s;
 			}
-			else
-			{
-				return "[" . self::delimit( $value ) . "]";
-			}
+			$result = '[' . join( ', ', $result ) . ']';
+			$result = self::trim( $result );
+			return $result;
 		}
 		else if ( is_bool( $value ) )
 		{
@@ -150,13 +152,14 @@ class Logger
 		}
 		else if ( is_string( $value ) )
 		{
-			$value = \PCRE::create( '([^[:print:]]|\s)+' )->replace( $value, ' ' )->result();
-			$value = trim( $value );
+			if ( !\PCRE::match( '^[A-Za-z0-9_ ]+$', $value ) )
+			{
+				$value = \PCRE::replace( '([^[:print:]]|\s+)+', $value, ' ' );
+				$value = trim( $value );
+				$value = "\"$value\"";
+			}
 
-			if ( strlen( $value ) > 60 )
-				return substr( $value, 0, 30 ) . "..." . substr( $value, -30 );
-			else
-				return $value;
+			return self::trim( $value );
 		}
 		else if ( is_int( $value ) || is_float( $value ) )
 		{
@@ -164,8 +167,16 @@ class Logger
 		}
 		else
 		{
-			throw new \IVT\Exception( "Invalid type: " . gettype( $value ) );
+			throw new Exception( "Invalid type: " . gettype( $value ) );
 		}
+	}
+
+	private static function trim( $value )
+	{
+		if ( strlen( $value ) > 40 )
+			return substr( $value, 0, 20 ) . '...' . substr( $value, -20 );
+		else
+			return $value;
 	}
 
 	private $callback;
@@ -200,9 +211,9 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
-	function scandir()
+	function scanDir()
 	{
-		$result = parent::scandir();
+		$result = parent::scanDir();
 		$this->log( "scandir", $result );
 
 		return $result;
@@ -246,6 +257,13 @@ class LoggingFile extends WrappedFile
 		return $result;
 	}
 
+	function perms()
+	{
+		$result = parent::perms();
+		$this->log( 'perms', decoct( $result ) );
+		return $result;
+	}
+
 	function size()
 	{
 		$size = parent::size();
@@ -279,7 +297,13 @@ class LoggingFile extends WrappedFile
 	function read( $offset = 0, $maxLength = null )
 	{
 		$result = parent::read( $offset, $maxLength );
-		$this->log( array( "read", 'offset' => $offset, 'length' => $maxLength ), $result );
+
+		if ( $offset === 0 && $maxLength === null )
+			$input = 'read';
+		else
+			$input = array( 'read', 'offset' => $offset, 'length' => $maxLength );
+
+		$this->log( $input, $result );
 
 		return $result;
 	}
@@ -335,7 +359,7 @@ class LoggingFile extends WrappedFile
 
 	protected function renameImpl( $to )
 	{
-		$this->logger->log( array( 'rename', 'from' => $this->path(), 'to' => $to ) );
+		$this->log( array( 'rename to', $to ) );
 		parent::renameImpl( $to );
 	}
 }
@@ -352,8 +376,6 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 
 	function query( $sql )
 	{
-		$this->logger->log( array( 'query start', $sql ) );
-
 		$result = parent::query( $sql );
 
 		if ( $result instanceof \Dbase_SQL_Query_Result_Select )
@@ -361,7 +383,7 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		else
 			$result1 = "no result set";
 
-		$this->logger->log( array( 'query end', $result1 ) );
+		$this->log( array( 'query', $sql ), $result1 );
 
 		return $result;
 	}
@@ -369,27 +391,28 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 	function insertId()
 	{
 		$result = parent::insertId();
-		$this->logger->log( 'get insert id', $result );
+		$this->log( 'insert id', $result );
 		return $result;
 	}
 
 	function affectedRows()
 	{
 		$result = parent::affectedRows();
-		$this->logger->log( 'get affected rows', $result );
+		$this->log( 'affected rows', $result );
 		return $result;
 	}
 
 	function selectDB( $dbName )
 	{
-		$this->logger->log( array( 'select db', $dbName ) );
+		$this->log( array( 'select db', $dbName ) );
 		parent::selectDB( $dbName );
 	}
 
 	function simpleSelect( $table, array $columns, array $where, \Closure $allWheres = null )
 	{
-		$this->logger->log( array( 'simple select', $table, $columns, $where ) );
-		return parent::simpleSelect( $table, $columns, $where, $allWheres );
+		$rows = parent::simpleSelect( $table, $columns, $where, $allWheres );
+		$this->log( array( 'simple select', 'from' => $table ), count( $rows ) . ' rows' );
+		return $rows;
 	}
 
 	function update( $table, array $set = array(), array $where = array() )
@@ -401,16 +424,26 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 
 	function startTransaction()
 	{
-		return new LoggingTransaction( parent::startTransaction(), $this->logger );
+		return new LoggingTransaction( parent::startTransaction(), $this );
+	}
+
+	function log( $input, $output = null )
+	{
+		$dsn  = $this->connectionInfo();
+		$user = $dsn->user();
+		$host = $dsn->host();
+		$db   = $dsn->database();
+
+		$this->logger->log( $input, $output, "$user@$host/$db" );
 	}
 }
 
 class LoggingTransaction extends \WrappedDatabaseTransaction
 {
-	/** @var Logger */
+	/** @var LoggingDB */
 	private $logger;
 
-	function __construct( \DatabaseTransaction $txn, Logger $logger )
+	function __construct( \DatabaseTransaction $txn, LoggingDB $logger )
 	{
 		parent::__construct( $txn );
 		$this->logger = $logger;

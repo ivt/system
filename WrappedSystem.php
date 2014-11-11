@@ -84,7 +84,7 @@ class WrappedFile extends File
 
 	function isFile() { return $this->file->isFile(); }
 
-	function scandir() { return $this->file->scandir(); }
+	function scanDir() { return $this->file->scanDir(); }
 
 	function isDir() { return $this->file->isDir(); }
 
@@ -127,4 +127,6 @@ class WrappedFile extends File
 	function realpath() { return $this->file->realpath(); }
 
 	protected function copyImpl( $dest ) { $this->file->copyImpl( $dest ); }
+
+	function perms() { return $this->file->perms(); }
 }

@@ -20,13 +20,13 @@ class LocalSystem extends System
 	static function createLogging( $useStdErr = false )
 	{
 		$self   = new self;
-		$logger = new Logger( function ( $data ) use ( $self, $useStdErr )
+		$logger = function ( $data ) use ( $self, $useStdErr )
 		{
 			if ( $useStdErr )
 				$self->writeError( $data );
 			else
 				$self->writeOutput( $data );
-		} );
+		};
 
 		return new LoggingSystem( $self, $logger );
 	}
@@ -47,21 +47,7 @@ class LocalSystem extends System
 
 	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
-		return self::runLocal( $command, $stdIn, $stdOut, $stdErr, null, null );
-	}
-
-	/**
-	 * @param string        $command
-	 * @param string        $stdIn
-	 * @param callable      $stdOut
-	 * @param callable      $stdErr
-	 * @param string|null   $cwd
-	 * @param string[]|null $environment
-	 * @return int
-	 */
-	static function runLocal( $command, $stdIn, \Closure $stdOut, \Closure $stdErr, $cwd, $environment )
-	{
-		$process = new Process( $command, $cwd, $environment, $stdIn, null );
+		$process = new Process( $command, null, null, $stdIn, null );
 
 		return $process->run( function ( $type, $data ) use ( $stdOut, $stdErr )
 		{
@@ -110,7 +96,7 @@ class LocalSystem extends System
 
 	function describe()
 	{
-		return 'localhost';
+		return 'local';
 	}
 }
 
@@ -187,7 +173,7 @@ class LocalFile extends FOpenWrapperFile
 	protected function pathToUrl( $path )
 	{
 		if ( DIRECTORY_SEPARATOR === '\\' )
-			return \PCRE::create( '^([A-Za-z]:\\\\|\\\\\\\\|\\\\)', 'D' )->matches( $path ) ? $path : ".\\$path";
+			return \PCRE::match( '^([A-Za-z]:\\\\|\\\\\\\\|\\\\)', $path, 'D' ) ? $path : ".\\$path";
 		else
 			return starts_with( $path, '/' ) ? $path : "./$path";
 	}
@@ -199,6 +185,8 @@ class LocalFile extends FOpenWrapperFile
 
 	function realpath()
 	{
+		clearstatcache( true );
+
 		return Assert::string( realpath( $this->path() ) );
 	}
 }
