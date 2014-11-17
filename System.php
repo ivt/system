@@ -310,6 +310,13 @@ abstract class File
 		return $this->system->file( $this->combinePath( $path ) );
 	}
 
+	function isBlockDevice() { return $this->fileType() === 'block'; }
+
+	/**
+	 * @return string
+	 */
+	abstract function fileType();
+
 	/**
 	 * @return int
 	 */
@@ -600,6 +607,13 @@ abstract class FOpenWrapperFile extends File
 		clearstatcache( true );
 
 		return Assert::int( filectime( $this->url() ) );
+	}
+
+	function fileType()
+	{
+		clearstatcache( true );
+
+		return Assert::string( filetype( $this->url() ) );
 	}
 
 	function perms()

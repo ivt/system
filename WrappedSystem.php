@@ -82,6 +82,8 @@ class WrappedFile extends File
 		$this->file = $file;
 	}
 
+	function fileType() { return $this->file->fileType(); }
+
 	function isFile() { return $this->file->isFile(); }
 
 	function scanDir() { return $this->file->scanDir(); }

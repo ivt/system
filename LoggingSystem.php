@@ -203,6 +203,14 @@ class LoggingFile extends WrappedFile
 		$this->logger = $logger;
 	}
 
+	function fileType()
+	{
+		$type = parent::fileType();
+		$this->log( 'file type', $type );
+
+		return $type;
+	}
+
 	function isFile()
 	{
 		$result = parent::isFile();
