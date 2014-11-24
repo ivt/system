@@ -114,7 +114,7 @@ class WrappedFile extends File
 		return $this->file->read( $offset, $maxLength );
 	}
 
-	function write( $contents ) { $this->file->write( $contents ); }
+	function write( $contents ) { $this->file->write( $contents ); return $this; }
 
 	function create( $contents ) { $this->file->create( $contents ); }
 

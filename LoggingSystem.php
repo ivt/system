@@ -320,6 +320,7 @@ class LoggingFile extends WrappedFile
 	{
 		$this->log( array( "write", $contents ) );
 		parent::write( $contents );
+		return $this;
 	}
 
 	function create( $contents )

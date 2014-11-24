@@ -338,7 +338,7 @@ class SSHFile extends FOpenWrapperFile
 
 	function create( $contents ) { $this->_write( $contents, false, true ); }
 
-	function write( $contents ) { $this->_write( $contents, false, false ); }
+	function write( $contents ) { $this->_write( $contents, false, false ); return $this; }
 
 	private function _write( $data, $append, $bailIfExists )
 	{

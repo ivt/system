@@ -488,7 +488,7 @@ abstract class File
 
 	/**
 	 * @param string $contents
-	 * @return void
+	 * @return File
 	 */
 	abstract function write( $contents );
 
@@ -642,7 +642,7 @@ abstract class FOpenWrapperFile extends File
 
 	function append( $contents ) { $this->writeImpl( $contents, 'ab' ); }
 
-	function write( $contents ) { $this->writeImpl( $contents, 'wb' ); }
+	function write( $contents ) { $this->writeImpl( $contents, 'wb' ); return $this; }
 
 	function read( $offset = 0, $maxLength = null )
 	{
