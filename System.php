@@ -72,6 +72,29 @@ abstract class System implements CommandOutputHandler, FileSystem
 	}
 
 	/**
+	 * @param string   $dir
+	 * @param callable $f
+	 * @return mixed
+	 * @throws \Exception
+	 */
+	final function inDir( $dir, \Closure $f )
+	{
+		$cwd = $this->pwd();
+		try
+		{
+			$this->cd( $dir );
+			$result = $f();
+			$this->cd( $cwd );
+			return $result;
+		}
+		catch ( \Exception $e )
+		{
+			$this->cd( $cwd );
+			throw $e;
+		}
+	}
+
+	/**
 	 * @param string $linkFile
 	 * @param string $linkContents
 	 */
@@ -246,6 +269,33 @@ abstract class File
 	final function path() { return $this->path; }
 
 	final function __toString() { return $this->path(); }
+
+	/**
+	 * @param bool $followLinks
+	 * @return self[]
+	 */
+	final function recursiveScan( $followLinks = true )
+	{
+		$results = array( $this );
+
+		if ( $this->isDir() && ( $followLinks || !$this->isLink() ) )
+		{
+			foreach ( $this->dirContents() as $file )
+			{
+				foreach ( $file->recursiveScan( $followLinks ) as $file2 )
+				{
+					$results[ ] = $file2;
+				}
+			}
+		}
+
+		return $results;
+	}
+
+	final function parentDirectory()
+	{
+		return $this->system->file( $this->dirname() );
+	}
 
 	/**
 	 * @return string /blah/foo.txt => /blah
