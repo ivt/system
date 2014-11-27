@@ -32,7 +32,7 @@ class LoggingSystem extends WrappedSystem
 		$in     = new BinaryBuffer( new LinePrefixStream( '--- ', '--- ', $log ) );
 		$out    = new BinaryBuffer( new LinePrefixStream( '  ', '  ', $log ) );
 
-		$cmd( self::removeGitHubCredentials( "$command\n" ) );
+		$cmd( self::removeSecrets( "$command\n" ) );
 		unset( $cmd );
 
 		$in( $stdIn );

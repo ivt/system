@@ -31,9 +31,13 @@ interface FileSystem
 
 abstract class System implements CommandOutputHandler, FileSystem
 {
-	static function removeGitHubCredentials( $string )
+	static function removeSecrets( $string )
 	{
-		return \PCRE::replace( '(\w+(:\w+)?)(?=@github.com)', $string, '[HIDDEN]' );
+		$gitHub    = '(\w+(:\w+)?)(?=@github.com)';
+		$awsKey    = '(?<=\-\-key=)\S+';
+		$awsSecret = '(?<=\-\-secret=)\S+';
+
+		return \PCRE::replace( "$gitHub|$awsKey|$awsSecret", $string, '[HIDDEN]' );
 	}
 
 	final function escapeCmd( $arg )
