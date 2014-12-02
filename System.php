@@ -435,6 +435,12 @@ abstract class File
 		return array_diff( $this->scanDir(), array( '.', '..' ) );
 	}
 
+	final function removeContents()
+	{
+		foreach ( $this->dirContents() as $file )
+			$file->removeRecursive();
+	}
+
 	final function dirContents()
 	{
 		/** @var self[] $files */
