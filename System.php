@@ -286,10 +286,7 @@ abstract class File
 		{
 			foreach ( $this->dirContents() as $file )
 			{
-				foreach ( $file->recursiveScan( $followLinks ) as $file2 )
-				{
-					$results[ ] = $file2;
-				}
+				$results = array_merge( $results, $file->recursiveScan( $followLinks ) );
 			}
 		}
 
