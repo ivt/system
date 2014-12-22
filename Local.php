@@ -189,4 +189,14 @@ class LocalFile extends FOpenWrapperFile
 
 		return Assert::string( realpath( $this->path() ) );
 	}
+
+	function changeGroup( $group )
+	{
+		Assert::true( chgrp( $this->path(), $group ) );
+	}
+
+	function changeOwner( $owner )
+	{
+		Assert::true( chown( $this->path(), $owner ) );
+	}
 }

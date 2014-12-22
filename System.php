@@ -31,9 +31,13 @@ interface FileSystem
 
 abstract class System implements CommandOutputHandler, FileSystem
 {
-	static function removeGitHubCredentials( $string )
+	static function removeSecrets( $string )
 	{
-		return \PCRE::replace( '(\w+(:\w+)?)(?=@github.com)', $string, '[HIDDEN]' );
+		$gitHub    = '(\w+(:\w+)?)(?=@github.com)';
+		$awsKey    = '(?<=\-\-key=)\S+';
+		$awsSecret = '(?<=\-\-secret=)\S+';
+
+		return \PCRE::replace( "$gitHub|$awsKey|$awsSecret", $string, '[HIDDEN]' );
 	}
 
 	final function escapeCmd( $arg )
@@ -69,6 +73,29 @@ abstract class System implements CommandOutputHandler, FileSystem
 	final function exec( $command, $stdIn = '' )
 	{
 		return $this->runCommand( $command, $stdIn )->assertSuccess()->stdOut();
+	}
+
+	/**
+	 * @param string   $dir
+	 * @param callable $f
+	 * @return mixed
+	 * @throws \Exception
+	 */
+	final function inDir( $dir, \Closure $f )
+	{
+		$cwd = $this->pwd();
+		try
+		{
+			$this->cd( $dir );
+			$result = $f();
+			$this->cd( $cwd );
+			return $result;
+		}
+		catch ( \Exception $e )
+		{
+			$this->cd( $cwd );
+			throw $e;
+		}
 	}
 
 	/**
@@ -248,6 +275,30 @@ abstract class File
 	final function __toString() { return $this->path(); }
 
 	/**
+	 * @param bool $followLinks
+	 * @return self[]
+	 */
+	final function recursiveScan( $followLinks = true )
+	{
+		$results = array( $this );
+
+		if ( $this->isDir() && ( $followLinks || !$this->isLink() ) )
+		{
+			foreach ( $this->dirContents() as $file )
+			{
+				$results = array_merge( $results, $file->recursiveScan( $followLinks ) );
+			}
+		}
+
+		return $results;
+	}
+
+	final function parentDirectory()
+	{
+		return $this->system->file( $this->dirname() );
+	}
+
+	/**
 	 * @return string /blah/foo.txt => /blah
 	 */
 	final function dirname() { return pathinfo( $this->path, PATHINFO_DIRNAME ); }
@@ -379,6 +430,12 @@ abstract class File
 	final function scanDirNoDots()
 	{
 		return array_diff( $this->scanDir(), array( '.', '..' ) );
+	}
+
+	final function removeContents()
+	{
+		foreach ( $this->dirContents() as $file )
+			$file->removeRecursive();
 	}
 
 	final function dirContents()

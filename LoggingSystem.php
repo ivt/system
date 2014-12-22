@@ -32,7 +32,7 @@ class LoggingSystem extends WrappedSystem
 		$in     = new BinaryBuffer( new LinePrefixStream( '--- ', '--- ', $log ) );
 		$out    = new BinaryBuffer( new LinePrefixStream( '  ', '  ', $log ) );
 
-		$cmd( self::removeGitHubCredentials( "$command\n" ) );
+		$cmd( self::removeSecrets( "$command\n" ) );
 		unset( $cmd );
 
 		$in( $stdIn );
@@ -152,7 +152,7 @@ class Logger
 		}
 		else if ( is_string( $value ) )
 		{
-			if ( !\PCRE::match( '^[A-Za-z0-9_ ]+$', $value ) )
+			if ( !\PCRE::match( '^[A-Za-z0-9_ ]+$', $value, 'D' ) )
 			{
 				$value = \PCRE::replace( '([^[:print:]]|\s+)+', $value, ' ' );
 				$value = trim( $value );
