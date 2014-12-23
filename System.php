@@ -274,6 +274,11 @@ abstract class File
 
 	final function __toString() { return $this->path(); }
 
+	final function on( FileSystem $system )
+	{
+		return $system->file( $this->path );
+	}
+
 	/**
 	 * @param bool $followLinks
 	 * @return self[]
