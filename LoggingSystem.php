@@ -4,7 +4,12 @@ namespace IVT\System;
 
 use IVT\Exception;
 
-class LoggingSystem extends WrappedSystem
+interface Log
+{
+	function log( $message );
+}
+
+class LoggingSystem extends WrappedSystem implements Log
 {
 	private $callback;
 	private $logger;
@@ -22,6 +27,12 @@ class LoggingSystem extends WrappedSystem
 		$this->logger->log( 'init' );
 
 		$this->callback = $callback;
+	}
+
+	function log( $message )
+	{
+		$f = $this->callback;
+		$f( "$message\n" );
 	}
 
 	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
