@@ -427,7 +427,7 @@ class SSHFile extends FOpenWrapperFile
 
 	protected function pathToUrl( $path )
 	{
-		return "ssh2.sftp://$this->sftp{$this->absolutePath1( $path )}";
+		return "ssh2.sftp://$this->sftp/.{$this->absolutePath1( $path )}";
 	}
 
 	function chmod( $mode )
