@@ -32,12 +32,13 @@ interface FileSystem
 abstract class Process
 {
 	/**
-	 * @return bool
+	 * @return bool Whether the process has finished
 	 */
 	abstract function isDone();
 
 	/**
-	 * @return int Exit code
+	 * Waits for the process to finish and returns the exit code
+	 * @return int
 	 */
 	abstract function finish();
 }
