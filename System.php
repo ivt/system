@@ -29,6 +29,19 @@ interface FileSystem
 	function dirSep();
 }
 
+abstract class Process
+{
+	/**
+	 * @return bool
+	 */
+	abstract function isDone();
+
+	/**
+	 * @return int Exit code
+	 */
+	abstract function finish();
+}
+
 abstract class System implements CommandOutputHandler, FileSystem
 {
 	static function removeSecrets( $string )
@@ -187,7 +200,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 			$stdIn,
 			function ( $s ) use ( &$stdOut ) { $stdOut .= $s; },
 			function ( $s ) use ( &$stdErr ) { $stdErr .= $s; }
-		);
+		)->finish();
 
 		return new CommandResult( $command, $stdIn, $stdOut, $stdErr, $exitCode );
 	}
@@ -233,8 +246,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 * @param string   $stdIn
 	 * @param callable $stdOut
 	 * @param callable $stdErr
-	 *
-	 * @return int exit code
+	 * @return Process
 	 */
 	abstract protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr );
 

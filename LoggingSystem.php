@@ -38,7 +38,7 @@ class LoggingSystem extends WrappedSystem
 		$in( $stdIn );
 		unset( $in );
 
-		$exitStatus = parent::runImpl(
+		$process = parent::runImpl(
 			$command,
 			$stdIn,
 			function ( $data ) use ( $out, $stdOut )
@@ -55,7 +55,7 @@ class LoggingSystem extends WrappedSystem
 		unset( $out );
 		gc_collect_cycles();
 
-		return $exitStatus;
+		return $process;
 	}
 
 	function cd( $dir )
