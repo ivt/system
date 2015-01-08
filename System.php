@@ -221,6 +221,11 @@ abstract class System implements CommandOutputHandler, FileSystem
 
 	final function printLine( $string = '' ) { $this->writeOutput( "$string\n" ); }
 
+	final function runAsync( $command, $stdIn = '' )
+	{
+		return $this->runImpl( $command, $stdIn, function () {}, function () {} );
+	}
+
 	function isPortOpen( $host, $port, $timeout )
 	{
 		$cmd = array( 'nc', '-z', '-w', $timeout, '--', $host, $port );
