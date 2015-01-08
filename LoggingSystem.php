@@ -31,6 +31,7 @@ class LoggingSystem extends WrappedSystem
 		$cmd    = new BinaryBuffer( new LinePrefixStream( '>>> ', '... ', $log ) );
 		$in     = new BinaryBuffer( new LinePrefixStream( '--- ', '--- ', $log ) );
 		$out    = new BinaryBuffer( new LinePrefixStream( '  ', '  ', $log ) );
+		$err    = new BinaryBuffer( new LinePrefixStream( '! ', '! ', $log ) );
 
 		$cmd( self::removeSecrets( "$command\n" ) );
 		unset( $cmd );
@@ -46,13 +47,14 @@ class LoggingSystem extends WrappedSystem
 				$out( $data );
 				$stdOut( $data );
 			},
-			function ( $data ) use ( $out, $stdErr )
+			function ( $data ) use ( $err, $stdErr )
 			{
-				$out( $data );
+				$err( $data );
 				$stdErr( $data );
 			}
 		);
 		unset( $out );
+		unset( $err );
 		gc_collect_cycles();
 
 		return $process;
