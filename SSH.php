@@ -91,44 +91,54 @@ class SSHProcess extends Process
 	private $onStdErr;
 	private $stdOut;
 	private $stdErr;
-	private $exitCode;
+	private $getExitCode;
 
 	/**
 	 * @param resource $ssh
 	 * @param string   $command
 	 * @param callable $onStdOut
 	 * @param callable $onStdErr
+	 * @param callable $getExitCode
 	 */
-	function __construct( $ssh, $command, \Closure $onStdOut, \Closure $onStdErr )
+	function __construct( $ssh, $command, \Closure $onStdOut, \Closure $onStdErr, \Closure $getExitCode )
 	{
-		$this->onStdOut = $onStdOut;
-		$this->onStdErr = $onStdErr;
-		$this->stdOut   = Assert::resource( ssh2_exec( $ssh, $command ) );
-		$this->stdErr   = Assert::resource( ssh2_fetch_stream( $this->stdOut, SSH2_STREAM_STDERR ) );
+		$this->onStdOut    = $onStdOut;
+		$this->onStdErr    = $onStdErr;
+		$this->getExitCode = $getExitCode;
+		$this->stdOut      = Assert::resource( ssh2_exec( $ssh, $command ) );
+		$this->stdErr      = Assert::resource( ssh2_fetch_stream( $this->stdOut, SSH2_STREAM_STDERR ) );
+
+		Assert::true( stream_set_blocking( $this->stdOut, false ) );
+		Assert::true( stream_set_blocking( $this->stdErr, false ) );
 	}
 
-	/**
-	 * @param int $exitCode
-	 */
-	function setExitCode( $exitCode )
+	function __destruct()
 	{
-		$this->exitCode = Assert::int( $exitCode );
+		Assert::true( fclose( $this->stdOut ) );
+		Assert::true( fclose( $this->stdErr ) );
 	}
 
 	function isDone()
 	{
-		$onStdOut = $this->onStdOut;
-		$onStdErr = $this->onStdErr;
-		$stdOut   = $this->stdOut;
-		$stdErr   = $this->stdErr;
+		$stdOutDone = $this->isStreamDone( $this->stdOut, $this->onStdOut );
+		$stdErrDone = $this->isStreamDone( $this->stdErr, $this->onStdErr );
+		return $stdOutDone && $stdErrDone;
+	}
 
-		if ( !feof( $stdErr ) )
-			$onStdErr( Assert::string( fread( $stdErr, 8192 ) ) );
+	private function isStreamDone( $stream, \Closure $callback )
+	{
+		$eof = Assert::bool( feof( $stream ) );
 
-		if ( !feof( $stdOut ) )
-			$onStdOut( Assert::string( fread( $stdOut, 8192 ) ) );
+		if ( !$eof )
+		{
+			$data = Assert::string( fread( $stream, 8192 ) );
+			$eof  = Assert::bool( feof( $stream ) );
 
-		return feof( $stdOut ) && feof( $stdErr );
+			if ( $data !== '' )
+				$callback( $data );
+		}
+
+		return $eof;
 	}
 
 	function finish()
@@ -136,7 +146,8 @@ class SSHProcess extends Process
 		while ( !$this->isDone() )
 			usleep( 100000 );
 
-		return Assert::int( $this->exitCode );
+		$exitCode = $this->getExitCode;
+		return Assert::int( $exitCode() );
 	}
 }
 
@@ -205,10 +216,12 @@ class SSHSystem extends System
 
 	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
+		$command = "sh -c {$this->escapeCmd( $command )}";
+
 		if ( strlen( $stdIn ) < 1000 )
 		{
 			return $this->runImplHandleExitCode(
-				"echo -nE {$this->escapeCmd( $stdIn )} | ($command)",
+				"echo -nE {$this->escapeCmd( $stdIn )} | $command",
 				$stdOut,
 				$stdErr
 			);
@@ -219,7 +232,7 @@ class SSHSystem extends System
 			$tmpFile->write( $stdIn );
 
 			$process = $this->runImplHandleExitCode(
-				"($command) < {$this->escapeCmd( $tmpFile->path() )}",
+				"$command < {$this->escapeCmd( $tmpFile->path() )}",
 				$stdOut,
 				$stdErr
 			);
@@ -237,11 +250,10 @@ class SSHSystem extends System
 	 */
 	private function runImplHandleExitCode( $command, \Closure $stdOut, \Closure $stdErr )
 	{
-		/** @var SSHProcess $process */
 		$marker  = "*EXIT CODE: ";
 		$wrapped = "$command\necho -nE {$this->escapeCmd( $marker )}$?";
 		$buffer  = '';
-		$stdOut  = function ( $data ) use ( $stdOut, &$buffer, $marker, &$process )
+		$stdOut  = function ( $data ) use ( $stdOut, &$buffer, $marker )
 		{
 			$buffer .= $data;
 
@@ -257,16 +269,16 @@ class SSHSystem extends System
 
 			$stdOut( (string) substr( $buffer, 0, $pos ) );
 			$buffer = substr( $buffer, $pos );
-
-			if ( $process->isDone() )
-			{
-				Assert::equal( $marker, substr( $buffer, 0, strlen( $marker ) ) );
-
-				$process->setExitCode( (int) substr( $buffer, strlen( $marker ) ) );
-			}
 		};
 
-		$process = $this->sshRunCommand( $wrapped, $stdOut, $stdErr );
+		$getExitCode = function () use ( &$process, &$buffer, $marker )
+		{
+			Assert::equal( $marker, substr( $buffer, 0, strlen( $marker ) ) );
+
+			return (int) substr( $buffer, strlen( $marker ) );
+		};
+
+		$process = $this->sshRunCommand( $wrapped, $stdOut, $stdErr, $getExitCode );
 
 		return $process;
 	}
@@ -285,16 +297,17 @@ class SSHSystem extends System
 	 * @param string   $command
 	 * @param callable $onStdOut
 	 * @param callable $onStdErr
+	 * @param callable $getExitCode
 	 * @return SSHProcess
 	 */
-	private function sshRunCommand( $command, \Closure $onStdOut, \Closure $onStdErr )
+	private function sshRunCommand( $command, \Closure $onStdOut, \Closure $onStdErr, \Closure $getExitCode )
 	{
+		$this->connect();
+
 		if ( isset( $this->cwd ) )
 			$command = "cd {$this->escapeCmd( $this->cwd )}\n$command";
 
-		$this->connect();
-
-		return new SSHProcess( $this->ssh, $command, $onStdOut, $onStdErr );
+		return new SSHProcess( $this->ssh, $command, $onStdOut, $onStdErr, $getExitCode );
 	}
 
 	function cd( $dir )
