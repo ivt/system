@@ -128,16 +128,8 @@ class SSHProcess extends Process
 	private function isStreamDone( $stream, \Closure $callback )
 	{
 		$eof = Assert::bool( feof( $stream ) );
-
 		if ( !$eof )
-		{
-			$data = Assert::string( fread( $stream, 8192 ) );
-			$eof  = Assert::bool( feof( $stream ) );
-
-			if ( $data !== '' )
-				$callback( $data );
-		}
-
+			$callback( Assert::string( fread( $stream, 8192 ) ) );
 		return $eof;
 	}
 
