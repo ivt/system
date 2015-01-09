@@ -31,6 +31,24 @@ interface FileSystem
 
 abstract class Process
 {
+	/**
+	 * @param self[] $processes
+	 */
+	static function waitAll( array $processes )
+	{
+		while ( true )
+		{
+			foreach ( $processes as $k => $process )
+				if ( $process->isDone() )
+					unset( $processes[ $k ] );
+
+			if ( $processes )
+				usleep( 100000 );
+			else
+				break;
+		}
+	}
+
 	final function isRunning() { return !$this->isDone(); }
 
 	/**
@@ -219,6 +237,19 @@ abstract class System implements CommandOutputHandler, FileSystem
 	final function runCommandArgs( array $command, $stdIn = '' )
 	{
 		return $this->runCommand( $this->escapeCmdArgs( $command ), $stdIn );
+	}
+
+	/**
+	 * @param string[] $commands
+	 * @return CommandResult[]
+	 */
+	final function runCommandAsyncMany( array $commands )
+	{
+		/** @var CommandResult[] $processes */
+		$processes = array();
+		foreach ( $commands as $k => $command )
+			$processes[ ] = $this->runCommandAsync( $command );
+		return $processes;
 	}
 
 	final function printLineError( $string = '' ) { $this->writeError( "$string\n" ); }
