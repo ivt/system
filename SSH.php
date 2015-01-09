@@ -114,8 +114,10 @@ class SSHProcess extends Process
 
 	function __destruct()
 	{
-		Assert::true( fclose( $this->stdOut ) );
-		Assert::true( fclose( $this->stdErr ) );
+		if ( is_resource( $this->stdOut ) )
+			Assert::true( fclose( $this->stdOut ) );
+		if ( is_resource( $this->stdErr ) )
+			Assert::true( fclose( $this->stdErr ) );
 	}
 
 	function isDone()
