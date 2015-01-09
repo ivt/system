@@ -42,7 +42,7 @@ abstract class Process
 	 * Waits for the process to finish and returns the exit code
 	 * @return int
 	 */
-	abstract function finish();
+	abstract function wait();
 }
 
 abstract class System implements CommandOutputHandler, FileSystem

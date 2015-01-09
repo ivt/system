@@ -141,7 +141,7 @@ class SSHProcess extends Process
 		return $eof;
 	}
 
-	function finish()
+	function wait()
 	{
 		while ( !$this->isDone() )
 			usleep( 100000 );
@@ -170,7 +170,7 @@ class RemoveFileOnDestruct extends Process
 	}
 
 	function isDone() { return $this->process->isDone(); }
-	function finish() { return $this->process->finish(); }
+	function wait() { return $this->process->wait(); }
 }
 
 class SSHSystem extends System

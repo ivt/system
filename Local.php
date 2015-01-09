@@ -33,7 +33,7 @@ class LocalProcess extends Process
 		return $this->process->isTerminated();
 	}
 
-	function finish()
+	function wait()
 	{
 		return $this->process->wait();
 	}
