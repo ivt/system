@@ -5,7 +5,6 @@ namespace IVT\System;
 use DatabaseConnectionInfo;
 use Dbase_SQL_Driver;
 use DbaseConnectionFailed;
-use Symfony\Component\Process\Process as SymfonyProcess;
 
 class SSHDBConnection extends \Dbase_SQL_Driver
 {
@@ -86,9 +85,7 @@ class SSHForwardedPorts
 			}
 			while ( $local->isPortOpen( 'localhost', $port, 1 ) );
 
-			$process = new SymfonyProcess( $this->auth->forwardPortCmd( $local, $port, $remoteHost, $remotePort ) );
-			$process->setTimeout( null );
-			$process->start();
+			$process = $local->runCommandAsync( $this->auth->forwardPortCmd( $local, $port, $remoteHost, $remotePort ) );
 
 			$checks = 0;
 			while ( $process->isRunning() )
@@ -105,7 +102,7 @@ class SSHForwardedPorts
 			}
 		}
 
-		$e = $process ? new CommandFailedException( CommandResult::fromSymfonyProcess( $process ) ) : null;
+		$e = $process ? new CommandFailedException( $process ) : null;
 
 		throw new SSHForwardPortFailed( "Failed to forward a port after $attempts attempts :(", 0, $e );
 	}
@@ -118,12 +115,12 @@ class SSHForwardedPort
 	 * running until this object is GC'd. The destructor for the object will kill the
 	 * process, removing our forwarded port.
 	 *
-	 * @var SymfonyProcess
+	 * @var CommandResult
 	 */
 	private $process;
 	private $localPort;
 
-	function __construct( SymfonyProcess $process, $localPort )
+	function __construct( CommandResult $process, $localPort )
 	{
 		// PHP only collects cycles when the number of "roots" hits 1000 and
 		// by that time there may be many instances of this object in memory,

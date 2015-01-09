@@ -80,7 +80,7 @@ class LocalSystem extends System
 
 	function dirSep() { return DIRECTORY_SEPARATOR; }
 
-	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
 		return new LocalProcess( $command, $stdIn, $stdOut, $stdErr );
 	}

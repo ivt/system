@@ -41,7 +41,7 @@ class WrappedSystem extends System
 		return $this->system->time();
 	}
 
-	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
 		return $this->system->runImpl( $command, $stdIn, $stdOut, $stdErr );
 	}

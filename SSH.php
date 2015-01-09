@@ -214,7 +214,7 @@ class SSHSystem extends System
 
 	function dirSep() { return '/'; }
 
-	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
 		$command = "sh -c {$this->escapeCmd( $command )}";
 

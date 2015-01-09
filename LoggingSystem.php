@@ -24,7 +24,7 @@ class LoggingSystem extends WrappedSystem
 		$this->callback = $callback;
 	}
 
-	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
 		$logger = $this->logger;
 		$log    = function ( $x ) use ( $logger ) { $logger->writeLog( $x ); };

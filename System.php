@@ -31,6 +31,8 @@ interface FileSystem
 
 abstract class Process
 {
+	final function isRunning() { return !$this->isDone(); }
+
 	/**
 	 * @return bool Whether the process has finished
 	 */
@@ -189,21 +191,23 @@ abstract class System implements CommandOutputHandler, FileSystem
 	/**
 	 * @param string $command
 	 * @param string $stdIn
-	 *
+	 * @return CommandResult
+	 */
+	final function runCommandAsync( $command, $stdIn = '' )
+	{
+		return new CommandResult( $this, $command, $stdIn );
+	}
+
+	/**
+	 * @param string $command
+	 * @param string $stdIn
 	 * @return CommandResult
 	 */
 	final function runCommand( $command, $stdIn = '' )
 	{
-		$stdOut   = '';
-		$stdErr   = '';
-		$exitCode = $this->runImpl(
-			$command,
-			$stdIn,
-			function ( $s ) use ( &$stdOut ) { $stdOut .= $s; },
-			function ( $s ) use ( &$stdErr ) { $stdErr .= $s; }
-		)->finish();
-
-		return new CommandResult( $command, $stdIn, $stdOut, $stdErr, $exitCode );
+		$result = $this->runCommandAsync( $command, $stdIn );
+		$result->wait();
+		return $result;
 	}
 
 	/**
@@ -254,7 +258,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 * @param callable $stdErr
 	 * @return Process
 	 */
-	abstract protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr );
+	abstract function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr );
 
 	/**
 	 * If this System happens to be a wrapper around another System, this
