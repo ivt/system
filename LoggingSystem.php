@@ -17,7 +17,9 @@ class LoggingSystem extends WrappedSystem
 
 		$this->logger = new Logger( function ( $x ) use ( $self, $callback )
 		{
-			$callback( "{$self->describe()}: $x" );
+			$date = date( 'Y-m-d H:i:s' );
+
+			$callback( "[$date] {$self->describe()}: $x" );
 		} );
 		$this->logger->log( 'init' );
 
