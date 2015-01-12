@@ -102,6 +102,9 @@ class SSHProcess extends Process
 	 */
 	function __construct( $ssh, $command, \Closure $onStdOut, \Closure $onStdErr, \Closure $getExitCode )
 	{
+		// Make sure as many of these objects are collected first before we start a new command.
+		gc_collect_cycles();
+
 		$this->onStdOut    = $onStdOut;
 		$this->onStdErr    = $onStdErr;
 		$this->getExitCode = $getExitCode;
