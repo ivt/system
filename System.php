@@ -259,7 +259,7 @@ abstract class System implements CommandOutputHandler, FileSystem
 	{
 		/** @var CommandResult[] $processes */
 		$processes = array();
-		foreach ( $commands as $k => $command )
+		foreach ( $commands as $command )
 			$processes[ ] = $this->runCommandAsync( $command );
 		return $processes;
 	}
