@@ -51,6 +51,18 @@ abstract class Process
 
 	final function isRunning() { return !$this->isDone(); }
 
+	function exitStatus() { return $this->wait(); }
+
+	function succeeded()
+	{
+		return $this->exitStatus() === 0;
+	}
+
+	function failed()
+	{
+		return $this->exitStatus() !== 0;
+	}
+
 	/**
 	 * @return bool Whether the process has finished
 	 */
