@@ -268,16 +268,14 @@ class SSHSystem extends System
 			$buffer = substr( $buffer, $pos );
 		};
 
-		$getExitCode = function () use ( &$process, &$buffer, $marker )
+		$getExitCode = function () use ( &$buffer, $marker )
 		{
 			Assert::equal( $marker, substr( $buffer, 0, strlen( $marker ) ) );
 
 			return (int) substr( $buffer, strlen( $marker ) );
 		};
 
-		$process = $this->sshRunCommand( $wrapped, $stdOut, $stdErr, $getExitCode );
-
-		return $process;
+		return $this->sshRunCommand( $wrapped, $stdOut, $stdErr, $getExitCode );
 	}
 
 	function connectDB( \DatabaseConnectionInfo $dsn )
