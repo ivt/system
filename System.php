@@ -29,6 +29,52 @@ interface FileSystem
 	function dirSep();
 }
 
+abstract class Process
+{
+	/**
+	 * @param self[] $processes
+	 */
+	static function waitAll( array $processes )
+	{
+		while ( true )
+		{
+			foreach ( $processes as $k => $process )
+				if ( $process->isDone() )
+					unset( $processes[ $k ] );
+
+			if ( $processes )
+				usleep( 100000 );
+			else
+				break;
+		}
+	}
+
+	final function isRunning() { return !$this->isDone(); }
+
+	function exitStatus() { return $this->wait(); }
+
+	function succeeded()
+	{
+		return $this->exitStatus() === 0;
+	}
+
+	function failed()
+	{
+		return $this->exitStatus() !== 0;
+	}
+
+	/**
+	 * @return bool Whether the process has finished
+	 */
+	abstract function isDone();
+
+	/**
+	 * Waits for the process to finish and returns the exit code
+	 * @return int
+	 */
+	abstract function wait();
+}
+
 abstract class System implements CommandOutputHandler, FileSystem
 {
 	static function removeSecrets( $string )
@@ -175,21 +221,23 @@ abstract class System implements CommandOutputHandler, FileSystem
 	/**
 	 * @param string $command
 	 * @param string $stdIn
-	 *
+	 * @return CommandResult
+	 */
+	final function runCommandAsync( $command, $stdIn = '' )
+	{
+		return new CommandResult( $this, $command, $stdIn );
+	}
+
+	/**
+	 * @param string $command
+	 * @param string $stdIn
 	 * @return CommandResult
 	 */
 	final function runCommand( $command, $stdIn = '' )
 	{
-		$stdOut   = '';
-		$stdErr   = '';
-		$exitCode = $this->runImpl(
-			$command,
-			$stdIn,
-			function ( $s ) use ( &$stdOut ) { $stdOut .= $s; },
-			function ( $s ) use ( &$stdErr ) { $stdErr .= $s; }
-		);
-
-		return new CommandResult( $command, $stdIn, $stdOut, $stdErr, $exitCode );
+		$result = $this->runCommandAsync( $command, $stdIn );
+		$result->wait();
+		return $result;
 	}
 
 	/**
@@ -203,9 +251,27 @@ abstract class System implements CommandOutputHandler, FileSystem
 		return $this->runCommand( $this->escapeCmdArgs( $command ), $stdIn );
 	}
 
+	/**
+	 * @param string[] $commands
+	 * @return CommandResult[]
+	 */
+	final function runCommandAsyncMany( array $commands )
+	{
+		/** @var CommandResult[] $processes */
+		$processes = array();
+		foreach ( $commands as $command )
+			$processes[ ] = $this->runCommandAsync( $command );
+		return $processes;
+	}
+
 	final function printLineError( $string = '' ) { $this->writeError( "$string\n" ); }
 
 	final function printLine( $string = '' ) { $this->writeOutput( "$string\n" ); }
+
+	final function runAsync( $command, $stdIn = '' )
+	{
+		return $this->runImpl( $command, $stdIn, function () {}, function () {} );
+	}
 
 	function isPortOpen( $host, $port, $timeout )
 	{
@@ -233,10 +299,9 @@ abstract class System implements CommandOutputHandler, FileSystem
 	 * @param string   $stdIn
 	 * @param callable $stdOut
 	 * @param callable $stdErr
-	 *
-	 * @return int exit code
+	 * @return Process
 	 */
-	abstract protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr );
+	abstract function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr );
 
 	/**
 	 * If this System happens to be a wrapper around another System, this

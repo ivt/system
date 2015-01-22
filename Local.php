@@ -3,7 +3,41 @@
 namespace IVT\System;
 
 use IVT\Assert;
-use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Process as SymfonyProcess;
+
+class LocalProcess extends Process
+{
+	private $process;
+
+	/**
+	 * @param string   $command
+	 * @param string   $stdIn
+	 * @param callable $stdOut
+	 * @param callable $stdErr
+	 */
+	function __construct( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	{
+		$this->process = new SymfonyProcess( $command, null, null, $stdIn, null );
+		$this->process->start( function ( $type, $data ) use ( $stdOut, $stdErr )
+		{
+			if ( $type === SymfonyProcess::OUT )
+				$stdOut( $data );
+
+			if ( $type === SymfonyProcess::ERR )
+				$stdErr( $data );
+		} );
+	}
+
+	function isDone()
+	{
+		return $this->process->isTerminated();
+	}
+
+	function wait()
+	{
+		return $this->process->wait();
+	}
+}
 
 class LocalSystem extends System
 {
@@ -31,6 +65,7 @@ class LocalSystem extends System
 		return new LoggingSystem( $self, $logger );
 	}
 
+	/** @var CommandOutputHandler */
 	private $outputHandler;
 
 	function __construct()
@@ -45,18 +80,9 @@ class LocalSystem extends System
 
 	function dirSep() { return DIRECTORY_SEPARATOR; }
 
-	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
-		$process = new Process( $command, null, null, $stdIn, null );
-
-		return $process->run( function ( $type, $data ) use ( $stdOut, $stdErr )
-		{
-			if ( $type === Process::OUT )
-				$stdOut( $data );
-
-			if ( $type === Process::ERR )
-				$stdErr( $data );
-		} );
+		return new LocalProcess( $command, $stdIn, $stdOut, $stdErr );
 	}
 
 	function time() { return time(); }

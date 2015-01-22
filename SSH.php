@@ -85,6 +85,91 @@ s;
 	function describe() { return "$this->user@$this->host"; }
 }
 
+class SSHProcess extends Process
+{
+	private $onStdOut;
+	private $onStdErr;
+	private $stdOut;
+	private $stdErr;
+	private $getExitCode;
+
+	/**
+	 * @param resource $ssh
+	 * @param string   $command
+	 * @param callable $onStdOut
+	 * @param callable $onStdErr
+	 * @param callable $getExitCode
+	 */
+	function __construct( $ssh, $command, \Closure $onStdOut, \Closure $onStdErr, \Closure $getExitCode )
+	{
+		// Make sure as many of these objects are collected first before we start a new command.
+		gc_collect_cycles();
+
+		$this->onStdOut    = $onStdOut;
+		$this->onStdErr    = $onStdErr;
+		$this->getExitCode = $getExitCode;
+		$this->stdOut      = Assert::resource( ssh2_exec( $ssh, $command ) );
+		$this->stdErr      = Assert::resource( ssh2_fetch_stream( $this->stdOut, SSH2_STREAM_STDERR ) );
+
+		Assert::true( stream_set_blocking( $this->stdOut, false ) );
+		Assert::true( stream_set_blocking( $this->stdErr, false ) );
+	}
+
+	function __destruct()
+	{
+		if ( is_resource( $this->stdOut ) )
+			Assert::true( fclose( $this->stdOut ) );
+		if ( is_resource( $this->stdErr ) )
+			Assert::true( fclose( $this->stdErr ) );
+	}
+
+	function isDone()
+	{
+		$stdOutDone = $this->isStreamDone( $this->stdOut, $this->onStdOut );
+		$stdErrDone = $this->isStreamDone( $this->stdErr, $this->onStdErr );
+		return $stdOutDone && $stdErrDone;
+	}
+
+	private function isStreamDone( $stream, \Closure $callback )
+	{
+		$eof = Assert::bool( feof( $stream ) );
+		if ( !$eof )
+			$callback( Assert::string( fread( $stream, 8192 ) ) );
+		return $eof;
+	}
+
+	function wait()
+	{
+		while ( !$this->isDone() )
+			usleep( 100000 );
+
+		$exitCode = $this->getExitCode;
+		return Assert::int( $exitCode() );
+	}
+}
+
+class RemoveFileOnDestruct extends Process
+{
+	/** @var Process */
+	private $process;
+	/** @var File */
+	private $file;
+
+	function __construct( Process $process, File $file )
+	{
+		$this->process = $process;
+		$this->file    = $file;
+	}
+
+	function __destruct()
+	{
+		$this->file->ensureNotExists();
+	}
+
+	function isDone() { return $this->process->isDone(); }
+	function wait() { return $this->process->wait(); }
+}
+
 class SSHSystem extends System
 {
 	/** @var SSHAuth */
@@ -126,12 +211,14 @@ class SSHSystem extends System
 
 	function dirSep() { return '/'; }
 
-	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
+		$command = "sh -c {$this->escapeCmd( $command )}";
+
 		if ( strlen( $stdIn ) < 1000 )
 		{
 			return $this->runImplHandleExitCode(
-				"echo -nE {$this->escapeCmd( $stdIn )} | ($command)",
+				"echo -nE {$this->escapeCmd( $stdIn )} | $command",
 				$stdOut,
 				$stdErr
 			);
@@ -139,27 +226,16 @@ class SSHSystem extends System
 		else
 		{
 			$tmpFile = $this->file( "/tmp/tmp-ssh-command-input-" . random_string( 12 ) );
+			$tmpFile->write( $stdIn );
 
-			try
-			{
-				$tmpFile->write( $stdIn );
+			$process = $this->runImplHandleExitCode(
+				"$command < {$this->escapeCmd( $tmpFile->path() )}",
+				$stdOut,
+				$stdErr
+			);
+			$process = new RemoveFileOnDestruct( $process, $tmpFile );
 
-				$result = $this->runImplHandleExitCode(
-					"($command) < {$this->escapeCmd( $tmpFile->path() )}",
-					$stdOut,
-					$stdErr
-				);
-
-				$tmpFile->unlink();
-
-				return $result;
-			}
-			catch ( \Exception $e )
-			{
-				$tmpFile->ensureNotExists();
-
-				throw $e;
-			}
+			return $process;
 		}
 	}
 
@@ -167,7 +243,7 @@ class SSHSystem extends System
 	 * @param string   $command
 	 * @param callable $stdOut
 	 * @param callable $stdErr
-	 * @return int
+	 * @return SSHProcess
 	 */
 	private function runImplHandleExitCode( $command, \Closure $stdOut, \Closure $stdErr )
 	{
@@ -192,11 +268,14 @@ class SSHSystem extends System
 			$buffer = substr( $buffer, $pos );
 		};
 
-		$this->sshRunCommand( $wrapped, $stdOut, $stdErr );
+		$getExitCode = function () use ( &$buffer, $marker )
+		{
+			Assert::equal( $marker, substr( $buffer, 0, strlen( $marker ) ) );
 
-		Assert::equal( $marker, substr( $buffer, 0, strlen( $marker ) ) );
+			return (int) substr( $buffer, strlen( $marker ) );
+		};
 
-		return (int) substr( $buffer, strlen( $marker ) );
+		return $this->sshRunCommand( $wrapped, $stdOut, $stdErr, $getExitCode );
 	}
 
 	function connectDB( \DatabaseConnectionInfo $dsn )
@@ -211,52 +290,19 @@ class SSHSystem extends System
 
 	/**
 	 * @param string   $command
-	 * @param callable $fStdOut
-	 * @param callable $fStdErr
+	 * @param callable $onStdOut
+	 * @param callable $onStdErr
+	 * @param callable $getExitCode
+	 * @return SSHProcess
 	 */
-	private function sshRunCommand( $command, \Closure $fStdOut, \Closure $fStdErr )
+	private function sshRunCommand( $command, \Closure $onStdOut, \Closure $onStdErr, \Closure $getExitCode )
 	{
+		$this->connect();
+
 		if ( isset( $this->cwd ) )
 			$command = "cd {$this->escapeCmd( $this->cwd )}\n$command";
 
-		$this->connect();
-
-		$stdOut = Assert::resource( ssh2_exec( $this->ssh, $command ) );
-		$stdErr = Assert::resource( ssh2_fetch_stream( $stdOut, SSH2_STREAM_STDERR ) );
-
-		Assert::true( stream_set_blocking( $stdOut, false ) );
-		Assert::true( stream_set_blocking( $stdErr, false ) );
-
-		$stdErrDone = false;
-		$stdOutDone = false;
-
-		while ( !$stdErrDone || !$stdOutDone )
-		{
-			$stdOutDone = $stdOutDone || $this->readStream( $stdOut, $fStdOut );
-			$stdErrDone = $stdErrDone || $this->readStream( $stdErr, $fStdErr );
-
-			usleep( 100000 );
-		}
-	}
-
-	private function readStream( $resource, \Closure $into )
-	{
-		Assert::string( $data = fread( $resource, 8192 ) );
-
-		$into( $data );
-
-		if ( feof( $resource ) )
-		{
-			// For some reason, with SSH2, we have to set the stream to blocking mode and call
-			// fread() again, otherwise the next call to ssh2_exec() will fail.
-			Assert::true( stream_set_blocking( $resource, true ) );
-			Assert::equal( fread( $resource, 8192 ), '' );
-			Assert::true( fclose( $resource ) );
-
-			return true;
-		}
-
-		return false;
+		return new SSHProcess( $this->ssh, $command, $onStdOut, $onStdErr, $getExitCode );
 	}
 
 	function cd( $dir )
@@ -376,7 +422,7 @@ class SSHFile extends FOpenWrapperFile
 
 	protected function pathToUrl( $path )
 	{
-		return "ssh2.sftp://$this->sftp{$this->absolutePath1( $path )}";
+		return "ssh2.sftp://$this->sftp/.{$this->absolutePath1( $path )}";
 	}
 
 	function chmod( $mode )

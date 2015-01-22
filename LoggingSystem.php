@@ -37,13 +37,14 @@ class LoggingSystem extends WrappedSystem implements Log
 		$f( "$message\n" );
 	}
 
-	protected function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
+	function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{
 		$logger = $this->logger;
 		$log    = function ( $x ) use ( $logger ) { $logger->writeLog( $x ); };
 		$cmd    = new BinaryBuffer( new LinePrefixStream( '>>> ', '... ', $log ) );
 		$in     = new BinaryBuffer( new LinePrefixStream( '--- ', '--- ', $log ) );
 		$out    = new BinaryBuffer( new LinePrefixStream( '  ', '  ', $log ) );
+		$err    = new BinaryBuffer( new LinePrefixStream( '! ', '! ', $log ) );
 
 		$cmd( self::removeSecrets( "$command\n" ) );
 		unset( $cmd );
@@ -51,7 +52,7 @@ class LoggingSystem extends WrappedSystem implements Log
 		$in( $stdIn );
 		unset( $in );
 
-		$exitStatus = parent::runImpl(
+		$process = parent::runImpl(
 			$command,
 			$stdIn,
 			function ( $data ) use ( $out, $stdOut )
@@ -59,16 +60,17 @@ class LoggingSystem extends WrappedSystem implements Log
 				$out( $data );
 				$stdOut( $data );
 			},
-			function ( $data ) use ( $out, $stdErr )
+			function ( $data ) use ( $err, $stdErr )
 			{
-				$out( $data );
+				$err( $data );
 				$stdErr( $data );
 			}
 		);
 		unset( $out );
+		unset( $err );
 		gc_collect_cycles();
 
-		return $exitStatus;
+		return $process;
 	}
 
 	function cd( $dir )
