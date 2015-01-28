@@ -130,12 +130,12 @@ class CLIOutputHandler implements CommandOutputHandler
 {
 	function writeOutput( $data )
 	{
-		Assert::equal( fwrite( STDOUT, $data ), strlen( $data ) );
+		Assert::int( fwrite( STDOUT, $data ) );
 	}
 
 	function writeError( $data )
 	{
-		Assert::equal( fwrite( STDERR, $data ), strlen( $data ) );
+		Assert::int( fwrite( STDERR, $data ) );
 	}
 }
 
