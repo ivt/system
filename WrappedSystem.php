@@ -21,6 +21,11 @@ class WrappedSystem extends System
 		return $this->system->pwd();
 	}
 
+	function escapeCmd( $arg )
+	{
+		return $this->system->escapeCmd( $arg );
+	}
+
 	function file( $path )
 	{
 		return new WrappedFile( $this, $path, $this->system->file( $path ) );
