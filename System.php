@@ -78,7 +78,7 @@ abstract class Process
 
 abstract class System implements FileSystem
 {
-	static function removeSecrets( $string )
+	final static function removeSecrets( $string )
 	{
 		$gitHub    = '(\w+(:\w+)?)(?=@github.com)';
 		$awsKey    = '(?<=\-\-key=)\S+';
