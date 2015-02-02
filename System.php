@@ -92,29 +92,12 @@ abstract class System implements FileSystem
 		return new LoggingSystem( $this, $log );
 	}
 
-	final function escapeCmd( $arg )
+	function escapeCmd( $arg )
 	{
 		$arg1    = str_replace( str_split( "=:_+./-" ), '', $arg );
 		$isValid = $arg1 === '' || ctype_alnum( $arg1 );
 
-		return $isValid && $arg !== '' ? $arg : $this->escapeShellArg( $arg );
-	}
-
-	final function escapeShellArg( $arg )
-	{
-		if ( $this->isHostOSWindows() )
-		{
-			return '"' . addcslashes( $arg, '\\"' ) . '"';
-		}
-		else
-		{
-			return escapeshellarg( $arg );
-		}
-	}
-
-	final function isHostOSWindows()
-	{
-		return strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN';
+		return $isValid && $arg !== '' ? $arg : escapeshellarg( $arg );
 	}
 
 	final function escapeCmdArgs( array $args )

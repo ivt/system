@@ -42,6 +42,19 @@ class LocalProcess extends Process
 
 class LocalSystem extends System
 {
+	function escapeCmd( $arg )
+	{
+		if ( $this->isWindows() )
+			return '"' . addcslashes( $arg, '\\"' ) . '"';
+		else
+			return parent::escapeCmd( $arg );
+	}
+
+	final function isWindows()
+	{
+		return strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN';
+	}
+
 	function isPortOpen( $host, $port, $timeout )
 	{
 		$fp = @fsockopen( $host, $port, $errno, $errstr, $timeout );
