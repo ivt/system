@@ -499,7 +499,7 @@ abstract class File
 
 	final function scanDirNoDots()
 	{
-		return array_diff( $this->scanDir(), array( '.', '..' ) );
+		return array_values( array_diff( $this->scanDir(), array( '.', '..' ) ) );
 	}
 
 	final function removeContents()
