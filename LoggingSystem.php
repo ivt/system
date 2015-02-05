@@ -453,12 +453,7 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 
 	function log( $input, $output = null )
 	{
-		$dsn  = $this->connectionInfo();
-		$user = $dsn->user();
-		$host = $dsn->host();
-		$db   = $dsn->database();
-
-		$this->logger->log( $input, $output, "$user@$host/$db" );
+		$this->logger->log( $input, $output, $this->connectionInfo()->summary() );
 	}
 }
 
