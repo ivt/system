@@ -6,6 +6,10 @@ use IVT\Exception;
 
 interface Log
 {
+	/**
+	 * @param string $message
+	 * @return void
+	 */
 	function log( $message );
 }
 
