@@ -53,16 +53,9 @@ class LocalSystem extends System
 
 	static function createLogging( $useStdErr = false )
 	{
-		$self   = new self;
-		$logger = new ClosureLog( function ( $data ) use ( $self, $useStdErr )
-		{
-			if ( $useStdErr )
-				$self->printLineError( $data );
-			else
-				$self->printLine( $data );
-		} );
-
-		return new LoggingSystem( $self, $logger );
+		$system = new self;
+		$system = new LoggingSystem( $system, $system->logger( $useStdErr ) );
+		return $system;
 	}
 
 	/** @var CommandOutputHandler */
