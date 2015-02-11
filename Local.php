@@ -54,13 +54,13 @@ class LocalSystem extends System
 	static function createLogging( $useStdErr = false )
 	{
 		$self   = new self;
-		$logger = function ( $data ) use ( $self, $useStdErr )
+		$logger = new ClosureLog( function ( $data ) use ( $self, $useStdErr )
 		{
 			if ( $useStdErr )
-				$self->writeError( $data );
+				$self->printLineError( $data );
 			else
-				$self->writeOutput( $data );
-		};
+				$self->printLine( $data );
+		} );
 
 		return new LoggingSystem( $self, $logger );
 	}
