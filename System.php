@@ -86,18 +86,6 @@ abstract class System implements CommandOutputHandler, FileSystem
 		return \PCRE::replace( "$gitHub|$awsKey|$awsSecret", $string, '[HIDDEN]' );
 	}
 
-	final function logger( $useStdErr = false )
-	{
-		$self = $this;
-		return new ClosureLog( function ( $data ) use ( $self, $useStdErr )
-		{
-			if ( $useStdErr )
-				$self->printLineError( $data );
-			else
-				$self->printLine( $data );
-		} );
-	}
-
 	final function escapeCmd( $arg )
 	{
 		$arg1    = str_replace( str_split( "=:_+./-" ), '', $arg );

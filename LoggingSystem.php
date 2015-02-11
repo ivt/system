@@ -4,38 +4,7 @@ namespace IVT\System;
 
 use IVT\Exception;
 
-interface Log
-{
-	/**
-	 * @param string $message
-	 * @return void
-	 */
-	function log( $message );
-}
-
-class NullLog implements Log
-{
-	function log( $message ) { }
-}
-
-class ClosureLog implements Log
-{
-	/** @var callable */
-	private $f;
-
-	function __construct( \Closure $f )
-	{
-		$this->f = $f;
-	}
-
-	function log( $message )
-	{
-		$f = $this->f;
-		$f( $message );
-	}
-}
-
-class LoggingSystem extends WrappedSystem implements Log
+class LoggingSystem extends WrappedSystem
 {
 	private $log;
 
@@ -46,11 +15,14 @@ class LoggingSystem extends WrappedSystem implements Log
 		$this->log = $log;
 	}
 
-	function log( $line )
+	function getLog()
 	{
-		$date = date( 'Y-m-d H:i:s' );
+		return $this->log;
+	}
 
-		$this->log->log( "[$date] {$this->describe()}: $line" );
+	function log( $message )
+	{
+		$this->log->debug( "{$this->describe()}: $message" );
 	}
 
 	function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
@@ -225,7 +197,7 @@ class LoggingFile extends WrappedFile
 {
 	private $log;
 
-	function __construct( System $system, $path, File $file, Log $log )
+	function __construct( System $system, $path, File $file, LoggingSystem $log )
 	{
 		parent::__construct( $system, $path, $file );
 		$this->log = $log;
@@ -409,7 +381,7 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 {
 	private $log;
 
-	function __construct( \Dbase_SQL_Driver_Abstract $driver, Log $log )
+	function __construct( \Dbase_SQL_Driver_Abstract $driver, LoggingSystem $log )
 	{
 		parent::__construct( $driver );
 		$this->log = $log;
@@ -485,7 +457,7 @@ class LoggingTransaction extends \WrappedDatabaseTransaction
 	/** @var Log */
 	private $log;
 
-	function __construct( \DatabaseTransaction $txn, Log $log )
+	function __construct( \DatabaseTransaction $txn, LoggingSystem $log )
 	{
 		parent::__construct( $txn );
 		$this->log = $log;

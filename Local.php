@@ -51,19 +51,17 @@ class LocalSystem extends System
 		return true;
 	}
 
-	static function createLogging( $useStdErr = false )
+	static function createLogging()
 	{
-		$system = new self;
-		$system = new LoggingSystem( $system, $system->logger( $useStdErr ) );
-		return $system;
+		return new LoggingSystem( new self, Log::create() );
 	}
 
-	/** @var CommandOutputHandler */
-	private $outputHandler;
+	/** @var Log */
+	private $log;
 
 	function __construct()
 	{
-		$this->outputHandler = PHP_SAPI === 'cli' ? new CLIOutputHandler : new WebOutputHandler;
+		$this->log = Log::create();
 	}
 
 	function file( $path )
@@ -105,12 +103,12 @@ class LocalSystem extends System
 
 	function writeOutput( $data )
 	{
-		$this->outputHandler->writeOutput( $data );
+		$this->log->debug( rtrim( $data, "\n" ) );
 	}
 
 	function writeError( $data )
 	{
-		$this->outputHandler->writeError( $data );
+		$this->log->error( rtrim( $data, "\n" ) );
 	}
 
 	function describe()
