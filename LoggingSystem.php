@@ -2,8 +2,6 @@
 
 namespace IVT\System;
 
-use IVT\Exception;
-
 class LoggingSystem extends WrappedSystem
 {
 	private $log;
@@ -74,7 +72,7 @@ class LoggingSystem extends WrappedSystem
 	function pwd()
 	{
 		$result = parent::pwd();
-		$this->log( "pwd = $result" );
+		$this->log( "pwd => $result" );
 
 		return $result;
 	}
@@ -82,12 +80,7 @@ class LoggingSystem extends WrappedSystem
 	function isPortOpen( $host, $port, $timeout )
 	{
 		$result = parent::isPortOpen( $host, $port, $timeout );
-		$this->log( Logger::dump( array(
-			'is port open?' => $result,
-			'host'          => $host,
-			'port'          => $port,
-			'timeout'       => "{$timeout}s"
-		) ) );
+		$this->log( "is $host:$port open? " . yes_no( $result ) );
 
 		return $result;
 	}
@@ -118,7 +111,7 @@ class Logger
 	 * @param int    $width
 	 * @return string
 	 */
-	static function ellipsize( $string, $width )
+	private static function ellipsize( $string, $width )
 	{
 		if ( strlen( $string ) <= $width )
 			return $string;
@@ -133,63 +126,35 @@ class Logger
 	}
 
 	/**
+	 * @param string[] $strings
+	 * @return string
+	 */
+	static function summarizeArray( array $strings )
+	{
+		$result = '[' . join( ', ', $strings ) . ']';
+		$result = self::ellipsize( $result, 40 );
+		return $result;
+	}
+
+	/**
+	 * @param string $string
+	 * @return string
+	 */
+	static function summarize( $string )
+	{
+		$string = self::collapse( $string );
+		$string = self::ellipsize( $string, 40 );
+		return $string;
+	}
+
+	/**
 	 * Collapses the given string into a single line
 	 * @param string $string
 	 * @return string
 	 */
 	static function collapse( $string )
 	{
-		return \PCRE::replace( '([^[:print:]]|\s+)+', trim( $string ), ' ' );
-	}
-
-	/**
-	 * Converts arbitrary PHP value into a friendly string
-	 * @param mixed $value
-	 * @return string
-	 * @throws Exception
-	 */
-	static function dump( $value )
-	{
-		if ( is_object( $value ) )
-		{
-			return self::dump( get_object_vars( $value ) );
-		}
-		else if ( is_resource( $value ) )
-		{
-			return 'resource ' . get_resource_type( $value );
-		}
-		else if ( is_array( $value ) )
-		{
-			$parts = array();
-			foreach ( $value as $k => $v )
-			{
-				$s = self::dump( $v );
-				if ( !is_int( $k ) )
-					$s = self::dump( $k ) . ": $s";
-				$parts[ ] = $s;
-			}
-			return '[' . join( ', ', $parts ) . ']';
-		}
-		else if ( is_bool( $value ) )
-		{
-			return $value ? 'yes' : 'no';
-		}
-		else if ( is_null( $value ) )
-		{
-			return 'null';
-		}
-		else if ( is_string( $value ) )
-		{
-			return \PCRE::match( '^[A-Za-z0-9_ ]+$', $value, 'D' ) ? $value : "\"$value\"";
-		}
-		else if ( is_int( $value ) || is_float( $value ) )
-		{
-			return "$value";
-		}
-		else
-		{
-			throw new Exception( "Invalid type: " . gettype( $value ) );
-		}
+		return '"' . \PCRE::replace( '([^[:print:]]|\s+)+', trim( $string ), ' ' ) . '"';
 	}
 }
 
@@ -206,7 +171,7 @@ class LoggingFile extends WrappedFile
 	function fileType()
 	{
 		$type = parent::fileType();
-		$this->log( "file type? $type" );
+		$this->log( "file type => $type" );
 
 		return $type;
 	}
@@ -222,7 +187,7 @@ class LoggingFile extends WrappedFile
 	function scanDir()
 	{
 		$result = parent::scanDir();
-		$this->log( "scandir => " . Logger::ellipsize( Logger::dump( $result ), 40 ) );
+		$this->log( "scandir => " . Logger::summarizeArray( $result ) );
 
 		return $result;
 	}
@@ -237,7 +202,7 @@ class LoggingFile extends WrappedFile
 
 	function mkdir( $mode = 0777, $recursive = false )
 	{
-		$this->log( 'mkdir ' . Logger::dump( array( 'mode' => decoct( $mode ), 'recursive' => $recursive ) ) );
+		$this->log( 'mkdir, mode ' . decoct( $mode ) . ', recursive: ' . yes_no( $recursive ) );
 		parent::mkdir( $mode, $recursive );
 	}
 
@@ -307,30 +272,32 @@ class LoggingFile extends WrappedFile
 		$result = parent::read( $offset, $maxLength );
 
 		$log = 'read';
-		if ( $offset !== 0 || $maxLength !== null )
-			$log .= ' ' . Logger::dump( array( 'offset' => $offset, 'length' => $maxLength ) );
+		if ( $offset !== 0 )
+			$log .= ", offset: $offset";
+		if ( $maxLength !== null )
+			$log .= ", length: $maxLength";
 
-		$this->log( "$log => {$this->simplify( $result )}" );
+		$this->log( "$log => " . Logger::summarize( $result ) );
 
 		return $result;
 	}
 
 	function write( $contents )
 	{
-		$this->log( "write {$this->simplify( $contents )}" );
+		$this->log( "write " . Logger::summarize( $contents ) );
 		parent::write( $contents );
 		return $this;
 	}
 
 	function create( $contents )
 	{
-		$this->log( "create {$this->simplify( $contents )}" );
+		$this->log( "create " . Logger::summarize( $contents ) );
 		parent::create( $contents );
 	}
 
 	function append( $contents )
 	{
-		$this->log( "append {$this->simplify( $contents )}" );
+		$this->log( "append " . Logger::summarize( $contents ) );
 		parent::append( $contents );
 	}
 
@@ -360,11 +327,6 @@ class LoggingFile extends WrappedFile
 		parent::copyImpl( $dest );
 	}
 
-	private function simplify( $contents )
-	{
-		return Logger::ellipsize( Logger::dump( Logger::collapse( $contents ) ), 40 );
-	}
-
 	function log( $line )
 	{
 		$this->log->log( "{$this->path()}: $line" );
@@ -391,10 +353,8 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 	{
 		$result = parent::query( $sql );
 
-		$this->log( Logger::dump( array(
-			'query' => Logger::ellipsize( Logger::collapse( $sql ), 40 ),
-			'rows'  => $result instanceof \Dbase_SQL_Query_Result_Select ? $result->numRows() : null,
-		) ) );
+		$rows = $result instanceof \Dbase_SQL_Query_Result_Select ? $result->numRows() . ' rows' : 'ok';
+		$this->log( 'query ' . Logger::summarize( $sql ) . " => $rows" );
 
 		return $result;
 	}
@@ -402,14 +362,14 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 	function insertId()
 	{
 		$result = parent::insertId();
-		$this->log( "insert id = $result" );
+		$this->log( "insert id => $result" );
 		return $result;
 	}
 
 	function affectedRows()
 	{
 		$result = parent::affectedRows();
-		$this->log( "affected rows = $result" );
+		$this->log( "affected rows => $result" );
 		return $result;
 	}
 
@@ -422,22 +382,22 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 	function simpleSelect( $table, array $columns, array $where, \Closure $allWheres = null )
 	{
 		$rows = parent::simpleSelect( $table, $columns, $where, $allWheres );
-		$this->log( Logger::dump( array(
-			'select' => $table,
-			'rows'   => count( $rows ),
-		) ) );
+
+		$columns_ = Logger::summarizeArray( $columns );
+		$where_   = Logger::summarizeArray( array_keys( $where ) );
+		$this->log( "select $columns_ from $table where $where_" );
+
 		return $rows;
 	}
 
 	function update( $table, array $set = array(), array $where = array() )
 	{
 		$affected = parent::update( $table, $set, $where );
-		$this->log( Logger::dump( array(
-			'update'        => $table,
-			'set'           => array_keys( $set ),
-			'where'         => array_keys( $where ),
-			'rows affected' => $affected,
-		) ) );
+
+		$columns_ = Logger::summarizeArray( array_keys( $set ) );
+		$where_   = Logger::summarizeArray( array_keys( $where ) );
+		$this->log( "update $table set $columns_ where $where_ => $affected rows changed" );
+
 		return $affected;
 	}
 
