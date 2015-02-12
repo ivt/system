@@ -13,11 +13,6 @@ class LoggingSystem extends WrappedSystem
 		$this->log = $log;
 	}
 
-	function getLog()
-	{
-		return $this->log;
-	}
-
 	function log( $message )
 	{
 		$this->log->debug( "{$this->describe()}: $message" );
@@ -421,7 +416,6 @@ class LoggingTransaction extends \WrappedDatabaseTransaction
 	{
 		parent::__construct( $txn );
 		$this->log = $log;
-
 		$this->log( 'start' );
 	}
 

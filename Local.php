@@ -51,17 +51,14 @@ class LocalSystem extends System
 		return true;
 	}
 
+	/**
+	 * @return System
+	 */
 	static function createLogging()
 	{
-		return new LoggingSystem( new self, Log::create() );
-	}
-
-	/** @var Log */
-	private $log;
-
-	function __construct()
-	{
-		$this->log = Log::create();
+		$self = new self;
+		$self = $self->wrapLogging( Log::create() );
+		return $self;
 	}
 
 	function file( $path )
@@ -101,72 +98,9 @@ class LocalSystem extends System
 		return Assert::string( getcwd() );
 	}
 
-	function writeOutput( $data )
-	{
-		$this->log->debug( rtrim( $data, "\n" ) );
-	}
-
-	function writeError( $data )
-	{
-		$this->log->error( rtrim( $data, "\n" ) );
-	}
-
 	function describe()
 	{
 		return 'local';
-	}
-}
-
-class CLIOutputHandler implements CommandOutputHandler
-{
-	function writeOutput( $data )
-	{
-		Assert::int( fwrite( STDOUT, $data ) );
-	}
-
-	function writeError( $data )
-	{
-		Assert::int( fwrite( STDERR, $data ) );
-	}
-}
-
-class WebOutputHandler implements CommandOutputHandler
-{
-	private $initDone = false;
-
-	function writeOutput( $data )
-	{
-		$this->send( $data, false );
-	}
-
-	function writeError( $data )
-	{
-		$this->send( $data, true );
-	}
-
-	private function send( $data = '', $isError = false )
-	{
-		if ( !$this->initDone )
-		{
-			if ( !headers_sent() )
-			{
-				header( 'Content-Type: text/html; charset=utf8' );
-				echo "<!DOCTYPE html><html><body>";
-			}
-
-			while ( ob_get_level() > 0 && ob_end_flush() )
-			{
-			}
-
-			$this->initDone = true;
-		}
-
-		$color = $isError ? "darkred" : "darkblue";
-		echo "<pre style=\"display: inline; margin: 0; padding: 0; color: $color;\">";
-		echo html( $data );
-		echo "</pre>";
-
-		flush();
 	}
 }
 

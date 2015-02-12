@@ -180,15 +180,12 @@ class SSHSystem extends System
 	private $sftp;
 	/** @var string */
 	private $cwd;
-	/** @var CommandOutputHandler */
-	private $outputHandler;
 	/** @var SSHForwardedPorts */
 	private $forwardedPorts;
 
-	function __construct( SSHAuth $auth, CommandOutputHandler $outputHandler )
+	function __construct( SSHAuth $auth )
 	{
 		$this->auth           = $auth;
-		$this->outputHandler  = $outputHandler;
 		$this->forwardedPorts = new SSHForwardedPorts( $auth );
 	}
 
@@ -318,16 +315,6 @@ class SSHSystem extends System
 		$this->connect();
 
 		return $this->cwd;
-	}
-
-	function writeOutput( $data )
-	{
-		$this->outputHandler->writeOutput( $data );
-	}
-
-	function writeError( $data )
-	{
-		$this->outputHandler->writeError( $data );
 	}
 
 	function describe()
