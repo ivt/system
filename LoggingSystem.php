@@ -77,7 +77,7 @@ class LoggingSystem extends WrappedSystem
 	function isPortOpen( $host, $port, $timeout )
 	{
 		$result = parent::isPortOpen( $host, $port, $timeout );
-		$this->log( "is $host:$port open? " . yes_no( $result ) );
+		$this->log( "is $host:$port open => " . yes_no( $result ) );
 
 		return $result;
 	}
@@ -176,7 +176,7 @@ class LoggingFile extends WrappedFile
 	function isFile()
 	{
 		$result = parent::isFile();
-		$this->log( "is file? " . yes_no( $result ) );
+		$this->log( "is file => " . yes_no( $result ) );
 
 		return $result;
 	}
@@ -192,7 +192,7 @@ class LoggingFile extends WrappedFile
 	function isDir()
 	{
 		$result = parent::isDir();
-		$this->log( "is dir? " . yes_no( $result ) );
+		$this->log( "is dir => " . yes_no( $result ) );
 
 		return $result;
 	}
@@ -206,7 +206,7 @@ class LoggingFile extends WrappedFile
 	function isLink()
 	{
 		$result = parent::isLink();
-		$this->log( "is link? " . yes_no( $result ) );
+		$this->log( "is link => " . yes_no( $result ) );
 
 		return $result;
 	}
@@ -222,7 +222,7 @@ class LoggingFile extends WrappedFile
 	function exists()
 	{
 		$result = parent::exists();
-		$this->log( "exists? " . yes_no( $result ) );
+		$this->log( "exists => " . yes_no( $result ) );
 
 		return $result;
 	}
@@ -230,14 +230,14 @@ class LoggingFile extends WrappedFile
 	function perms()
 	{
 		$result = parent::perms();
-		$this->log( 'perms? ' . decoct( $result ) );
+		$this->log( 'perms => ' . decoct( $result ) );
 		return $result;
 	}
 
 	function size()
 	{
 		$size = parent::size();
-		$this->log( "size? " . sb_file_size_conversion( $size ) );
+		$this->log( "size => " . sb_file_size_conversion( $size ) );
 
 		return $size;
 	}
