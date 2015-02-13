@@ -2,6 +2,8 @@
 
 namespace IVT\System;
 
+use IVT\Log;
+
 class LoggingSystem extends WrappedSystem
 {
 	private $log;

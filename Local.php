@@ -3,6 +3,7 @@
 namespace IVT\System;
 
 use IVT\Assert;
+use IVT\Log;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
 class LocalProcess extends Process

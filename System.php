@@ -3,6 +3,7 @@
 namespace IVT\System;
 
 use IVT\Assert;
+use IVT\Log;
 
 interface FileSystem
 {
