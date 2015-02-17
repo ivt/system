@@ -3,6 +3,7 @@
 namespace IVT\System;
 
 use IVT\Assert;
+use IVT\Log;
 
 interface FileSystem
 {
@@ -75,7 +76,7 @@ abstract class Process
 	abstract function wait();
 }
 
-abstract class System implements CommandOutputHandler, FileSystem
+abstract class System implements FileSystem
 {
 	static function removeSecrets( $string )
 	{
@@ -84,6 +85,11 @@ abstract class System implements CommandOutputHandler, FileSystem
 		$awsSecret = '(?<=\-\-secret=)\S+';
 
 		return \PCRE::replace( "$gitHub|$awsKey|$awsSecret", $string, '[HIDDEN]' );
+	}
+
+	final function wrapLogging( Log $log )
+	{
+		return new LoggingSystem( $this, $log );
 	}
 
 	final function escapeCmd( $arg )
@@ -117,15 +123,6 @@ abstract class System implements CommandOutputHandler, FileSystem
 			$arg = $this->escapeCmd( $arg );
 
 		return join( ' ', $args );
-	}
-
-	final function outputWriter()
-	{
-		$self = $this;
-		return function ( $string ) use ( $self )
-		{
-			$self->writeOutput( $string );
-		};
 	}
 
 	final function execArgs( array $command, $stdIn = '' )
@@ -280,10 +277,6 @@ abstract class System implements CommandOutputHandler, FileSystem
 			$processes[ ] = $this->runCommandAsync( $command );
 		return $processes;
 	}
-
-	final function printLineError( $string = '' ) { $this->writeError( "$string\n" ); }
-
-	final function printLine( $string = '' ) { $this->writeOutput( "$string\n" ); }
 
 	final function runAsync( $command, $stdIn = '' )
 	{

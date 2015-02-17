@@ -46,16 +46,6 @@ class WrappedSystem extends System
 		return $this->system->runImpl( $command, $stdIn, $stdOut, $stdErr );
 	}
 
-	function writeOutput( $data )
-	{
-		$this->system->writeOutput( $data );
-	}
-
-	function writeError( $data )
-	{
-		$this->system->writeError( $data );
-	}
-
 	function wrap( System $system )
 	{
 		return $this->system->wrap( parent::wrap( $system ) );
