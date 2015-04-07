@@ -387,9 +387,9 @@ class LoggingDB extends \Dbase_SQL_Driver_Delegate
 		return $rows;
 	}
 
-	function update( $table, array $set = array(), array $where = array() )
+	function update( $table, array $set = array(), array $where = array(), $limit = null )
 	{
-		$affected = parent::update( $table, $set, $where );
+		$affected = parent::update( $table, $set, $where, $limit );
 
 		$columns_ = Logger::summarizeArray( array_keys( $set ) );
 		$where_   = Logger::summarizeArray( array_keys( $where ) );
