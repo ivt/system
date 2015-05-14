@@ -691,7 +691,7 @@ abstract class FOpenWrapperFile extends File
 	{
 		clearstatcache( true );
 
-		Assert::true( mkdir( $this->url(), $mode, $recursive ) );
+		Assert::true( mkdir( $this->url(), $mode, $recursive ), "Failed to create directory at {$this->url()}" );
 	}
 
 	function isLink()
@@ -712,50 +712,51 @@ abstract class FOpenWrapperFile extends File
 	{
 		clearstatcache( true );
 
-		return Assert::int( filesize( $this->url() ) );
+		return Assert::int( filesize( $this->url() ), "Failed to get file size on {$this->url()}" );
 	}
 
 	function unlink()
 	{
 		clearstatcache( true );
 
-		Assert::true( unlink( $this->url() ) );
+		Assert::true( unlink( $this->url() ), "Failed to unlink file at {$this->url()}" );
 	}
 
 	function ctime()
 	{
 		clearstatcache( true );
 
-		return Assert::int( filectime( $this->url() ) );
+		return Assert::int( filectime( $this->url() ), "Failed to read create time on file {$this->url()}" );
 	}
 
 	function fileType()
 	{
 		clearstatcache( true );
 
-		return Assert::string( filetype( $this->url() ) );
+		return Assert::string( filetype( $this->url() ), "Failed to get file type of {$this->url()}" );
 	}
 
 	function perms()
 	{
 		clearstatcache( true );
 
-		return Assert::int( fileperms( $this->url() ) );
+		return Assert::int( fileperms( $this->url() ), "Failed to get file permissions on {$this->url()}" );
 	}
 
 	function rmdir()
 	{
-		Assert::true( rmdir( $this->url() ) );
+		Assert::true( rmdir( $this->url() ), "Failed to remove directory at {$this->url()}" );
 	}
 
 	protected function renameImpl( $to )
 	{
-		Assert::true( rename( $this->url(), $this->pathToUrl( $to ) ) );
+		Assert::true( rename( $this->url(), $this->pathToUrl( $to ) ), "Failed to rename file at {$this->url()}" );
 	}
 
 	protected function copyImpl( $dest )
 	{
-		Assert::true( copy( $this->url(), $this->pathToUrl( $dest ) ) );
+		Assert::true( copy( $this->url(), $this->pathToUrl( $dest ) ),
+			"Failed to copy file at {$this->url()} to {$this->pathToUrl( $dest )}");
 	}
 
 	function create( $contents ) { $this->writeImpl( $contents, 'xb' ); }
@@ -770,11 +771,13 @@ abstract class FOpenWrapperFile extends File
 
 		if ( $maxLength === null )
 		{
-			return Assert::string( file_get_contents( $this->url(), false, null, $offset ) );
+			return Assert::string( file_get_contents( $this->url(), false, null, $offset ),
+				"Failed to read file at {$this->url()}" );
 		}
 		else
 		{
-			return Assert::string( file_get_contents( $this->url(), false, null, $offset, $maxLength ) );
+			return Assert::string( file_get_contents( $this->url(), false, null, $offset, $maxLength ),
+				"Failed to read file at {$this->url()}" );
 		}
 	}
 
@@ -782,21 +785,21 @@ abstract class FOpenWrapperFile extends File
 	{
 		clearstatcache( true );
 
-		return Assert::isArray( scandir( $this->url() ) );
+		return Assert::isArray( scandir( $this->url() ), "Failed to scan directory at {$this->url()}" );
 	}
 
 	function mtime()
 	{
 		clearstatcache( true );
 
-		return Assert::int( filemtime( $this->url() ) );
+		return Assert::int( filemtime( $this->url() ), "Failed to read mod time on file at {$this->url()}" );
 	}
 
 	private function writeImpl( $data, $mode )
 	{
-		Assert::resource( $handle = fopen( $this->url(), $mode ) );
-		Assert::equal( fwrite( $handle, $data ), strlen( $data ) );
-		Assert::true( fclose( $handle ) );
+		Assert::resource( $handle = fopen( $this->url(), $mode ), "Failed to open file for write at {$this->url()}" );
+		Assert::equal( fwrite( $handle, $data ), strlen( $data ), "Failed to write to file at {$this->url()}" );
+		Assert::true( fclose( $handle ), "Failed to close file handle after write() on {$this->url()}" );
 	}
 
 	/**
