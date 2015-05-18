@@ -330,6 +330,10 @@ abstract class File
 
 	final function path() { return $this->path; }
 
+	/**
+	 * @return string
+	 * @deprecated
+	 */
 	final function __toString() { return $this->path(); }
 
 	final function on( FileSystem $system )
