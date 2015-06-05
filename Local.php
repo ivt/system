@@ -57,7 +57,9 @@ class LocalSystem extends System
 
 	function isPortOpen( $host, $port, $timeout )
 	{
+		set_error_handler( function () { } );
 		$fp = @fsockopen( $host, $port, $errno, $errstr, $timeout );
+		restore_error_handler();
 		if ( $fp === false )
 			return false;
 		fclose( $fp );
