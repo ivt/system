@@ -42,6 +42,11 @@ class LocalProcess extends Process
 
 class LocalSystem extends System
 {
+	static function create()
+	{
+		return new self;
+	}
+
 	function escapeCmd( $arg )
 	{
 		if ( $this->isWindows() )
