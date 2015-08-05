@@ -52,6 +52,38 @@ class SSHAuth
 
 	function forwardPortCmd( System $system, $localPort, $remoteHost, $remotePort )
 	{
+		// PHP's proc_open() runs it's command in a shell with "sh -c ...".
+		// 'exec' instructs the shell to not just run the command as a child,
+		// but replace itself with it.
+		//
+		// Without 'exec', the process tree looks like this:
+		//
+		// init
+		//  \_ ...
+		//      \_ php
+		//          \_ sh -c "ssh ..."
+		//              \_ ssh ... 
+		// 
+		// And when PHP kills it's child, the "ssh" is left orphaned on the system:
+		//
+		// init
+		//  \_ ...
+		//  |   \_ php
+		//  \_ ssh ... 
+		// 
+		// With 'exec', the process tree looks like this:
+		//
+		// init
+		//  \_ ...
+		//      \_ php
+		//          \_ ssh ... 
+		//
+		// And when PHP kills it's child, nothing is left:
+		//
+		// init
+		//  \_ ...
+		//      \_ php
+		//
 		return 'exec ' . $this->sshCmd( $system, array( '-N', '-L', "localhost:$localPort:$remoteHost:$remotePort" ) );
 	}
 
