@@ -245,7 +245,9 @@ abstract class System implements FileSystem
 	 */
 	final function runCommandArgs( array $command, $stdIn = '' )
 	{
-		return $this->runCommand( $this->escapeCmdArgs( $command ), $stdIn );
+		// Use 'exec' so the command is a direct child of this process, without an 'sh -c ...'
+		// process in between.
+		return $this->runCommand( 'exec ' . $this->escapeCmdArgs( $command ), $stdIn );
 	}
 
 	/**
