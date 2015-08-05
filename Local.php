@@ -110,14 +110,10 @@ class LocalSystem extends System
 		return true;
 	}
 
-	/**
-	 * @return System
-	 */
 	static function createLogging()
 	{
 		$self = new self;
-		$self = $self->wrapLogging( Log::create() );
-		return $self;
+		return $self->wrapLogging( Log::create() );
 	}
 
 	function file( $path )

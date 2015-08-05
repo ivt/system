@@ -6,7 +6,7 @@ use IVT\Log;
 
 class LoggingSystem extends WrappedSystem
 {
-	private $log;
+	public $log;
 
 	function __construct( System $system, Log $log )
 	{
