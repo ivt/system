@@ -543,10 +543,15 @@ abstract class File
 	 */
 	abstract function exists();
 
+	/**
+	 * @return bool Whether the file was removed
+	 */
 	final function ensureNotExists()
 	{
-		if ( $this->exists() )
+		$remove = !$this->exists();
+		if ( $remove )
 			$this->removeRecursive();
+		return $remove;
 	}
 
 	/**
