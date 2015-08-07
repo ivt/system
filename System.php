@@ -546,7 +546,7 @@ abstract class File
 	 */
 	final function ensureNotExists()
 	{
-		$remove = !$this->exists();
+		$remove = $this->exists();
 		if ( $remove )
 			$this->removeRecursive();
 		return $remove;
