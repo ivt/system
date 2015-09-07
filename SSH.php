@@ -244,6 +244,8 @@ class SSHSystem extends System
 	{
 		$command = "sh -c {$this->escapeCmd( $command )}";
 
+		// If the input is short enough, pipe it into the command using "echo ... | cmd".
+		// Otherwise, write it to a file and pipe it into the command using "cmd < file".
 		if ( strlen( $stdIn ) < 1000 )
 		{
 			return $this->runImplHandleExitCode(
@@ -269,6 +271,8 @@ class SSHSystem extends System
 	}
 
 	/**
+	 * PHP's ssh2 extension doesn't provide a means to get the exit code of a command, so we have to
+	 * munge the command to print the exit code after it finishes, and then parse it out.
 	 * @param string   $command
 	 * @param callable $stdOut
 	 * @param callable $stdErr
@@ -283,24 +287,34 @@ class SSHSystem extends System
 		{
 			$buffer .= $data;
 
+			// Stop at the start of the marker, if present
 			$pos = strrpos( $buffer, $marker );
 
+			// If we didn't find a marker, we need to check if the string ends with
+			// the start of the marker.
 			if ( $pos === false )
 			{
+				// Starting at len(marker) bytes short of the end
 				$pos = max( 0, strlen( $buffer ) - strlen( $marker ) );
 
+				// As long as the remaining buffer at this point is not the start of a marker
 				while ( !starts_with( $marker, substr( $buffer, $pos ) ) )
+					// Move forward
 					$pos++;
 			}
 
+			// Send all bytes up to $pos, so we keep the marker
 			$stdOut( (string) substr( $buffer, 0, $pos ) );
 			$buffer = substr( $buffer, $pos );
 		};
 
+		// When we need the exit code, we need to parse it out of $buffer
 		$getExitCode = function () use ( &$buffer, $marker )
 		{
+			// Make sure $buffer starts with the marker
 			Assert::equal( $marker, substr( $buffer, 0, strlen( $marker ) ) );
 
+			// The exit code will be whatever is after the marker
 			return (int) substr( $buffer, strlen( $marker ) );
 		};
 
