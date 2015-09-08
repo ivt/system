@@ -230,7 +230,7 @@ class LoggingFile extends WrappedFile
 	function size()
 	{
 		$size = parent::size();
-		$this->log( "size => " . sb_file_size_conversion( $size ) );
+		$this->log( "size => " . humanize_bytes( $size ) );
 
 		return $size;
 	}
