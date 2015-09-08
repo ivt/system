@@ -42,8 +42,8 @@ class LocalProcess extends Process
 	/**
 	 * @param string   $command
 	 * @param string   $stdIn
-	 * @param callable $stdOut
-	 * @param callable $stdErr
+	 * @param \Closure $stdOut
+	 * @param \Closure $stdErr
 	 */
 	function __construct( $command, $stdIn, \Closure $stdOut, \Closure $stdErr )
 	{

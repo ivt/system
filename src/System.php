@@ -120,7 +120,7 @@ abstract class System implements FileSystem
 
 	/**
 	 * @param string   $dir
-	 * @param callable $f
+	 * @param \Closure $f
 	 * @return mixed
 	 * @throws \Exception
 	 */
@@ -283,8 +283,8 @@ abstract class System implements FileSystem
 	/**
 	 * @param string   $command
 	 * @param string   $stdIn
-	 * @param callable $stdOut
-	 * @param callable $stdErr
+	 * @param \Closure $stdOut
+	 * @param \Closure $stdErr
 	 * @return Process
 	 */
 	abstract function runImpl( $command, $stdIn, \Closure $stdOut, \Closure $stdErr );

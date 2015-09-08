@@ -128,9 +128,9 @@ class SSHProcess extends Process
 	/**
 	 * @param resource $ssh
 	 * @param string   $command
-	 * @param callable $onStdOut
-	 * @param callable $onStdErr
-	 * @param callable $getExitCode
+	 * @param \Closure $onStdOut
+	 * @param \Closure $onStdErr
+	 * @param \Closure $getExitCode
 	 */
 	function __construct( $ssh, $command, \Closure $onStdOut, \Closure $onStdErr, \Closure $getExitCode )
 	{
@@ -274,8 +274,8 @@ class SSHSystem extends System
 	 * PHP's ssh2 extension doesn't provide a means to get the exit code of a command, so we have to
 	 * munge the command to print the exit code after it finishes, and then parse it out.
 	 * @param string   $command
-	 * @param callable $stdOut
-	 * @param callable $stdErr
+	 * @param \Closure $stdOut
+	 * @param \Closure $stdErr
 	 * @return SSHProcess
 	 */
 	private function runImplHandleExitCode( $command, \Closure $stdOut, \Closure $stdErr )
@@ -328,9 +328,9 @@ class SSHSystem extends System
 
 	/**
 	 * @param string   $command
-	 * @param callable $onStdOut
-	 * @param callable $onStdErr
-	 * @param callable $getExitCode
+	 * @param \Closure $onStdOut
+	 * @param \Closure $onStdErr
+	 * @param \Closure $getExitCode
 	 * @return SSHProcess
 	 */
 	private function sshRunCommand( $command, \Closure $onStdOut, \Closure $onStdErr, \Closure $getExitCode )
