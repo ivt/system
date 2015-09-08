@@ -215,6 +215,8 @@ class SSHSystem extends System
 	/** @var SSHForwardedPorts */
 	private $forwardedPorts;
 
+	function forwardedPorts() { return $this->forwardedPorts; }
+
 	function __construct( SSHAuth $auth )
 	{
 		$this->auth           = $auth;

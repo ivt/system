@@ -20,6 +20,11 @@ class LoggingSystem extends WrappedSystem
 		return $visitor->visitLoggingSystem( $this );
 	}
 
+	function parentApplyVisitor( SystemVisitor $visitor )
+	{
+		return parent::applyVisitor( $visitor );
+	}
+
 	function log( $message )
 	{
 		$this->log->debug( "{$this->describe()}: $message" );

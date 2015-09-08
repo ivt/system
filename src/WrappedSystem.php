@@ -6,6 +6,8 @@ class WrappedSystem extends System
 {
 	private $system;
 
+	function system() { return $this->system; }
+
 	function __construct( System $system )
 	{
 		$this->system = $system;
