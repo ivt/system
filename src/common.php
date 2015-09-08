@@ -1,6 +1,7 @@
 <?php
 
 namespace IVT\System;
+use ArrayAccess;
 
 /**
  * Get a key from an array using a default value if it is not set.

@@ -2,6 +2,8 @@
 
 namespace IVT;
 
-class SystemException extends \FailWhale\Exception
+use FailWhale\Exception;
+
+class SystemException extends Exception
 {
 }
