@@ -274,13 +274,6 @@ abstract class System implements FileSystem
 	}
 
 	/**
-	 * @param \DatabaseConnectionInfo $dsn
-	 *
-	 * @return \Dbase_SQL_Driver_Abstract
-	 */
-	abstract function connectDB( \DatabaseConnectionInfo $dsn );
-
-	/**
 	 * Unix timestamp
 	 *
 	 * @return int

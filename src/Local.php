@@ -138,11 +138,6 @@ class LocalSystem extends System
 		return getmypid();
 	}
 
-	function connectDB( \DatabaseConnectionInfo $dsn )
-	{
-		return new \Dbase_SQL_Driver( $dsn );
-	}
-
 	function cd( $dir )
 	{
 		Assert::true( chdir( $dir ) );

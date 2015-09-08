@@ -91,13 +91,6 @@ class LoggingSystem extends WrappedSystem
 	{
 		return new LoggingFile( $this, $path, parent::file( $path ), $this );
 	}
-
-	function connectDB( \DatabaseConnectionInfo $dsn )
-	{
-		$this->log( "connect db: $dsn" );
-
-		return new LoggingDB( parent::connectDB( $dsn ), $this );
-	}
 }
 
 class Logger

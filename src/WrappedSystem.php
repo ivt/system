@@ -36,11 +36,6 @@ class WrappedSystem extends System
 		return $this->system->dirSep();
 	}
 
-	function connectDB( \DatabaseConnectionInfo $dsn )
-	{
-		return $this->system->connectDB( $dsn );
-	}
-
 	function time()
 	{
 		return $this->system->time();

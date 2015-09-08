@@ -321,11 +321,6 @@ class SSHSystem extends System
 		return $this->sshRunCommand( $wrapped, $stdOut, $stdErr, $getExitCode );
 	}
 
-	function connectDB( \DatabaseConnectionInfo $dsn )
-	{
-		return new SSHDBConnection( $this->forwardedPorts, $dsn );
-	}
-
 	function time()
 	{
 		return (int) substr( $this->exec( 'date +%s' ), 0, -1 );
