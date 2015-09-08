@@ -2,45 +2,6 @@
 
 namespace IVT\System;
 
-use DatabaseConnectionInfo;
-use Dbase_SQL_Driver;
-use DbaseConnectionFailed;
-
-class SSHDBConnection extends \Dbase_SQL_Driver
-{
-	/**
-	 * This object will keep the port forwarded until the object it gets GC'd, so its important
-	 * we keep a reference to it.
-	 *
-	 * @var SSHForwardedPort
-	 */
-	private $forwardedPort;
-
-	/**
-	 * @param SSHForwardedPorts      $ssh
-	 * @param DatabaseConnectionInfo $dsn
-	 * @throws \DbaseConnectionFailed
-	 */
-	function __construct( SSHForwardedPorts $ssh, DatabaseConnectionInfo $dsn )
-	{
-		try
-		{
-			$forwardedPort = $ssh->forwardPort( $dsn->host(), $dsn->port() ? : 3306 );
-		}
-		catch ( SSHForwardPortFailed $e )
-		{
-			throw new DbaseConnectionFailed( 'Could not forward port', 0, $e );
-		}
-
-		$dsn = clone $dsn;
-		$dsn->setHost( '127.0.0.1' );
-		$dsn->setPort( $forwardedPort->localPort() );
-		parent::__construct( $dsn );
-
-		$this->forwardedPort = $forwardedPort;
-	}
-}
-
 class SSHForwardedPorts
 {
 	/** @var SSHAuth */
@@ -139,4 +100,3 @@ class SSHForwardedPort
 
 	function localPort() { return $this->localPort; }
 }
-
