@@ -221,6 +221,11 @@ class SSHSystem extends System
 		$this->forwardedPorts = new SSHForwardedPorts( $auth );
 	}
 
+	function applyVisitor( SystemVisitor $visitor )
+	{
+		return $visitor->visitSSHSystem( $this );
+	}
+
 	private function connect()
 	{
 		if ( $this->ssh )

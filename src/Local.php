@@ -85,6 +85,11 @@ class LocalSystem extends System
 		return new self;
 	}
 
+	function applyVisitor( SystemVisitor $visitor )
+	{
+		return $visitor->visitLocalSystem( $this );
+	}
+
 	function escapeCmd( $arg )
 	{
 		if ( $this->isWindows() )

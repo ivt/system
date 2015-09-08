@@ -78,6 +78,11 @@ abstract class Process
 
 abstract class System implements FileSystem
 {
+	/* @param SystemVisitor $visitor
+	 * @return mixed
+	 */
+	abstract function applyVisitor( SystemVisitor $visitor );
+
 	final static function removeSecrets( $string )
 	{
 		$gitHub    = '(\w+(:\w+)?)(?=@github.com)';

@@ -11,6 +11,11 @@ class WrappedSystem extends System
 		$this->system = $system;
 	}
 
+	function applyVisitor( SystemVisitor $visitor )
+	{
+		return $visitor->visitWrappedSystem( $this );
+	}
+
 	function cd( $dir )
 	{
 		$this->system->cd( $dir );
