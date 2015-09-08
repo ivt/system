@@ -2,10 +2,10 @@
 
 namespace IVT\System;
 
-use IVT\Exception;
+use IVT\SystemException;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
-final class CommandFailedException extends Exception
+final class CommandFailedException extends SystemException
 {
     private $result;
 

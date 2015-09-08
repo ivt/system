@@ -3,7 +3,7 @@
 namespace IVT\System;
 
 use IVT\Assert;
-use IVT\Exception;
+use IVT\SystemException;
 
 class SSHAuth
 {
@@ -36,7 +36,7 @@ class SSHAuth
 
 		if ( !$local->isPortOpen( $this->host, $this->port, 20 ) )
 		{
-			throw new Exception( "Port $this->port is not open on $this->host" );
+			throw new SystemException( "Port $this->port is not open on $this->host" );
 		}
 
 		Assert::resource( $ssh = ssh2_connect( $this->host, $this->port ) );
@@ -364,7 +364,7 @@ class SSHSystem extends System
 	}
 }
 
-class SSHForwardPortFailed extends Exception
+class SSHForwardPortFailed extends SystemException
 {
 }
 
