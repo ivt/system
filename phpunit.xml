@@ -1,0 +1,7 @@
+<phpunit colors="true">
+    <testsuites>
+        <testsuite name="System">
+            <file>src/Test.php</file>
+        </testsuite>
+    </testsuites>
+</phpunit>
