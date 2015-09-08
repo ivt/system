@@ -1,6 +1,6 @@
 <?php
 
-namespace IVT;
+namespace IVT\System;
 
 use FailWhale\Exception;
 

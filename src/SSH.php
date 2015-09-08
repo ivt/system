@@ -3,7 +3,6 @@
 namespace IVT\System;
 
 use IVT\Assert;
-use IVT\SystemException;
 
 class SSHAuth
 {
