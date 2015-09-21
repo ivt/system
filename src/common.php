@@ -1,6 +1,7 @@
 <?php
 
 namespace IVT\System;
+
 use ArrayAccess;
 
 /**
@@ -15,33 +16,33 @@ use ArrayAccess;
  *
  * @return mixed
  */
-function array_get( $array, $key, $default = null )
+function array_get($array, $key, $default = null)
 {
-    return isset( $array[ $key ] ) ? $array[ $key ] : $default;
+    return isset($array[$key]) ? $array[$key] : $default;
 }
 
-function random_string( $len )
+function random_string($len)
 {
     $alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    $count    = strlen( $alphabet ) - 1;
-    $str      = "";
+    $count = strlen($alphabet) - 1;
+    $str = "";
 
-    mt_srand( (double) microtime() * 1000000 );
+    mt_srand((double)microtime() * 1000000);
 
-    for ( $i = 0; $i < $len; $i++ )
-        $str .= $alphabet[ mt_rand( 0, $count ) ];
+    for ($i = 0; $i < $len; $i++)
+        $str .= $alphabet[mt_rand(0, $count)];
 
     return $str;
 }
 
-function starts_with( $string, $start )
+function starts_with($string, $start)
 {
-    return strncmp( $string, $start, strlen( $start ) ) === 0;
+    return strncmp($string, $start, strlen($start)) === 0;
 }
 
-function ends_with( $string, $end )
+function ends_with($string, $end)
 {
-    return substr( $string, -strlen( $end ) ) === $end;
+    return substr($string, -strlen($end)) === $end;
 }
 
 /**
@@ -49,12 +50,12 @@ function ends_with( $string, $end )
  * @param string $text
  * @return string[]
  */
-function lines( $text )
+function lines($text)
 {
-    $lines = explode( "\n", $text );
+    $lines = explode("\n", $text);
 
-    if ( $lines && $lines[ count( $lines ) - 1 ] === '' )
-        array_pop( $lines );
+    if ($lines && $lines[count($lines) - 1] === '')
+        array_pop($lines);
 
     return $lines;
 }
@@ -63,13 +64,17 @@ function lines( $text )
  * @param bool $bool
  * @return string
  */
-function yes_no( $bool ) { return $bool ? 'yes' : 'no'; }
+function yes_no($bool)
+{
+    return $bool ? 'yes' : 'no';
+}
 
 /**
  * @param int $n
  * @return string
  */
-function humanize_bytes($n) {
+function humanize_bytes($n)
+{
     $i = (int)log(max(abs($n), 1), 1000);
     $p = 'KMGTPEZY';
     if ($i == 0)

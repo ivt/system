@@ -4,99 +4,98 @@ namespace IVT\System;
 
 class SSHForwardedPorts
 {
-	/** @var SSHAuth */
-	private $auth;
-	/** @var array */
-	private $forwardedPorts = array();
+    /** @var SSHAuth */
+    private $auth;
+    /** @var array */
+    private $forwardedPorts = array();
 
-	function __construct( SSHAuth $auth )
-	{
-		$this->auth = $auth;
-	}
+    function __construct(SSHAuth $auth)
+    {
+        $this->auth = $auth;
+    }
 
-	function forwardPort( $remoteHost, $remotePort )
-	{
-		$forwarded =& $this->forwardedPorts[ $remoteHost ][ $remotePort ];
+    function forwardPort($remoteHost, $remotePort)
+    {
+        $forwarded =& $this->forwardedPorts[$remoteHost][$remotePort];
 
-		if ( !$forwarded )
-			$forwarded = $this->doPortForward( $remoteHost, $remotePort );
+        if (!$forwarded)
+            $forwarded = $this->doPortForward($remoteHost, $remotePort);
 
-		return $forwarded;
-	}
+        return $forwarded;
+    }
 
-	/**
-	 * @param string $remoteHost
-	 * @param int    $remotePort
-	 * @throws SSHForwardPortFailed
-	 * @return SSHForwardedPort
-	 */
-	private function doPortForward( $remoteHost, $remotePort )
-	{
-		if ( $remoteHost === 'localhost' )
-			$remoteHost = '127.0.0.1';
+    /**
+     * @param string $remoteHost
+     * @param int $remotePort
+     * @throws SSHForwardPortFailed
+     * @return SSHForwardedPort
+     */
+    private function doPortForward($remoteHost, $remotePort)
+    {
+        if ($remoteHost === 'localhost')
+            $remoteHost = '127.0.0.1';
 
-		$process = null;
-		$local   = new LocalSystem;
+        $process = null;
+        $local = new LocalSystem;
 
-		for ( $attempts = 0; $attempts < 10; $attempts++ )
-		{
-			do
-			{
-				$port = \mt_rand( 49152, 65535 );
-			}
-			while ( $local->isPortOpen( 'localhost', $port, 1 ) );
+        for ($attempts = 0; $attempts < 10; $attempts++) {
+            do {
+                $port = \mt_rand(49152, 65535);
+            } while ($local->isPortOpen('localhost', $port, 1));
 
-			$process = $local->runCommandAsync( $this->auth->forwardPortCmd( $local, $port, $remoteHost, $remotePort ) );
+            $process = $local->runCommandAsync($this->auth->forwardPortCmd($local, $port, $remoteHost, $remotePort));
 
-			$checks = 0;
-			while ( $process->isRunning() )
-			{
-				usleep( 10000 );
+            $checks = 0;
+            while ($process->isRunning()) {
+                usleep(10000);
 
-				if ( $local->isPortOpen( 'localhost', $port, 1 ) )
-					$checks++;
-				else
-					$checks = 0;
+                if ($local->isPortOpen('localhost', $port, 1))
+                    $checks++;
+                else
+                    $checks = 0;
 
-				if ( $checks >= 4 )
-					return new SSHForwardedPort( $process, $port );
-			}
-		}
+                if ($checks >= 4)
+                    return new SSHForwardedPort($process, $port);
+            }
+        }
 
-		$e = $process ? new CommandFailedException( $process ) : null;
+        $e = $process ? new CommandFailedException($process) : null;
 
-		throw new SSHForwardPortFailed( "Failed to forward a port after $attempts attempts :(", 0, $e );
-	}
+        throw new SSHForwardPortFailed("Failed to forward a port after $attempts attempts :(", 0, $e);
+    }
 }
 
 class SSHForwardedPort
 {
-	/**
-	 * It is important that we store this object in a property, so that the process continues
-	 * running until this object is GC'd. The destructor for the object will kill the
-	 * process, removing our forwarded port.
-	 *
-	 * @var CommandResult
-	 */
-	private $process;
-	private $localPort;
+    /**
+     * It is important that we store this object in a property, so that the process continues
+     * running until this object is GC'd. The destructor for the object will kill the
+     * process, removing our forwarded port.
+     *
+     * @var CommandResult
+     */
+    private $process;
+    private $localPort;
 
-	function __construct( CommandResult $process, $localPort )
-	{
-		// PHP only collects cycles when the number of "roots" hits 1000 and
-		// by that time there may be many instances of this object in memory,
-		// all keeping an SSH connection open with a forwarded port.
-		//
-		// To prevent many instances of this object from building up and
-		// keeping forwarded ports open, we will force the cycle collector to
-		// run each time this object is instantiated. At least then there
-		// will only ever be at most 1 instance of this class left
-		// unreferenced waiting to be collected at any time.
-		gc_collect_cycles();
+    function __construct(CommandResult $process, $localPort)
+    {
+        // PHP only collects cycles when the number of "roots" hits 1000 and
+        // by that time there may be many instances of this object in memory,
+        // all keeping an SSH connection open with a forwarded port.
+        //
+        // To prevent many instances of this object from building up and
+        // keeping forwarded ports open, we will force the cycle collector to
+        // run each time this object is instantiated. At least then there
+        // will only ever be at most 1 instance of this class left
+        // unreferenced waiting to be collected at any time.
+        gc_collect_cycles();
 
-		$this->process   = $process;
-		$this->localPort = $localPort;
-	}
+        $this->process = $process;
+        $this->localPort = $localPort;
+    }
 
-	function localPort() { return $this->localPort; }
+    function localPort()
+    {
+        return $this->localPort;
+    }
 }

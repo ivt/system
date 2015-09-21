@@ -8,14 +8,17 @@ final class CommandFailedException extends SystemException
 {
     private $result;
 
-    function __construct( CommandResult $result )
+    function __construct(CommandResult $result)
     {
-        parent::__construct( $result->toString(), $result->exitStatus() );
+        parent::__construct($result->toString(), $result->exitStatus());
 
         $this->result = $result;
     }
 
-    function result() { return $this->result; }
+    function result()
+    {
+        return $this->result;
+    }
 }
 
 class CommandResult extends Process
@@ -23,11 +26,11 @@ class CommandResult extends Process
     /**
      * @param self[] $results
      */
-    static function assertSuccessAll( array $results )
+    static function assertSuccessAll(array $results)
     {
-        Process::waitAll( $results );
+        Process::waitAll($results);
 
-        foreach ( $results as $self )
+        foreach ($results as $self)
             $self->assertSuccess();
     }
 
@@ -38,19 +41,31 @@ class CommandResult extends Process
     private $command;
     private $stdIn;
 
-    function stdErr() { return $this->stdErr; }
+    function stdErr()
+    {
+        return $this->stdErr;
+    }
 
-    function stdOut() { return $this->stdOut; }
+    function stdOut()
+    {
+        return $this->stdOut;
+    }
 
-    function command() { return $this->command; }
+    function command()
+    {
+        return $this->command;
+    }
 
-    function stdIn() { return $this->stdIn; }
+    function stdIn()
+    {
+        return $this->stdIn;
+    }
 
     function toString()
     {
         $this->wait();
-        $exitStatus  = $this->exitStatus();
-        $exitMessage = array_get( SymfonyProcess::$exitCodes, $exitStatus, "Unknown error" );
+        $exitStatus = $this->exitStatus();
+        $exitMessage = array_get(SymfonyProcess::$exitCodes, $exitStatus, "Unknown error");
 
         $result = <<<s
 >>> command <<<
@@ -65,8 +80,8 @@ $this->stdErr
 >>> exit status <<<
 $exitStatus $exitMessage
 s;
-        $result = System::removeSecrets( $result );
-        $result = utf8_encode( $result ); // to convert raw binary data from command/stdin/stdout/stderr to valid UTF-8
+        $result = System::removeSecrets($result);
+        $result = utf8_encode($result); // to convert raw binary data from command/stdin/stdout/stderr to valid UTF-8
         return $result;
     }
 
@@ -75,29 +90,40 @@ s;
      * @param string $command
      * @param string $stdIn
      */
-    function __construct( System $system, $command, $stdIn = '' )
+    function __construct(System $system, $command, $stdIn = '')
     {
         $stdOut =& $this->stdOut;
         $stdErr =& $this->stdErr;
 
         $this->command = "$command";
-        $this->stdIn   = "$stdIn";
+        $this->stdIn = "$stdIn";
         $this->process = $system->runImpl(
             $command,
             $stdIn,
-            function ( $x ) use ( &$stdOut ) { $stdOut .= $x; },
-            function ( $x ) use ( &$stdErr ) { $stdErr .= $x; }
+            function ($x) use (&$stdOut) {
+                $stdOut .= $x;
+            },
+            function ($x) use (&$stdErr) {
+                $stdErr .= $x;
+            }
         );
     }
 
     function assertSuccess()
     {
-        if ( $this->failed() )
-            throw new CommandFailedException( $this );
+        if ($this->failed())
+            throw new CommandFailedException($this);
 
         return $this;
     }
 
-    function isDone() { return $this->process->isDone(); }
-    function wait() { return $this->process->wait(); }
+    function isDone()
+    {
+        return $this->process->isDone();
+    }
+
+    function wait()
+    {
+        return $this->process->wait();
+    }
 }

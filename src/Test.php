@@ -11,12 +11,12 @@ class TestLocal extends \PHPUnit_Framework_TestCase
         $local = LocalSystem::create();
 
         $result = $local->runCommand("cat /etc/passwd | wc -l");
-        $this->assertGreaterThan( 0, $result->stdOut() );
+        $this->assertGreaterThan(0, $result->stdOut());
 
         $result = $local->runCommand("true");
-        $this->assertTrue( $result->succeeded() );
+        $this->assertTrue($result->succeeded());
 
         $result = $local->runCommand("false");
-        $this->assertTrue( $result->failed() );
+        $this->assertTrue($result->failed());
     }
 }
