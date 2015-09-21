@@ -22,8 +22,10 @@
 
     ],
     "autoload": {
-        "classmap": ["src/"],
-        "files": ["src/common.php"]
+        "psr-4": {
+            "IVT\\System\\": "src/"
+        },
+        "files": ["src/functions.php"]
     },
     "require": {
         "symfony/process": "v2.4.0",

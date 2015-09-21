@@ -4,23 +4,6 @@ namespace IVT\System;
 
 use Symfony\Component\Process\Process as SymfonyProcess;
 
-final class CommandFailedException extends SystemException
-{
-    private $result;
-
-    function __construct(CommandResult $result)
-    {
-        parent::__construct($result->toString(), $result->exitStatus());
-
-        $this->result = $result;
-    }
-
-    function result()
-    {
-        return $this->result;
-    }
-}
-
 class CommandResult extends Process
 {
     /**
@@ -127,3 +110,4 @@ s;
         return $this->process->wait();
     }
 }
+
