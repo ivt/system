@@ -9,10 +9,6 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/ivt/log.git"
-        },
-        {
-            "type": "vcs",
             "url": "https://github.com/ivt/assert.git"
         },
         {
@@ -22,14 +18,10 @@
 
     ],
     "autoload": {
-        "psr-4": {
-            "IVT\\System\\": "src/"
-        },
-        "files": ["src/functions.php"]
+        "files": ["src/include.php"]
     },
     "require": {
         "symfony/process": "v2.4.0",
-        "ivt/log": "^0.1.0",
         "ivt/assert": "^0.1.0",
         "ivt/pcre": "^0.1.0"
     },

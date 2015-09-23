@@ -2,12 +2,10 @@
 
 namespace IVT\System\Test;
 
-use IVT\System\LocalSystem;
+use IVT\System\_Internal\Local\LocalSystem;
 
-class TestLocal extends \PHPUnit_Framework_TestCase
-{
-    function testProcess()
-    {
+class TestLocal extends \PHPUnit_Framework_TestCase {
+    function testProcess() {
         $local = LocalSystem::create();
 
         $result = $local->runCommand("cat /etc/passwd | wc -l");

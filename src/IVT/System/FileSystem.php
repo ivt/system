@@ -2,8 +2,7 @@
 
 namespace IVT\System;
 
-interface FileSystem
-{
+interface FileSystem {
     /**
      * @return string
      */
