@@ -188,18 +188,6 @@ abstract class System implements FileSystem, Loggable {
     }
 
     /**
-     * @param string[] $commands
-     * @return CommandResult[]
-     */
-    final function runCommandAsyncMany(array $commands) {
-        /** @var CommandResult[] $processes */
-        $processes = array();
-        foreach ($commands as $command)
-            $processes[] = $this->runCommandAsync($command);
-        return $processes;
-    }
-
-    /**
      * @param string $host
      * @param int    $port
      * @param int    $timeout Timeout in seconds
