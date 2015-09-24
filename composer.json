@@ -1,11 +1,6 @@
 {
     "name": "ivt/system",
     "description": "Filesystem and process abstractions for local and remote systems",
-    "config": {
-        "github-oauth": {
-            "github.com": "65aba10e4e1683ad5e0fd3041fd9162fe8fb51a6"
-        }
-    },
     "repositories": [
         {
             "type": "vcs",
