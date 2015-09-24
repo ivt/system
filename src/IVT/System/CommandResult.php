@@ -63,7 +63,6 @@ $this->stdErr
 >>> exit status <<<
 $exitStatus ($exitMessage)
 s;
-        $result = System::removeSecrets($result);
         $result = utf8_encode($result); // to convert raw binary data from command/stdin/stdout/stderr to valid UTF-8
         return $result;
     }

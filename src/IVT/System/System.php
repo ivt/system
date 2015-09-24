@@ -35,14 +35,6 @@ abstract class System implements FileSystem, Loggable {
      */
     abstract function forwardPort($host, $port);
 
-    final static function removeSecrets($string) {
-        $gitHub    = '(\w+(:\w+)?)(?=@github.com)';
-        $awsKey    = '(?<=\-\-key=)\S+';
-        $awsSecret = '(?<=\-\-secret=)\S+';
-
-        return \PCRE::replace("$gitHub|$awsKey|$awsSecret", $string, '[HIDDEN]');
-    }
-
     /**
      * @param LoggerInterface $log
      * @param string          $level

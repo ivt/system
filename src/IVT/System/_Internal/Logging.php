@@ -303,7 +303,7 @@ class LoggingSystem extends WrappedSystem {
         $out  = new BinaryBuffer(new LinePrefixStream('  ', '  ', $log));
         $err  = new BinaryBuffer(new LinePrefixStream('! ', '! ', $log));
 
-        $cmd(self::removeSecrets("$command\n"));
+        $cmd("$command\n");
         unset($cmd);
 
         $in($stdIn);
