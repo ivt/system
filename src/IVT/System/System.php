@@ -136,11 +136,6 @@ abstract class System implements FileSystem, Loggable {
         $this->execArgs(array('sed', '-ri', "s/$search/$replace/g", $file));
     }
 
-    final function replaceInFileMany($file, array $replacements) {
-        foreach ($replacements as $search => $replace)
-            $this->replaceInFile($search, $replace, $file);
-    }
-
     /**
      * @param string $command
      * @param string $stdIn
