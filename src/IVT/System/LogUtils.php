@@ -2,14 +2,14 @@
 
 namespace IVT\System;
 
-class Logger {
+final class LogUtils {
     /**
      * Ellipsize the given string to the given length
      * @param string $string
      * @param int    $width
      * @return string
      */
-    private static function ellipsize($string, $width) {
+    static function ellipsize($string, $width) {
         if (strlen($string) <= $width)
             return $string;
 

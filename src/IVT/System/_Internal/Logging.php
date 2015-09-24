@@ -7,7 +7,7 @@ use IVT\System\_Internal\Wrapped\WrappedFile;
 use IVT\System\_Internal\Wrapped\WrappedSystem;
 use IVT\System\File;
 use IVT\System\Loggable;
-use IVT\System\Logger;
+use IVT\System\LogUtils;
 use IVT\System\PrefixLogger;
 use IVT\System\System;
 use Psr\Log\LoggerInterface;
@@ -138,7 +138,7 @@ class LoggingFile extends WrappedFile {
 
     function scanDir() {
         $result = parent::scanDir();
-        $this->log("scandir => " . Logger::summarizeArray($result));
+        $this->log("scandir => " . LogUtils::summarizeArray($result));
 
         return $result;
     }
@@ -217,24 +217,24 @@ class LoggingFile extends WrappedFile {
         if ($maxLength !== null)
             $log .= ", length: $maxLength";
 
-        $this->log("$log => " . Logger::summarize($result));
+        $this->log("$log => " . LogUtils::summarize($result));
 
         return $result;
     }
 
     function write($contents) {
-        $this->log("write " . Logger::summarize($contents));
+        $this->log("write " . LogUtils::summarize($contents));
         parent::write($contents);
         return $this;
     }
 
     function create($contents) {
-        $this->log("create " . Logger::summarize($contents));
+        $this->log("create " . LogUtils::summarize($contents));
         parent::create($contents);
     }
 
     function append($contents) {
-        $this->log("append " . Logger::summarize($contents));
+        $this->log("append " . LogUtils::summarize($contents));
         parent::append($contents);
     }
 
