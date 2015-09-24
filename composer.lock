@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "a95c5f34eda422c285e63916bc877eda",
+    "hash": "b70343685fe3987248a8e72f3f63d99d",
     "packages": [
         {
             "name": "fail-whale/fail-whale",
@@ -76,41 +76,6 @@
             "time": "2015-09-08 02:05:10"
         },
         {
-            "name": "ivt/log",
-            "version": "0.1.4",
-            "source": {
-                "type": "git",
-                "url": "git@github.com:ivt/log.git",
-                "reference": "7d9c7496519c23db0fbf6c95b9d59ddf7d1e592a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/ivt/log/zipball/7d9c7496519c23db0fbf6c95b9d59ddf7d1e592a",
-                "reference": "7d9c7496519c23db0fbf6c95b9d59ddf7d1e592a",
-                "shasum": ""
-            },
-            "require": {
-                "ivt/assert": "^0.1.0",
-                "monolog/monolog": "1.12.0",
-                "psr/log": "1.0.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^4.8.0"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "description": "Context dependent (CLI or browser) Psr AbstractLogger implementation",
-            "support": {
-                "source": "https://github.com/ivt/log/tree/0.1.4",
-                "issues": "https://github.com/ivt/log/issues"
-            },
-            "time": "2015-09-09 02:07:25"
-        },
-        {
             "name": "ivt/pcre",
             "version": "0.1.4",
             "source": {
@@ -143,116 +108,6 @@
                 "issues": "https://github.com/ivt/pcre/issues"
             },
             "time": "2015-09-08 03:23:02"
-        },
-        {
-            "name": "monolog/monolog",
-            "version": "1.12.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "1fbe8c2641f2b163addf49cc5e18f144bec6b19f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/1fbe8c2641f2b163addf49cc5e18f144bec6b19f",
-                "reference": "1fbe8c2641f2b163addf49cc5e18f144bec6b19f",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0",
-                "psr/log": "~1.0"
-            },
-            "provide": {
-                "psr/log-implementation": "1.0.0"
-            },
-            "require-dev": {
-                "aws/aws-sdk-php": "~2.4, >2.4.8",
-                "doctrine/couchdb": "~1.0@dev",
-                "graylog2/gelf-php": "~1.0",
-                "phpunit/phpunit": "~4.0",
-                "raven/raven": "~0.5",
-                "ruflin/elastica": "0.90.*",
-                "videlalvaro/php-amqplib": "~2.4"
-            },
-            "suggest": {
-                "aws/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
-                "doctrine/couchdb": "Allow sending log messages to a CouchDB server",
-                "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
-                "ext-mongo": "Allow sending log messages to a MongoDB server",
-                "graylog2/gelf-php": "Allow sending log messages to a GrayLog2 server",
-                "raven/raven": "Allow sending log messages to a Sentry server",
-                "rollbar/rollbar": "Allow sending log messages to Rollbar",
-                "ruflin/elastica": "Allow sending log messages to an Elastic Search server",
-                "videlalvaro/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.12.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Monolog\\": "src/Monolog"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Jordi Boggiano",
-                    "email": "j.boggiano@seld.be",
-                    "homepage": "http://seld.be"
-                }
-            ],
-            "description": "Sends your logs to files, sockets, inboxes, databases and various web services",
-            "homepage": "http://github.com/Seldaek/monolog",
-            "keywords": [
-                "log",
-                "logging",
-                "psr-3"
-            ],
-            "time": "2014-12-29 21:29:35"
-        },
-        {
-            "name": "psr/log",
-            "version": "1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/php-fig/log.git",
-                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/log/zipball/fe0936ee26643249e916849d48e3a51d5f5e278b",
-                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b",
-                "shasum": ""
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Psr\\Log\\": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "PHP-FIG",
-                    "homepage": "http://www.php-fig.org/"
-                }
-            ],
-            "description": "Common interface for logging libraries",
-            "keywords": [
-                "log",
-                "psr",
-                "psr-3"
-            ],
-            "time": "2012-12-21 11:40:51"
         },
         {
             "name": "symfony/process",
@@ -710,16 +565,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "4.8.8",
+            "version": "4.8.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "521720279261e5b14799cf1bb895d4b55e516f26"
+                "reference": "73fad41adb5b7bc3a494bb930d90648df1d5e74b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/521720279261e5b14799cf1bb895d4b55e516f26",
-                "reference": "521720279261e5b14799cf1bb895d4b55e516f26",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/73fad41adb5b7bc3a494bb930d90648df1d5e74b",
+                "reference": "73fad41adb5b7bc3a494bb930d90648df1d5e74b",
                 "shasum": ""
             },
             "require": {
@@ -778,7 +633,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-09-19 05:44:37"
+            "time": "2015-09-20 12:56:44"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
