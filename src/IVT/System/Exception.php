@@ -11,6 +11,6 @@ class Exception extends \Exception {
             array_shift($trace);
         $prop = new \ReflectionProperty('Exception', 'trace');
         $prop->setAccessible(true);
-        $prop->setValue($trace);
+        $prop->setValue($this, $trace);
     }
 }
