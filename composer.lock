@@ -4,60 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "b70343685fe3987248a8e72f3f63d99d",
+    "hash": "5203fe21ac30ca7fd10820a79ff1280d",
     "packages": [
         {
-            "name": "fail-whale/fail-whale",
-            "version": "0.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/jesseschalken/fail-whale.git",
-                "reference": "60c76ea36b66268eb4f32f2a193253326586352e"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/jesseschalken/fail-whale/zipball/60c76ea36b66268eb4f32f2a193253326586352e",
-                "reference": "60c76ea36b66268eb4f32f2a193253326586352e",
-                "shasum": ""
-            },
-            "require-dev": {
-                "phpunit/phpunit": "*"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Jesse Schalken",
-                    "email": "me@jesseschalken.com"
-                }
-            ],
-            "description": "A robust error handler and pretty printer for PHP",
-            "time": "2015-04-28 02:04:27"
-        },
-        {
             "name": "ivt/assert",
-            "version": "0.1.3",
+            "version": "0.1.5",
             "source": {
                 "type": "git",
                 "url": "git@github.com:ivt/assert.git",
-                "reference": "af901c075c8b800f84c6ae7c9a8ef54081226859"
+                "reference": "255de4d90e216bd7b188af67ba5246ff7044129c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ivt/assert/zipball/af901c075c8b800f84c6ae7c9a8ef54081226859",
-                "reference": "af901c075c8b800f84c6ae7c9a8ef54081226859",
+                "url": "https://api.github.com/repos/ivt/assert/zipball/255de4d90e216bd7b188af67ba5246ff7044129c",
+                "reference": "255de4d90e216bd7b188af67ba5246ff7044129c",
                 "shasum": ""
-            },
-            "require": {
-                "fail-whale/fail-whale": "^0.1.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^4.8.0"
@@ -70,28 +31,24 @@
             },
             "description": "Assertions for specific types, returning input value to reduce temporary variables",
             "support": {
-                "source": "https://github.com/ivt/assert/tree/master",
+                "source": "https://github.com/ivt/assert/tree/0.1.5",
                 "issues": "https://github.com/ivt/assert/issues"
             },
-            "time": "2015-09-08 02:05:10"
+            "time": "2015-09-25 06:54:24"
         },
         {
             "name": "ivt/pcre",
-            "version": "0.1.4",
+            "version": "0.1.6",
             "source": {
                 "type": "git",
                 "url": "git@github.com:ivt/pcre.git",
-                "reference": "12ecbec880188a10ab4db2000e66adf0e59ae224"
+                "reference": "49a6d63a1805ce4886e5c734201505d9d4b6fb30"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ivt/pcre/zipball/12ecbec880188a10ab4db2000e66adf0e59ae224",
-                "reference": "12ecbec880188a10ab4db2000e66adf0e59ae224",
+                "url": "https://api.github.com/repos/ivt/pcre/zipball/49a6d63a1805ce4886e5c734201505d9d4b6fb30",
+                "reference": "49a6d63a1805ce4886e5c734201505d9d4b6fb30",
                 "shasum": ""
-            },
-            "require": {
-                "fail-whale/fail-whale": "^0.1.0",
-                "ivt/assert": "^0.1.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^4.8.0"
@@ -100,14 +57,55 @@
             "autoload": {
                 "classmap": [
                     "src/"
+                ],
+                "files": [
+                    "src/php_compat.php"
                 ]
             },
-            "description": "PCRE class to wrap preg_ functions",
+            "description": "PCRE class to wrap preg_* functions",
             "support": {
-                "source": "https://github.com/ivt/pcre/tree/0.1.4",
+                "source": "https://github.com/ivt/pcre/tree/0.1.6",
                 "issues": "https://github.com/ivt/pcre/issues"
             },
-            "time": "2015-09-08 03:23:02"
+            "time": "2015-09-25 03:46:22"
+        },
+        {
+            "name": "psr/log",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/log.git",
+                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/fe0936ee26643249e916849d48e3a51d5f5e278b",
+                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Psr\\Log\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "time": "2012-12-21 11:40:51"
         },
         {
             "name": "symfony/process",
@@ -565,16 +563,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "4.8.9",
+            "version": "4.8.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "73fad41adb5b7bc3a494bb930d90648df1d5e74b"
+                "reference": "463163747474815c5ccd4ae12b5b355ec12158e8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/73fad41adb5b7bc3a494bb930d90648df1d5e74b",
-                "reference": "73fad41adb5b7bc3a494bb930d90648df1d5e74b",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/463163747474815c5ccd4ae12b5b355ec12158e8",
+                "reference": "463163747474815c5ccd4ae12b5b355ec12158e8",
                 "shasum": ""
             },
             "require": {
@@ -633,20 +631,20 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-09-20 12:56:44"
+            "time": "2015-10-01 09:14:30"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
-            "version": "2.3.7",
+            "version": "2.3.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit-mock-objects.git",
-                "reference": "5e2645ad49d196e020b85598d7c97e482725786a"
+                "reference": "ac8e7a3db35738d56ee9a76e78a4e03d97628983"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit-mock-objects/zipball/5e2645ad49d196e020b85598d7c97e482725786a",
-                "reference": "5e2645ad49d196e020b85598d7c97e482725786a",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit-mock-objects/zipball/ac8e7a3db35738d56ee9a76e78a4e03d97628983",
+                "reference": "ac8e7a3db35738d56ee9a76e78a4e03d97628983",
                 "shasum": ""
             },
             "require": {
@@ -689,7 +687,7 @@
                 "mock",
                 "xunit"
             ],
-            "time": "2015-08-19 09:14:08"
+            "time": "2015-10-02 06:51:40"
         },
         {
             "name": "sebastian/comparator",
@@ -1064,16 +1062,16 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v2.7.4",
+            "version": "v2.7.5",
             "source": {
                 "type": "git",
-                "url": "https://github.com/symfony/Yaml.git",
-                "reference": "2dc7b06c065df96cc686c66da2705e5e18aef661"
+                "url": "https://github.com/symfony/yaml.git",
+                "reference": "31cb2ad0155c95b88ee55fe12bc7ff92232c1770"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Yaml/zipball/2dc7b06c065df96cc686c66da2705e5e18aef661",
-                "reference": "2dc7b06c065df96cc686c66da2705e5e18aef661",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/31cb2ad0155c95b88ee55fe12bc7ff92232c1770",
+                "reference": "31cb2ad0155c95b88ee55fe12bc7ff92232c1770",
                 "shasum": ""
             },
             "require": {
@@ -1109,7 +1107,7 @@
             ],
             "description": "Symfony Yaml Component",
             "homepage": "https://symfony.com",
-            "time": "2015-08-24 07:13:45"
+            "time": "2015-09-14 14:14:09"
         }
     ],
     "aliases": [],
