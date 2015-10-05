@@ -9,6 +9,9 @@
           <option name="ALIGN_PHPDOC_COMMENTS" value="true" />
           <option name="ALIGN_ASSIGNMENTS" value="true" />
           <option name="COMMA_AFTER_LAST_ARRAY_ELEMENT" value="true" />
+          <option name="PHPDOC_WRAP_LONG_LINES" value="true" />
+          <option name="LOWER_CASE_BOOLEAN_CONST" value="true" />
+          <option name="LOWER_CASE_NULL_CONST" value="true" />
           <option name="ALIGN_CLASS_CONSTANTS" value="true" />
         </PHPCodeStyleSettings>
         <codeStyleSettings language="PHP">
@@ -16,6 +19,130 @@
           <option name="METHOD_BRACE_STYLE" value="1" />
           <option name="ALIGN_GROUP_FIELD_DECLARATIONS" value="true" />
           <option name="KEEP_SIMPLE_METHODS_IN_ONE_LINE" value="true" />
+          <arrangement>
+            <tokens>
+              <token id="modifiers" name="modifiers">
+                <rules>
+                  <rule>
+                    <match>
+                      <AND>
+                        <FINAL>true</FINAL>
+                        <PUBLIC>true</PUBLIC>
+                      </AND>
+                    </match>
+                  </rule>
+                  <rule>
+                    <match>
+                      <AND>
+                        <ABSTRACT>false</ABSTRACT>
+                        <FINAL>false</FINAL>
+                        <PUBLIC>true</PUBLIC>
+                      </AND>
+                    </match>
+                  </rule>
+                  <rule>
+                    <match>
+                      <AND>
+                        <ABSTRACT>true</ABSTRACT>
+                        <PUBLIC>true</PUBLIC>
+                      </AND>
+                    </match>
+                  </rule>
+                  <rule>
+                    <match>
+                      <AND>
+                        <FINAL>true</FINAL>
+                        <PROTECTED>true</PROTECTED>
+                      </AND>
+                    </match>
+                  </rule>
+                  <rule>
+                    <match>
+                      <AND>
+                        <ABSTRACT>false</ABSTRACT>
+                        <FINAL>false</FINAL>
+                        <PROTECTED>true</PROTECTED>
+                      </AND>
+                    </match>
+                  </rule>
+                  <rule>
+                    <match>
+                      <AND>
+                        <ABSTRACT>true</ABSTRACT>
+                        <PROTECTED>true</PROTECTED>
+                      </AND>
+                    </match>
+                  </rule>
+                  <rule>
+                    <match>
+                      <PRIVATE>true</PRIVATE>
+                    </match>
+                  </rule>
+                </rules>
+              </token>
+            </tokens>
+            <groups />
+            <rules>
+              <section>
+                <rule>
+                  <match>
+                    <CONST>true</CONST>
+                  </match>
+                </rule>
+              </section>
+              <section>
+                <rule>
+                  <match>
+                    <AND>
+                      <FIELD>true</FIELD>
+                      <STATIC>true</STATIC>
+                      <modifiers />
+                    </AND>
+                  </match>
+                </rule>
+              </section>
+              <section>
+                <rule>
+                  <match>
+                    <AND>
+                      <METHOD>true</METHOD>
+                      <STATIC>true</STATIC>
+                      <modifiers />
+                    </AND>
+                  </match>
+                </rule>
+              </section>
+              <section>
+                <rule>
+                  <match>
+                    <AND>
+                      <FIELD>true</FIELD>
+                      <STATIC>false</STATIC>
+                      <modifiers />
+                    </AND>
+                  </match>
+                </rule>
+              </section>
+              <section>
+                <rule>
+                  <match>
+                    <CONSTRUCTOR>true</CONSTRUCTOR>
+                  </match>
+                </rule>
+              </section>
+              <section>
+                <rule>
+                  <match>
+                    <AND>
+                      <METHOD>true</METHOD>
+                      <STATIC>false</STATIC>
+                      <modifiers />
+                    </AND>
+                  </match>
+                </rule>
+              </section>
+            </rules>
+          </arrangement>
         </codeStyleSettings>
       </value>
     </option>

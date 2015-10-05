@@ -125,22 +125,6 @@ abstract class File {
     }
 
     /**
-     * @return string
-     */
-    abstract function fileType();
-
-    /**
-     * @return int
-     */
-    abstract function perms();
-
-    /**
-     * @param string $dest
-     * @return void
-     */
-    abstract protected function copyImpl($dest);
-
-    /**
      * @param string $to
      * @return File the new file
      */
@@ -172,16 +156,6 @@ abstract class File {
         }
     }
 
-    /**
-     * @return bool
-     */
-    abstract function isFile();
-
-    /**
-     * @return string[]
-     */
-    abstract function scanDir();
-
     final function scanDirNoDots() {
         return array_values(array_diff($this->scanDir(), array('.', '..')));
     }
@@ -198,6 +172,89 @@ abstract class File {
             $files[] = $this->combine($p);
         return $files;
     }
+
+    /**
+     * @return bool Whether the file was removed
+     */
+    final function ensureNotExists() {
+        $remove = $this->exists();
+        if ($remove)
+            $this->removeRecursive();
+        return $remove;
+    }
+
+    /**
+     * Recursive version of remove()
+     */
+    final function removeRecursive() {
+        if ($this->isDir() && !$this->isLink()) {
+            foreach ($this->dirContents() as $file)
+                $file->removeRecursive();
+
+            $this->rmdir();
+        } else {
+            $this->unlink();
+        }
+    }
+
+    /**
+     * Calls unlink() for files and rmdir() for directories, like remove() in C.
+     */
+    final function remove() {
+        if ($this->isDir() && !$this->isLink())
+            $this->rmdir();
+        else
+            $this->unlink();
+    }
+
+    final function readIfFile() {
+        return $this->isFile() ? $this->read() : null;
+    }
+
+    final function readLinkIfLink() {
+        return $this->isLink() ? $this->readlink() : null;
+    }
+
+    /**
+     * @param string $contents
+     * @return boolean
+     */
+    final function writeIfChanged($contents) {
+        $changed = !$this->exists() || $this->read() !== "$contents";
+        if ($changed)
+            $this->write($contents);
+        return $changed;
+    }
+
+    final function rename($to) {
+        $this->renameImpl($to);
+        return $this->system->file($to);
+    }
+
+    final function ensureIsDir($mode = 0777, $recursive = false) {
+        if (!$this->isDir())
+            $this->mkdir($mode, $recursive);
+    }
+
+    /**
+     * @return string
+     */
+    abstract function fileType();
+
+    /**
+     * @return int
+     */
+    abstract function perms();
+
+    /**
+     * @return bool
+     */
+    abstract function isFile();
+
+    /**
+     * @return string[]
+     */
+    abstract function scanDir();
 
     /**
      * @return bool
@@ -227,45 +284,11 @@ abstract class File {
     abstract function exists();
 
     /**
-     * @return bool Whether the file was removed
-     */
-    final function ensureNotExists() {
-        $remove = $this->exists();
-        if ($remove)
-            $this->removeRecursive();
-        return $remove;
-    }
-
-    /**
      * @return int
      */
     abstract function size();
 
     abstract function unlink();
-
-    /**
-     * Recursive version of remove()
-     */
-    final function removeRecursive() {
-        if ($this->isDir() && !$this->isLink()) {
-            foreach ($this->dirContents() as $file)
-                $file->removeRecursive();
-
-            $this->rmdir();
-        } else {
-            $this->unlink();
-        }
-    }
-
-    /**
-     * Calls unlink() for files and rmdir() for directories, like remove() in C.
-     */
-    final function remove() {
-        if ($this->isDir() && !$this->isLink())
-            $this->rmdir();
-        else
-            $this->unlink();
-    }
 
     /**
      * @return int
@@ -284,30 +307,11 @@ abstract class File {
      */
     abstract function read($offset = 0, $maxLength = null);
 
-    final function readIfFile() {
-        return $this->isFile() ? $this->read() : null;
-    }
-
-    final function readLinkIfLink() {
-        return $this->isLink() ? $this->readlink() : null;
-    }
-
     /**
      * @param string $contents
      * @return File
      */
     abstract function write($contents);
-
-    /**
-     * @param string $contents
-     * @return boolean
-     */
-    final function writeIfChanged($contents) {
-        $changed = !$this->exists() || $this->read() !== "$contents";
-        if ($changed)
-            $this->write($contents);
-        return $changed;
-    }
 
     /**
      * @param string $contents
@@ -323,13 +327,6 @@ abstract class File {
 
     abstract function rmdir();
 
-    abstract protected function renameImpl($to);
-
-    final function rename($to) {
-        $this->renameImpl($to);
-        return $this->system->file($to);
-    }
-
     /**
      * @param int $mode
      * @return void
@@ -341,14 +338,17 @@ abstract class File {
      */
     abstract function realpath();
 
-    final function ensureIsDir($mode = 0777, $recursive = false) {
-        if (!$this->isDir())
-            $this->mkdir($mode, $recursive);
-    }
-
     /**
      * @return bool
      */
     abstract function isLocal();
+
+    /**
+     * @param string $dest
+     * @return void
+     */
+    abstract protected function copyImpl($dest);
+
+    abstract protected function renameImpl($to);
 }
 

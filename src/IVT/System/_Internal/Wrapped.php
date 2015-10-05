@@ -87,16 +87,8 @@ class WrappedFile extends File {
         $this->file->chmod($mode);
     }
 
-    protected function renameImpl($to) {
-        $this->file->renameImpl($to);
-    }
-
     function realpath() {
         return $this->file->realpath();
-    }
-
-    protected function copyImpl($dest) {
-        $this->file->copyImpl($dest);
     }
 
     function perms() {
@@ -105,6 +97,14 @@ class WrappedFile extends File {
 
     function isLocal() {
         return $this->file->isLocal();
+    }
+
+    protected function renameImpl($to) {
+        $this->file->renameImpl($to);
+    }
+
+    protected function copyImpl($dest) {
+        $this->file->copyImpl($dest);
     }
 }
 

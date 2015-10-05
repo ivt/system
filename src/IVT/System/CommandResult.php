@@ -26,6 +26,25 @@ class CommandResult extends Process {
     private $command = '';
     private $stdIn   = '';
 
+    /**
+     * @param System $system
+     * @param string $command
+     * @param string $stdIn
+     */
+    function __construct(System $system, $command, $stdIn = '') {
+        $stdOut =& $this->stdOut;
+        $stdErr =& $this->stdErr;
+
+        $this->command = "$command";
+        $this->stdIn   = "$stdIn";
+        $this->process = $system->runAsync(
+            $command,
+            $stdIn,
+            function ($x) use (&$stdOut) { $stdOut .= $x; },
+            function ($x) use (&$stdErr) { $stdErr .= $x; }
+        );
+    }
+
     function stdErr() {
         return $this->stdErr;
     }
@@ -65,25 +84,6 @@ $exitStatus ($exitMessage)
 s;
         $result = utf8_encode($result); // to convert raw binary data from command/stdin/stdout/stderr to valid UTF-8
         return $result;
-    }
-
-    /**
-     * @param System $system
-     * @param string $command
-     * @param string $stdIn
-     */
-    function __construct(System $system, $command, $stdIn = '') {
-        $stdOut =& $this->stdOut;
-        $stdErr =& $this->stdErr;
-
-        $this->command = "$command";
-        $this->stdIn   = "$stdIn";
-        $this->process = $system->runAsync(
-            $command,
-            $stdIn,
-            function ($x) use (&$stdOut) { $stdOut .= $x; },
-            function ($x) use (&$stdErr) { $stdErr .= $x; }
-        );
     }
 
     function assertSuccess() {

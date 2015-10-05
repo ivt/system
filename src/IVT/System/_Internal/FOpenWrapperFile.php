@@ -76,15 +76,6 @@ abstract class FOpenWrapperFile extends File {
         Assert::true(rmdir($this->url()), "Failed to remove directory at {$this->url()}");
     }
 
-    protected function renameImpl($to) {
-        Assert::true(rename($this->url(), $this->pathToUrl($to)), "Failed to rename file at {$this->url()}");
-    }
-
-    protected function copyImpl($dest) {
-        Assert::true(copy($this->url(), $this->pathToUrl($dest)),
-            "Failed to copy file at {$this->url()} to {$this->pathToUrl( $dest )}");
-    }
-
     function create($contents) {
         $this->writeImpl($contents, 'xb');
     }
@@ -122,10 +113,17 @@ abstract class FOpenWrapperFile extends File {
         return Assert::int(filemtime($this->url()), "Failed to read mod time on file at {$this->url()}");
     }
 
-    private function writeImpl($data, $mode) {
-        Assert::resource($handle = fopen($this->url(), $mode), "Failed to open file for write at {$this->url()}");
-        Assert::equal(fwrite($handle, $data), strlen($data), "Failed to write to file at {$this->url()}");
-        Assert::true(fclose($handle), "Failed to close file handle after write() on {$this->url()}");
+    protected function renameImpl($to) {
+        Assert::true(rename($this->url(), $this->pathToUrl($to)), "Failed to rename file at {$this->url()}");
+    }
+
+    protected function copyImpl($dest) {
+        Assert::true(copy($this->url(), $this->pathToUrl($dest)),
+            "Failed to copy file at {$this->url()} to {$this->pathToUrl( $dest )}");
+    }
+
+    protected function url() {
+        return $this->pathToUrl($this->path());
     }
 
     /**
@@ -134,8 +132,10 @@ abstract class FOpenWrapperFile extends File {
      */
     abstract protected function pathToUrl($path);
 
-    protected function url() {
-        return $this->pathToUrl($this->path());
+    private function writeImpl($data, $mode) {
+        Assert::resource($handle = fopen($this->url(), $mode), "Failed to open file for write at {$this->url()}");
+        Assert::equal(fwrite($handle, $data), strlen($data), "Failed to write to file at {$this->url()}");
+        Assert::true(fclose($handle), "Failed to close file handle after write() on {$this->url()}");
     }
 }
 
