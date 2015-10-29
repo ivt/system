@@ -208,10 +208,11 @@ abstract class System implements FileSystem, Loggable {
     );
 
     /**
-     * If this System happens to be a wrapper around another System, this
-     * applies the same wrapping to the given system.
+     * Alias for applyLogging()
      * @param System $system
      * @return System
+     * @deprecated
+     * @see System::applyLogging
      */
     final function wrap(System $system) {
         return $this->applyLogging($system);
