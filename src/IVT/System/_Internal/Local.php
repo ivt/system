@@ -32,10 +32,6 @@ class LocalFile extends FOpenWrapperFile {
 
         return Assert::string(realpath($this->path()));
     }
-
-    function isLocal() {
-        return true;
-    }
 }
 
 class LocalPort extends ForwardedPort {

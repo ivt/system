@@ -339,11 +339,6 @@ abstract class File {
     abstract function realpath();
 
     /**
-     * @return bool
-     */
-    abstract function isLocal();
-
-    /**
      * @param string $dest
      * @return void
      */

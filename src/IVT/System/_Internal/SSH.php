@@ -133,10 +133,6 @@ class SSHFile extends FOpenWrapperFile {
     function realpath() {
         return Assert::string(ssh2_sftp_realpath($this->sftp, $this->absolutePath()));
     }
-
-    function isLocal() {
-        return false;
-    }
 }
 
 class SSHForwardedPort extends ForwardedPort {

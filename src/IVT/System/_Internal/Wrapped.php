@@ -95,10 +95,6 @@ class WrappedFile extends File {
         return $this->file->perms();
     }
 
-    function isLocal() {
-        return $this->file->isLocal();
-    }
-
     protected function renameImpl($to) {
         $this->file->renameImpl($to);
     }
