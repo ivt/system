@@ -3,6 +3,8 @@
 namespace IVT\System;
 
 abstract class File {
+    const DEFAULT_CHUNK_SIZE = 512000;
+
     /** @var string */
     protected $path;
     /** @var FileSystem */
@@ -337,6 +339,13 @@ abstract class File {
      * @return string
      */
     abstract function realpath();
+
+    /**
+     * Stream the file into the given \Closure.
+     * @param \Closure $callback
+     * @param int      $chunkSize
+     */
+    abstract function stream(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE);
 
     /**
      * @param string $dest

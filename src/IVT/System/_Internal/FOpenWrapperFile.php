@@ -4,6 +4,7 @@ namespace IVT\System\_Internal;
 
 use IVT\Assert;
 use IVT\System\File;
+use IVT\System\FOpenFailed;
 
 abstract class FOpenWrapperFile extends File {
     function isFile() {
@@ -104,13 +105,34 @@ abstract class FOpenWrapperFile extends File {
     function scanDir() {
         clearstatcache(true);
 
-        return Assert::isArray(scandir($this->url()), "Failed to scan directory at {$this->url()}");
+        return Assert::array_(scandir($this->url()), "Failed to scan directory at {$this->url()}");
     }
 
     function mtime() {
         clearstatcache(true);
 
         return Assert::int(filemtime($this->url()), "Failed to read mod time on file at {$this->url()}");
+    }
+
+    function stream(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE) {
+        $url    = $this->url();
+        $handle = fopen($url, 'rb');
+
+        if ($handle === false)
+            throw new FOpenFailed("fopen '$url' failed");
+
+        Assert::resource($handle);
+
+        try {
+            while (!Assert::bool(feof($handle))) {
+                $callback(Assert::string(fread($handle, $chunkSize)));
+            }
+        } catch (\Exception $e) {
+            Assert::true(fclose($handle));
+            throw $e;
+        }
+
+        Assert::true(fclose($handle));
     }
 
     protected function renameImpl($to) {

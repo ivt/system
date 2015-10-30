@@ -255,13 +255,18 @@ class LoggingFile extends WrappedFile {
         return $result;
     }
 
-    protected function copyImpl($dest) {
-        $this->log("copy to $dest");
-        parent::copyImpl($dest);
+    function stream(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE) {
+        $this->log('stream');
+        parent::stream($callback, $chunkSize);
     }
 
     function log($line) {
         $this->log->log($this->level, $line);
+    }
+
+    protected function copyImpl($dest) {
+        $this->log("copy to $dest");
+        parent::copyImpl($dest);
     }
 
     protected function renameImpl($to) {
