@@ -29,12 +29,16 @@ class RemoveFileOnDestruct extends Process {
         $this->file->ensureNotExists();
     }
 
-    public function isDone() {
+    function isDone() {
         return $this->process->isDone();
     }
 
-    public function wait() {
+    function wait() {
         return $this->process->wait();
+    }
+
+    function stop() {
+        $this->process->stop();
     }
 }
 
@@ -224,12 +228,63 @@ class SSHForwardedPort extends ForwardedPort {
     }
 }
 
+class SSHProcessStream {
+    /** @var string */
+    private $stream;
+    /** @var \Closure */
+    private $dataCallback;
+    /** @var \Closure */
+    private $eofCallback;
+
+    /**
+     * @param resource $stream
+     * @param \Closure $dataCallback
+     * @param \Closure $eofCallback Will not be called if you close the stream before it's done.
+     */
+    function __construct($stream, \Closure $dataCallback, \Closure $eofCallback) {
+        Assert::true(stream_set_blocking($stream, false));
+
+        $this->stream       = $stream;
+        $this->dataCallback = $dataCallback;
+        $this->eofCallback  = $eofCallback;
+    }
+
+    function __destruct() {
+        $this->close();
+    }
+
+    function close() {
+        $this->isDone();
+        if ($this->stream) {
+            Assert::true(fclose($this->stream));
+            $this->stream = null;
+        }
+    }
+
+    function isDone() {
+        if ($this->stream) {
+            $isEof = Assert::bool(feof($this->stream));
+            if ($isEof) {
+                $cb = $this->eofCallback;
+                $cb();
+            } else {
+                $cb = $this->dataCallback;
+                $cb(Assert::string(fread($this->stream, 8192)));
+            }
+            return $isEof;
+        } else {
+            return true;
+        }
+    }
+}
+
 class SSHProcess extends Process {
-    private $onStdOut;
-    private $onStdErr;
+    /** @var SSHProcessStream */
     private $stdOut;
+    /** @var SSHProcessStream */
     private $stdErr;
-    private $getExitCode;
+    /** @var int|null */
+    private $exitCode;
 
     /**
      * @param resource $ssh
@@ -242,42 +297,33 @@ class SSHProcess extends Process {
         // Make sure as many of these objects are collected first before we start a new command.
         gc_collect_cycles();
 
-        $this->onStdOut    = $onStdOut;
-        $this->onStdErr    = $onStdErr;
-        $this->getExitCode = $getExitCode;
-        $this->stdOut      = Assert::resource(ssh2_exec($ssh, $command));
-        $this->stdErr      = Assert::resource(ssh2_fetch_stream($this->stdOut, SSH2_STREAM_STDERR));
+        $stdOut = Assert::resource(ssh2_exec($ssh, $command));
+        $stdErr = Assert::resource(ssh2_fetch_stream($stdOut, SSH2_STREAM_STDERR));
 
-        Assert::true(stream_set_blocking($this->stdOut, false));
-        Assert::true(stream_set_blocking($this->stdErr, false));
+        $exitCode =& $this->exitCode;
+
+        $this->stdErr = new SSHProcessStream($stdErr, $onStdErr, function () { });
+        $this->stdOut = new SSHProcessStream($stdOut, $onStdOut, function () use (&$exitCode, $getExitCode) {
+            $exitCode = $getExitCode();
+        });
     }
 
-    function __destruct() {
-        if (is_resource($this->stdOut))
-            Assert::true(fclose($this->stdOut));
-        if (is_resource($this->stdErr))
-            Assert::true(fclose($this->stdErr));
-    }
-
-    public function isDone() {
-        $stdOutDone = $this->isStreamDone($this->stdOut, $this->onStdOut);
-        $stdErrDone = $this->isStreamDone($this->stdErr, $this->onStdErr);
+    function isDone() {
+        $stdOutDone = $this->stdOut->isDone();
+        $stdErrDone = $this->stdErr->isDone();
         return $stdOutDone && $stdErrDone;
     }
 
-    private function isStreamDone($stream, \Closure $callback) {
-        $eof = Assert::bool(feof($stream));
-        if (!$eof)
-            $callback(Assert::string(fread($stream, 8192)));
-        return $eof;
-    }
-
-    public function wait() {
+    function wait() {
         while (!$this->isDone())
             usleep(100000);
 
-        $exitCode = $this->getExitCode;
-        return Assert::int($exitCode());
+        return Assert::int($this->exitCode);
+    }
+
+    function stop() {
+        $this->stdOut->close();
+        $this->stdErr->close();
     }
 }
 
