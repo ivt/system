@@ -172,51 +172,53 @@ class SSHForwardedPort extends ForwardedPort {
         if ($remoteHost === 'localhost')
             $remoteHost = '127.0.0.1';
 
-        for ($i = 0; $i < 10; $i++) {
-            $this->localPort = self::findOpenPort();
-            $this->process   = System::local()->runCommandAsyncArgs(array_merge(
-                array(
-                    // Important! Causes the shell which the command is run in to replace itself with the "ssh"
-                    // process, so we can kill it directly. Otherwise "ssh" will be a child of the shell, and
-                    // killing the shell will leave the "ssh" process orphaned on the system.
-                    'exec',
-                ),
-                $sshAuth->sshCmd(),
-                array(
-                    '-N',
-                    '-L', "$this->localPort:$remoteHost:$remotePort",
-                    '-o', 'ExitOnForwardFailure=yes',
-                    '-p', $sshPort,
-                    "$sshUser@$sshHost",
-                )
-            ));
-            if ($this->waitForPortForward())
-                return;
-        }
+        $this->localPort = self::findOpenPort();
+        $this->process   = System::local()->runCommandAsyncArgs(array_merge(
+            array(
+                // Important! Causes the shell which the command is run in to replace itself with the "ssh"
+                // process, so we can kill it directly. Otherwise "ssh" will be a child of the shell, and
+                // killing the shell will leave the "ssh" process orphaned on the system.
+                'exec',
+            ),
+            $sshAuth->sshCmd(),
+            array(
+                '-N',
+                '-L', "$this->localPort:$remoteHost:$remotePort",
+                '-o', 'ServerAliveInterval=60', // Prevents the connection being dropped from being idle too long 
+                '-o', 'ConnectTimeout=5',
+                '-o', 'ExitOnForwardFailure=yes',
+                '-v',
+                '-p', $sshPort,
+                "$sshUser@$sshHost",
+            )
+        ));
 
-        $e = $this->process ? new CommandFailedException($this->process) : null;
-
-        throw new ForwardPortFailed("Failed to forward a port after $i attempts :(", 0, $e);
+        $this->waitForPortForward();
     }
 
     /**
-     * @return bool Whether the port forward was successful
+     * @return void
+     * @throws ForwardPortFailed
      */
     private function waitForPortForward() {
-        $checks = 0;
+        $start = microtime(true);
         while ($this->process->isRunning()) {
-            usleep(10000);
-
-            if (System::local()->isPortOpen('localhost', $this->localPort, 1))
-                $checks++;
-            else
-                $checks = 0;
-
-            if ($checks >= 4)
-                return true;
+            if (System::local()->isPortOpen('localhost', $this->localPort, 1)) {
+                return;
+            } // Time out  after 10 seconds
+            else if ((microtime(true) - $start) > 10) {
+                $this->process->stop();
+                throw new ForwardPortFailed("Port forward timed out :(", 0, new CommandFailedException($this->process));
+            } else {
+                usleep(10000);
+            }
         }
 
-        return false;
+        throw new ForwardPortFailed("Failed to forward a port", 0, new CommandFailedException($this->process));
+    }
+
+    function readWritePipes() {
+        $this->process->isDone();
     }
 
     function localPort() {
@@ -364,6 +366,7 @@ class SSHSystem extends System {
         $forwardedPort =& $this->forwardedPorts["$host:$port"];
         if (!$forwardedPort)
             $forwardedPort = new SSHForwardedPort($this->user, $this->host, $this->port, $this->auth, $host, $port);
+        $forwardedPort->readWritePipes();
         return $forwardedPort;
     }
 
