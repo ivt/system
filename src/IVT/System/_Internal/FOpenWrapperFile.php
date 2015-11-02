@@ -114,7 +114,7 @@ abstract class FOpenWrapperFile extends File {
         return Assert::int(filemtime($this->url()), "Failed to read mod time on file at {$this->url()}");
     }
 
-    function stream(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE) {
+    function streamInto(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE) {
         $url    = $this->url();
         $handle = fopen($url, 'rb');
 

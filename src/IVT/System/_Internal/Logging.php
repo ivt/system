@@ -255,9 +255,9 @@ class LoggingFile extends WrappedFile {
         return $result;
     }
 
-    function stream(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE) {
+    function streamInto(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE) {
         $this->log('stream');
-        parent::stream($callback, $chunkSize);
+        parent::streamInto($callback, $chunkSize);
     }
 
     function log($line) {

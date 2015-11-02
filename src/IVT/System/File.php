@@ -345,7 +345,7 @@ abstract class File {
      * @param \Closure $callback
      * @param int      $chunkSize
      */
-    abstract function stream(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE);
+    abstract function streamInto(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE);
 
     /**
      * @param string $dest

@@ -95,8 +95,8 @@ class WrappedFile extends File {
         return $this->file->perms();
     }
 
-    function stream(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE) {
-        $this->file->stream($callback, $chunkSize);
+    function streamInto(\Closure $callback, $chunkSize = self::DEFAULT_CHUNK_SIZE) {
+        $this->file->streamInto($callback, $chunkSize);
     }
 
     protected function renameImpl($to) {
