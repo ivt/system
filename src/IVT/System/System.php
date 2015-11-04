@@ -44,6 +44,10 @@ abstract class System implements FileSystem, Loggable {
         return new LoggingSystem($this, $log, $level);
     }
 
+    /**
+     * @param string $arg
+     * @return string
+     */
     function escapeCmd($arg) {
         $arg1    = str_replace(str_split("=:_+./-"), '', $arg);
         $isValid = $arg1 === '' || ctype_alnum($arg1);
@@ -51,6 +55,10 @@ abstract class System implements FileSystem, Loggable {
         return $isValid && $arg !== '' ? $arg : escapeshellarg($arg);
     }
 
+    /**
+     * @param string[] $args
+     * @return string
+     */
     final function escapeCmdArgs(array $args) {
         foreach ($args as &$arg)
             $arg = $this->escapeCmd($arg);
@@ -58,10 +66,22 @@ abstract class System implements FileSystem, Loggable {
         return join(' ', $args);
     }
 
+    /**
+     * @param string[] $command
+     * @param string   $stdIn
+     * @return string
+     * @throws CommandFailedException
+     */
     final function execArgs(array $command, $stdIn = '') {
         return $this->runCommandArgs($command, $stdIn)->assertSuccess()->stdOut();
     }
 
+    /**
+     * @param string $command
+     * @param string $stdIn
+     * @return string
+     * @throws CommandFailedException
+     */
     final function exec($command, $stdIn = '') {
         return $this->runCommand($command, $stdIn)->assertSuccess()->stdOut();
     }
@@ -117,6 +137,9 @@ abstract class System implements FileSystem, Loggable {
         $this->execArgs(array('cp', '-rT', $from, $to));
     }
 
+    /**
+     * @param string $path
+     */
     final function ensureNotExists($path) {
         $this->execArgs(array('rm', '-rf', $path));
     }

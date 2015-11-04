@@ -10,15 +10,26 @@ abstract class File {
     /** @var FileSystem */
     protected $system;
 
+    /**
+     * @param FileSystem $system
+     * @param string     $path
+     */
     function __construct(FileSystem $system, $path) {
         $this->path   = $path;
         $this->system = $system;
     }
 
+    /**
+     * @param File $other
+     * @return bool
+     */
     final function is(self $other) {
         return $this->path === $other->path;
     }
 
+    /**
+     * @return string
+     */
     final function path() {
         return $this->path;
     }
@@ -31,6 +42,10 @@ abstract class File {
         return $this->path();
     }
 
+    /**
+     * @param FileSystem $system
+     * @return File
+     */
     final function on(FileSystem $system) {
         return $system->file($this->path);
     }
@@ -51,6 +66,9 @@ abstract class File {
         return $results;
     }
 
+    /**
+     * @return File
+     */
     final function parentDirectory() {
         return $this->system->file($this->dirname());
     }
@@ -83,6 +101,10 @@ abstract class File {
         return pathinfo($this->path, PATHINFO_FILENAME);
     }
 
+    /**
+     * @param int $mode
+     * @return $this
+     */
     final function createDirs($mode = 0777) {
         $this->system->file($this->dirname())->ensureIsDir($mode, true);
         return $this;
@@ -99,6 +121,10 @@ abstract class File {
         return $this->combinePaths($this->path, $path);
     }
 
+    /**
+     * @param string $string
+     * @return bool
+     */
     final function startsWith($string) {
         return $this->read(0, strlen($string)) === "$string";
     }
@@ -118,6 +144,10 @@ abstract class File {
             return $path1 . $dirSep . $path2;
     }
 
+    /**
+     * @param string $path
+     * @return File
+     */
     final function combine($path) {
         return $this->system->file($this->combinePath($path));
     }
@@ -209,10 +239,16 @@ abstract class File {
             $this->unlink();
     }
 
+    /**
+     * @return null|string
+     */
     final function readIfFile() {
         return $this->isFile() ? $this->read() : null;
     }
 
+    /**
+     * @return null|string
+     */
     final function readLinkIfLink() {
         return $this->isLink() ? $this->readlink() : null;
     }
@@ -228,11 +264,19 @@ abstract class File {
         return $changed;
     }
 
+    /**
+     * @param string $to
+     * @return File
+     */
     final function rename($to) {
         $this->renameImpl($to);
         return $this->system->file($to);
     }
 
+    /**
+     * @param int  $mode
+     * @param bool $recursive
+     */
     final function ensureIsDir($mode = 0777, $recursive = false) {
         if (!$this->isDir())
             $this->mkdir($mode, $recursive);
@@ -290,6 +334,9 @@ abstract class File {
      */
     abstract function size();
 
+    /**
+     * @return void
+     */
     abstract function unlink();
 
     /**
@@ -327,6 +374,9 @@ abstract class File {
      */
     abstract function append($contents);
 
+    /**
+     * @return void
+     */
     abstract function rmdir();
 
     /**
@@ -353,6 +403,10 @@ abstract class File {
      */
     abstract protected function copyImpl($dest);
 
+    /**
+     * @param string $to
+     * @return void
+     */
     abstract protected function renameImpl($to);
 }
 
