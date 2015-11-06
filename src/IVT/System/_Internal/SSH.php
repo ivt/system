@@ -127,7 +127,7 @@ class SSHFile extends FOpenWrapperFile {
     }
 
     protected function renameImpl($to) {
-        Assert::true(ssh2_sftp_rename($this->sftp, $this->absolutePath(), $to));
+        $this->ssh->execArgs(array('mv', '-T', $this->path(), $to));
     }
 
     function realpath() {
