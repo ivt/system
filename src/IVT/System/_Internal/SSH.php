@@ -299,14 +299,13 @@ class SSHProcess extends Process {
         // Make sure as many of these objects are collected first before we start a new command.
         gc_collect_cycles();
 
+        $self   = $this;
         $stdOut = Assert::resource(ssh2_exec($ssh, $command));
         $stdErr = Assert::resource(ssh2_fetch_stream($stdOut, SSH2_STREAM_STDERR));
 
-        $exitCode =& $this->exitCode;
-
         $this->stdErr = new SSHProcessStream($stdErr, $onStdErr, function () { });
-        $this->stdOut = new SSHProcessStream($stdOut, $onStdOut, function () use (&$exitCode, $getExitCode) {
-            $exitCode = $getExitCode();
+        $this->stdOut = new SSHProcessStream($stdOut, $onStdOut, function () use ($self, $getExitCode) {
+            $self->exitCode = $getExitCode();
         });
     }
 

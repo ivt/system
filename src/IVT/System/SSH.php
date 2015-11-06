@@ -64,7 +64,7 @@ class SSHAuthPassword extends SSH\SSHAuth {
             'env',
             "SSH_PASS=$this->password",
             'sshpass', '-e',
-            '-o', 'PubkeyAuthentication=no',
+            'ssh', '-o', 'PubkeyAuthentication=no',
         ), self::$defaultSSHOptions);
     }
 }
