@@ -1,7 +1,8 @@
 <phpunit colors="true">
     <testsuites>
         <testsuite name="System">
-            <file>src/Test.php</file>
+            <file>src/IVT/System/Test/TestLocal.php</file>
+            <file>src/IVT/System/Test/TestFile.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
