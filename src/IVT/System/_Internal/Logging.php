@@ -6,6 +6,7 @@ use IVT\System\_Internal;
 use IVT\System\_Internal\Wrapped\WrappedFile;
 use IVT\System\_Internal\Wrapped\WrappedSystem;
 use IVT\System\File;
+use IVT\System\FileSystem;
 use IVT\System\Loggable;
 use IVT\System\LogUtils;
 use IVT\System\PrefixLogger;
@@ -116,8 +117,8 @@ class LoggingFile extends WrappedFile {
     /** @var string */
     private $level;
 
-    function __construct(File $file, LoggerInterface $log, $level = LogLevel::DEBUG) {
-        parent::__construct($file);
+    function __construct(FileSystem $system, File $file, LoggerInterface $log, $level = LogLevel::DEBUG) {
+        parent::__construct($system, $file);
         $this->log   = new PrefixLogger($log, "$file->path: ");
         $this->level = $level;
     }
@@ -352,6 +353,6 @@ class LoggingSystem extends WrappedSystem {
     }
 
     function file($path) {
-        return new LoggingFile(parent::file($path), $this->logger, $this->level);
+        return new LoggingFile($this, parent::file($path), $this->logger, $this->level);
     }
 }

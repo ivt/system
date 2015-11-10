@@ -100,5 +100,9 @@ s;
     function wait() {
         return $this->process->wait();
     }
+
+    function stop() {
+        $this->process->stop();
+    }
 }
 

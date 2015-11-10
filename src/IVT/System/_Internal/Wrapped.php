@@ -9,8 +9,8 @@ use IVT\System\System;
 class WrappedFile extends File {
     private $file;
 
-    function __construct(File $file) {
-        parent::__construct($file->system, $file->path);
+    function __construct(\IVT\System\FileSystem $system, File $file) {
+        parent::__construct($system, $file->path);
         $this->file = $file;
     }
 
@@ -124,7 +124,7 @@ class WrappedSystem extends System {
     }
 
     function file($path) {
-        return new WrappedFile($this->system->file($path));
+        return $this->system->file($path);
     }
 
     function dirSep() {

@@ -109,12 +109,16 @@ class LocalProcess extends Process {
         unset(self::$processes[spl_object_hash($this->process)]);
     }
 
-    public function isDone() {
+    function isDone() {
         return $this->process->isTerminated();
     }
 
-    public function wait() {
+    function wait() {
         return $this->process->wait();
+    }
+
+    function stop() {
+        $this->process->stop();
     }
 }
 

@@ -26,6 +26,12 @@ abstract class Process {
     }
 
     /**
+     * Stop the process, gracefully if possible.
+     * @return void
+     */
+    abstract function stop();
+
+    /**
      * @return bool Whether the process has finished
      */
     abstract function isDone();
