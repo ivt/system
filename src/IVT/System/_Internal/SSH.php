@@ -286,7 +286,7 @@ class SSHProcess extends Process {
     /** @var SSHProcessStream */
     private $stdErr;
     /** @var int|null */
-    private $exitCode;
+    public $exitCode;
 
     /**
      * @param resource $ssh
