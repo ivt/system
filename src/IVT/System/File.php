@@ -3,7 +3,7 @@
 namespace IVT\System;
 
 abstract class File {
-    const DEFAULT_CHUNK_SIZE = 512000;
+    const DEFAULT_CHUNK_SIZE = 65536;
 
     /** @var string */
     protected $path;
