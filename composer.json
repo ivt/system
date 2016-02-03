@@ -16,7 +16,7 @@
         "files": ["src/include.php"]
     },
     "require": {
-        "symfony/process": "v2.4.0",
+        "symfony/process": "^v2.4.0",
         "ivt/assert": "^0.1.0",
         "ivt/pcre": "^0.1.0",
         "psr/log": "^1.0.0"
