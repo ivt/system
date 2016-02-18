@@ -172,6 +172,7 @@ class SSHForwardedPort extends ForwardedPort {
         if ($remoteHost === 'localhost')
             $remoteHost = '127.0.0.1';
 
+        start:
         $this->localPort = self::findOpenPort();
         $this->process   = System::local()->runCommandAsyncArgs(array_merge(
             array(
@@ -184,37 +185,42 @@ class SSHForwardedPort extends ForwardedPort {
             array(
                 '-N',
                 '-L', "$this->localPort:$remoteHost:$remotePort",
-                '-o', 'ServerAliveInterval=60', // Prevents the connection being dropped from being idle too long 
+                '-o', 'ServerAliveInterval=60', // Prevents the connection being dropped from being idle too long
                 '-o', 'ConnectTimeout=5',
                 '-o', 'ExitOnForwardFailure=yes',
-                '-v',
+                '-v', // Needed to get "debug1: ..." output indicating when the port is ready
                 '-p', $sshPort,
                 "$sshUser@$sshHost",
             )
         ));
 
-        $this->waitForPortForward();
-    }
-
-    /**
-     * @return void
-     * @throws ForwardPortFailed
-     */
-    private function waitForPortForward() {
         $start = microtime(true);
-        while ($this->process->isRunning()) {
-            if (System::local()->isPortOpen('localhost', $this->localPort, 1)) {
-                return;
-            } // Time out  after 10 seconds
-            else if ((microtime(true) - $start) > 10) {
+        while (true) {
+            $running = $this->process->isRunning();
+            $stdErr  = $this->process->stdErr();
+
+            if (!$running) {
+                if (strpos($stdErr, "bind: Address already in use\r\n") !== false) {
+                    // Somebody grabbed our port before we could use it, try again.
+                    goto start;
+                } else {
+                    throw new ForwardPortFailed("Failed to forward a port", 0, new CommandFailedException($this->process));
+                }
+            }
+
+            if (strpos($stdErr, "debug1: Entering interactive session.\r\n") !== false) {
+                // Last line after a successful port forward, my body is ready.
+                break;
+            }
+
+            // Time out after 10 seconds
+            if ((microtime(true) - $start) > 10) {
                 $this->process->stop();
                 throw new ForwardPortFailed("Port forward timed out :(", 0, new CommandFailedException($this->process));
-            } else {
-                usleep(10000);
             }
-        }
 
-        throw new ForwardPortFailed("Failed to forward a port", 0, new CommandFailedException($this->process));
+            usleep(100000); // 0.1s
+        }
     }
 
     function readWritePipes() {
