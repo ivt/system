@@ -1,6 +1,7 @@
 {
     "name": "ivt/system",
     "description": "Filesystem and process abstractions for local and remote systems",
+    "license": "MIT",
     "repositories": [
         {
             "type": "vcs",
