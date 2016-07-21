@@ -115,6 +115,10 @@ class WrappedSystem extends System {
         $this->system = $system;
     }
 
+    function reconnect() {
+        $this->system->reconnect();
+    }
+
     function cd($dir) {
         $this->system->cd($dir);
     }

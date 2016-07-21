@@ -367,6 +367,14 @@ class SSHSystem extends System {
         $this->auth = clone $auth;
     }
 
+    function reconnect() {
+        $this->ssh = null;
+
+        // This will clear the cache of forwarded port processes, but any forwarded port objects that are being held
+        // externally will continue to exist (but probably be broken, if the server is being restarted).
+        $this->forwardedPorts = array();
+    }
+
     function forwardPort($host, $port) {
         $forwardedPort =& $this->forwardedPorts["$host:$port"];
         if (!$forwardedPort)

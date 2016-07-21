@@ -289,6 +289,11 @@ class LoggingSystem extends WrappedSystem {
         $this->level  = $level;
     }
 
+    function reconnect() {
+        $this->log('reconnect');
+        parent::reconnect();
+    }
+
     function log($message) {
         $this->logger->log($this->level, $message);
     }

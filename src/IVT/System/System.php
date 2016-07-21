@@ -55,6 +55,9 @@ abstract class System implements FileSystem, Loggable {
         return $isValid && $arg !== '' ? $arg : escapeshellarg($arg);
     }
 
+    function reconnect() {
+    }
+
     /**
      * @param string[] $args
      * @return string
