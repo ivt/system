@@ -358,7 +358,7 @@ class LoggingSystem extends WrappedSystem {
         return $result;
     }
 
-    function applyLogging(Loggable $loggable) {
+    function applyLogging($loggable) {
         return parent::applyLogging($loggable)->wrapLogging($this->logger->getInnerLogger(), $this->level);
     }
 

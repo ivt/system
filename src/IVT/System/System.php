@@ -40,7 +40,7 @@ abstract class System implements FileSystem, Loggable {
      * @param string          $level
      * @return System
      */
-    final function wrapLogging(LoggerInterface $log, $level = LogLevel::DEBUG) {
+    final function wrapLogging($log, $level = LogLevel::DEBUG) {
         return new LoggingSystem($this, $log, $level);
     }
 
@@ -249,7 +249,7 @@ abstract class System implements FileSystem, Loggable {
      */
     abstract function describe();
 
-    function applyLogging(Loggable $loggable) {
+    function applyLogging($loggable) {
         return $loggable;
     }
 }

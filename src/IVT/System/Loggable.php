@@ -14,14 +14,14 @@ interface Loggable {
      * Return a logging version of this class.
      * @param LoggerInterface $logger
      * @param string          $level
-     * @return self
+     * @return Loggable
      */
-    function wrapLogging(LoggerInterface $logger, $level = LogLevel::DEBUG);
+    function wrapLogging($logger, $level = LogLevel::DEBUG);
 
     /**
      * Apply whatever logging this instance has to the given instance.
-     * @param self $loggable
-     * @return self
+     * @param Loggable $loggable
+     * @return Loggable
      */
-    function applyLogging(Loggable $loggable);
+    function applyLogging($loggable);
 }

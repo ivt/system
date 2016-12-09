@@ -164,7 +164,7 @@ class WrappedSystem extends System {
         return $this->system->forwardPort($host, $port);
     }
 
-    function applyLogging(Loggable $loggable) {
+    function applyLogging($loggable) {
         return $this->system->applyLogging($loggable);
     }
 }
